@@ -66,6 +66,8 @@ def create_mcp_server(*, env_file: str | Path | None = ".env", host: str = "127.
         query: str,
         source: str = "",
         kind: str = "",
+        degree: str = "",
+        module_code: str = "",
         include_private: bool = True,
         limit: int = 10,
     ) -> dict[str, Any]:
@@ -73,6 +75,8 @@ def create_mcp_server(*, env_file: str | Path | None = ".env", host: str = "127.
         filters = CourseDiscoveryFilters(
             sources=_csv(source),
             kinds=_csv(kind),
+            degrees=_csv_preserve(degree),
+            module_codes=_csv_preserve(module_code),
         )
         return _serialized(
             discovery_service.search(query, filters=filters, include_private=include_private, limit=limit)
@@ -132,6 +136,10 @@ def _serialized(value: object) -> dict[str, Any]:
 
 def _csv(value: str) -> tuple[str, ...]:
     return tuple(part.strip().lower() for part in value.split(",") if part.strip())
+
+
+def _csv_preserve(value: str) -> tuple[str, ...]:
+    return tuple(part.strip() for part in value.split(",") if part.strip())
 
 
 def _parser() -> argparse.ArgumentParser:

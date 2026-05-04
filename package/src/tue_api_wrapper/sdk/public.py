@@ -8,7 +8,9 @@ from ..client import AlmaClient
 from ..directory_client import UniversityDirectoryClient
 from ..event_calendar_client import EventCalendarClient
 from ..fitness_client import FitnessClient
+from ..praxisportal_client import PraxisportalClient
 from ..seatfinder_client import SeatfinderClient
+from ..talks_client import TalksClient
 from ..timms_client import TimmsClient
 from .discovery import CourseDiscoveryApi
 
@@ -87,6 +89,47 @@ class PublicTimmsApi:
         return self.client.fetch_tree(node_id=node_id, node_path=node_path)
 
 
+@dataclass(slots=True)
+class PublicTalksApi:
+    client: TalksClient = field(default_factory=TalksClient)
+
+    def search(self, *, query: str = "", limit: int = 16):
+        return self.client.fetch_talks(query=query, limit=limit)
+
+    def item(self, talk_id: int):
+        return self.client.fetch_talk(talk_id)
+
+
+@dataclass(slots=True)
+class PublicPraxisportalApi:
+    client: PraxisportalClient = field(default_factory=PraxisportalClient)
+
+    def filters(self):
+        return self.client.fetch_filter_options()
+
+    def search(
+        self,
+        *,
+        query: str = "",
+        project_type_ids: tuple[int, ...] = (),
+        industry_ids: tuple[int, ...] = (),
+        page: int = 0,
+        per_page: int = 20,
+        sort: str = "newest",
+    ):
+        return self.client.search_projects(
+            query=query,
+            project_type_ids=project_type_ids,
+            industry_ids=industry_ids,
+            page=page,
+            per_page=per_page,
+            sort=sort,
+        )
+
+    def project(self, project_id: int):
+        return self.client.fetch_project(project_id)
+
+
 class TuebingenPublicClient:
     def __init__(
         self,
@@ -95,10 +138,14 @@ class TuebingenPublicClient:
         campus: PublicCampusApi | None = None,
         directory: PublicDirectoryApi | None = None,
         discovery: CourseDiscoveryApi | None = None,
+        praxisportal: PublicPraxisportalApi | None = None,
+        talks: PublicTalksApi | None = None,
         timms: PublicTimmsApi | None = None,
     ) -> None:
         self.alma = alma or PublicAlmaApi()
         self.campus = campus or PublicCampusApi()
         self.directory = directory or PublicDirectoryApi()
         self.discovery = discovery or CourseDiscoveryApi()
+        self.praxisportal = praxisportal or PublicPraxisportalApi()
+        self.talks = talks or PublicTalksApi()
         self.timms = timms or PublicTimmsApi()

@@ -37,6 +37,12 @@ var moodleRoutes = map[string]backendRoute{
 		PathArgs:    []string{"course_id"},
 		Description: "Read-only Moodle enrolment state for a course.",
 	},
+	"course-enrol": {
+		Method:      "POST",
+		Path:        "/api/moodle/course/{course_id}/enrol",
+		PathArgs:    []string{"course_id"},
+		Description: "Enroll in a Moodle course. Use --query enrolment_key=... when required.",
+	},
 	"grades": {
 		Path:        "/api/moodle/grades",
 		Description: "Moodle grades. Optional query: limit.",

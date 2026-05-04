@@ -18,6 +18,18 @@ var campusRoutes = map[string]backendRoute{
 		Path:        "/api/campus/buildings/detail",
 		Description: "Building detail. Use --query path=/campus-der-zukunft/....",
 	},
+	"events": {
+		Path:        "/api/campus/events",
+		Description: "Campus events. Optional queries: query, limit.",
+	},
+	"kuf": {
+		Path:        "/api/campus/fitness/kuf",
+		Description: "Current KuF training occupancy with local history.",
+	},
+	"seats": {
+		Path:        "/api/campus/seats",
+		Description: "Library seat availability.",
+	},
 }
 
 func runCampus(args []string) int {

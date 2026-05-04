@@ -12,6 +12,7 @@ export type DashboardPageId =
   | "mail"
   | "campus"
   | "discovery"
+  | "career"
   | "assistant"
   | "tools";
 
@@ -55,9 +56,9 @@ export interface MailPageProps extends DashboardPageProps {
 }
 
 export interface CourseDiscoveryState {
-  degree: string;
+  degrees: string[];
   includePrivate: boolean;
-  moduleCode: string;
+  moduleCodes: string[];
   query: string;
   response: CourseDiscoverySearchResponse | null;
   sources: string[];
@@ -71,9 +72,9 @@ export interface CourseDiscoveryPageProps extends DashboardPageProps, CourseNavi
   discoverySyncing: boolean;
   onSearchDiscovery: () => Promise<void>;
   onSyncDiscovery: () => Promise<void>;
-  setDiscoveryDegree: (degree: string) => void;
+  setDiscoveryDegrees: (degrees: string[]) => void;
   setDiscoveryIncludePrivate: (includePrivate: boolean) => void;
-  setDiscoveryModuleCode: (moduleCode: string) => void;
+  setDiscoveryModuleCodes: (moduleCodes: string[]) => void;
   setDiscoveryQuery: (query: string) => void;
   setDiscoverySources: (sources: string[]) => void;
 }

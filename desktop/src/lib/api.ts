@@ -131,8 +131,8 @@ export async function searchCourseDiscovery(
     query: string;
     sources: string[];
     kinds?: string[];
-    degree?: string;
-    moduleCode?: string;
+    degrees?: string[];
+    moduleCodes?: string[];
     includePrivate: boolean;
     limit?: number;
   }
@@ -140,12 +140,8 @@ export async function searchCourseDiscovery(
   const params = new URLSearchParams({ q: input.query, limit: String(input.limit ?? 20) });
   input.sources.forEach((source) => params.append("source", source));
   input.kinds?.forEach((kind) => params.append("kind", kind));
-  if (input.degree) {
-    params.set("degree", input.degree);
-  }
-  if (input.moduleCode) {
-    params.set("module_code", input.moduleCode);
-  }
+  input.degrees?.forEach((degree) => params.append("degree", degree));
+  input.moduleCodes?.forEach((moduleCode) => params.append("module_code", moduleCode));
   if (input.includePrivate) {
     params.set("include_private", "true");
   }

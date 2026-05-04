@@ -1,7 +1,9 @@
+import type { useMoodleSnapshot } from "../../lib/use-moodle-snapshot";
 import { EmptyState, PanelHeader } from "./DashboardPrimitives";
+import { MoodlePanel } from "./MoodlePanel";
 import type { DashboardPageProps } from "./types";
 
-export function LearningPage({ data }: DashboardPageProps) {
+export function LearningPage({ data, moodle }: DashboardPageProps & { moodle: ReturnType<typeof useMoodleSnapshot> }) {
   return (
     <div className="content-grid">
       <article className="panel">
@@ -35,6 +37,13 @@ export function LearningPage({ data }: DashboardPageProps) {
           {data?.ilias.memberships.length === 0 ? <EmptyState>No learning spaces returned by ILIAS.</EmptyState> : null}
         </div>
       </article>
+
+      <MoodlePanel
+        data={moodle.data}
+        error={moodle.error}
+        loading={moodle.loading}
+        onRefresh={() => void moodle.refresh()}
+      />
     </div>
   );
 }

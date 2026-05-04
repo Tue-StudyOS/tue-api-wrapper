@@ -1,0 +1,137 @@
+.career-layout {
+  display: grid;
+  gap: 16px;
+}
+
+.career-search-panel,
+.career-result-panel,
+.career-detail-page,
+.career-result-list {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.career-filter-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(190px, 240px) minmax(190px, 240px) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.career-select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: #ffffff;
+  color: inherit;
+  font: inherit;
+  padding: 11px 12px;
+}
+
+.career-result-row {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  width: 100%;
+  min-height: 190px;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  background: var(--panel-muted);
+  color: inherit;
+  cursor: pointer;
+  padding: 13px 14px;
+  text-align: left;
+}
+
+.career-result-row:hover,
+.career-result-row:focus-visible {
+  border-color: rgba(161, 30, 59, 0.34);
+  background: #ffffff;
+}
+
+.career-result-list {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.career-result-row strong,
+.career-result-row small,
+.career-result-row p {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.career-result-row p {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.career-result-row small {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.career-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.career-tag-list span {
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--accent);
+  font-size: 0.74rem;
+  font-weight: 750;
+  padding: 4px 8px;
+}
+
+.career-detail-text {
+  margin: 0;
+  color: var(--muted-strong);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.career-detail-page {
+  max-width: 920px;
+}
+
+.career-detail-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.career-detail-heading h2 {
+  margin: 0;
+  font-size: 1.55rem;
+  line-height: 1.18;
+}
+
+.career-pagination {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  border-top: 1px solid var(--panel-border);
+  padding-top: 12px;
+}
+
+.career-pagination span {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+@media (max-width: 1180px) {
+  .career-filter-grid {
+    grid-template-columns: 1fr;
+  }
+}

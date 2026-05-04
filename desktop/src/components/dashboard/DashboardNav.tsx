@@ -30,6 +30,7 @@ export function DashboardNav({
     { id: "mail", label: "Mail", badge: data?.mail.unreadCount },
     { id: "campus", label: "Campus" },
     { id: "discovery", label: "Discovery" },
+    { id: "career", label: "Career" },
     { id: "assistant", label: "Assistant" },
     { id: "tools", label: "Tools" }
   ];

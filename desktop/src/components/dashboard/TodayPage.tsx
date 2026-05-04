@@ -27,6 +27,32 @@ export function TodayPage({ data }: DashboardPageProps) {
 
       <section className="content-grid">
         <article className="panel">
+          <PanelHeader
+            title="Mitteilungen"
+            meta={`${data?.portalMessages?.items.length ?? 0} Alma`}
+          />
+          <div className="stack-list">
+            {(data?.portalMessages?.items ?? []).slice(0, 3).map((item) => (
+              <button
+                key={item.id}
+                className="stack-row compact-row"
+                disabled={!item.url}
+                onClick={() => item.url ? void window.desktop.openExternal(item.url) : undefined}
+                type="button"
+              >
+                <div>
+                  <strong>{item.title}</strong>
+                  <span>{item.created_at ? formatTimestamp(item.created_at) : item.created_at_label ?? "Alma Mitteilung"}</span>
+                </div>
+                <span>{item.target === "_blank" ? "PDF" : "Open"}</span>
+              </button>
+            ))}
+            {data?.portalMessages?.error ? <p className="inline-error">{data.portalMessages.error}</p> : null}
+            {data?.portalMessages?.items.length === 0 ? <EmptyState>No Alma Mitteilungen returned.</EmptyState> : null}
+          </div>
+        </article>
+
+        <article className="panel">
           <PanelHeader title="Next events" meta={`${data?.agenda.items.length ?? 0} upcoming`} />
           <div className="stack-list">
             {(data?.agenda.items ?? []).slice(0, 4).map((item) => (

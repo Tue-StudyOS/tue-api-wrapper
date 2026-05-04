@@ -8,7 +8,13 @@ from .alma_portal_messages_html import (
     extract_portal_messages_start_page_contract,
     parse_portal_messages_settings,
 )
-from .alma_portal_messages_models import AlmaPortalMessagesFeed
+from .alma_portal_messages_items_html import (
+    build_expand_portal_messages_request,
+    extract_portal_messages_list_contract,
+    parse_portal_messages_page,
+    parse_portal_messages_partial_response,
+)
+from .alma_portal_messages_models import AlmaPortalMessagesFeed, AlmaPortalMessagesPage
 from .client import AlmaClient
 from .config import AlmaLoginError, AlmaParseError
 
@@ -69,6 +75,21 @@ def _build_feed_result(
 def fetch_portal_messages_feed(client: AlmaClient) -> AlmaPortalMessagesFeed:
     contract, settings = _open_portal_messages_settings(client)
     return _build_feed_result(contract, settings)
+
+
+def fetch_portal_messages(client: AlmaClient) -> AlmaPortalMessagesPage:
+    html, page_url = _fetch_start_page(client)
+    page = parse_portal_messages_page(html, page_url)
+    if page.items:
+        return page
+
+    contract = extract_portal_messages_list_contract(html, page_url)
+    request = build_expand_portal_messages_request(contract)
+    if request is None:
+        return page
+
+    response_text, response_url = _post_form(client, action_url=request.action_url, payload=request.payload)
+    return parse_portal_messages_partial_response(response_text, response_url)
 
 
 def refresh_portal_messages_feed(client: AlmaClient) -> AlmaPortalMessagesFeed:

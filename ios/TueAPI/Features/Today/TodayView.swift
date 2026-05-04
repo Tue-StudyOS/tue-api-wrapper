@@ -106,6 +106,8 @@ struct TodayView: View {
                     model: model
                 )
 
+                TodayPortalMessagesCard(model: model)
+
                 TodayStudySnapshotCard(model: model)
 
                 TodayCampusPulseCard(

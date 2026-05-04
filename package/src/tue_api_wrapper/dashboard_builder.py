@@ -7,6 +7,7 @@ from typing import Any, Callable
 
 from .alma_course_assignments_client import build_timetable_course_assignments
 from .alma_course_assignments_models import AlmaTimetableCourseAssignmentsPage
+from .alma_portal_messages_client import fetch_portal_messages
 from .alma_planner_models import AlmaStudyPlannerPage
 from .alma_studyservice_models import AlmaStudyServicePage
 from .client import AlmaClient
@@ -35,6 +36,7 @@ class AlmaDashboardData:
     studyservice_url: str
     course_assignments: AlmaTimetableCourseAssignmentsPage | None
     current_credit_error: str | None
+    portal_messages: dict[str, Any]
 
 
 @dataclass(frozen=True)
@@ -56,7 +58,7 @@ def build_dashboard_payload(
     load_talks_panel: Callable[..., dict[str, Any]] = build_talks_panel,
 ) -> dict[str, Any]:
     term_label = normalize_dashboard_term(term_label)
-    with ThreadPoolExecutor(max_workers=4, thread_name_prefix="dashboard") as executor:
+    with ThreadPoolExecutor(max_workers=5, thread_name_prefix="dashboard") as executor:
         alma_future = executor.submit(
             _load_alma_dashboard,
             load_alma_client,
@@ -89,6 +91,7 @@ def _load_alma_dashboard(
         exams_future = executor.submit(lambda: tuple(alma.fetch_exam_overview()[:limit]))
         studyservice_future = executor.submit(alma.fetch_studyservice_contract)
         study_planner_future = executor.submit(alma.fetch_study_planner)
+        portal_messages_future = executor.submit(_fetch_portal_messages_page, alma)
 
         timetable = timetable_future.result()
         enrollments = enrollments_future.result()
@@ -100,6 +103,16 @@ def _load_alma_dashboard(
             study_planner = study_planner_future.result()
         except AlmaError as error:
             study_planner_error = str(error)
+        try:
+            messages = portal_messages_future.result()
+            portal_messages = {
+                "available": True,
+                "sourcePageUrl": messages.page_url,
+                "items": serialize(messages.items),
+                "error": None,
+            }
+        except AlmaError as error:
+            portal_messages = {"available": False, "sourcePageUrl": None, "items": [], "error": str(error)}
 
     current_credit_error = None
     if include_course_assignments:
@@ -121,6 +134,7 @@ def _load_alma_dashboard(
         studyservice_url=alma.studyservice_url,
         course_assignments=course_assignments,
         current_credit_error=current_credit_error,
+        portal_messages=portal_messages,
     )
 
 
@@ -134,6 +148,13 @@ def _load_ilias_dashboard(
         memberships=tuple(ilias.fetch_membership_overview()[:limit]),
         tasks=tuple(ilias.fetch_task_overview()[:limit]),
     )
+
+
+def _fetch_portal_messages_page(alma: AlmaClient):
+    loader = getattr(alma, "fetch_portal_messages", None)
+    if callable(loader):
+        return loader()
+    return fetch_portal_messages(alma)
 
 
 def _compose_dashboard(
@@ -219,6 +240,7 @@ def _compose_dashboard(
             "tasks": serialize(ilias.tasks),
         },
         "mail": mail,
+        "portalMessages": alma.portal_messages,
         "talks": talks,
         "quickLinks": _quick_links(),
     }

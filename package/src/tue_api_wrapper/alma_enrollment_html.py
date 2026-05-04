@@ -13,6 +13,10 @@ from .models import AlmaEnrollmentPage
 TERM_FIELD = "studentOverviewForm:enrollmentsDiv:termSelector:termPeriodDropDownList_input"
 HEADING_RE = re.compile(r"^Veranstaltung:\s*(?P<type>.+?)\s+(?P<title>.+)$")
 CODE_RE = re.compile(r"^(?P<number>[A-ZÄÖÜ]+[A-ZÄÖÜ0-9-]*\d+[A-Z]?|GTCNEURO)\s+(?P<title>.+)$")
+SCHEDULE_NOISE_RE = re.compile(
+    r"\b(?:Status|Aktionen|Details anzeigen|Informationen zu Belegzeiträumen|"
+    r"Raumdetails für .+? anzeigen)\b"
+)
 
 
 def parse_enrollment_page(html: str, page_url: str = "https://alma.uni-tuebingen.de") -> AlmaEnrollmentPage:
@@ -96,6 +100,7 @@ def _schedule_text(table) -> str | None:
     if not cells:
         return None
     value = _clean(cells[0].get_text(" ", strip=True))
+    value = _clean(SCHEDULE_NOISE_RE.sub(" ", value))
     return value or None
 
 

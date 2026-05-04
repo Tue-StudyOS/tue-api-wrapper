@@ -11,33 +11,35 @@ Status legend:
 
 ## Matrix
 
-| Capability | Backend API | Next.js web | ChatGPT MCP app | Desktop | iOS | Python CLI | Go CLI |
+| Capability | Backend API | Next.js web | ChatGPT MCP app | Desktop | iOS | Python SDK | Go CLI |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Dashboard overview | full | full | full | partial | partial | none | partial |
-| Unified Alma/ILIAS search + fetch | full | none | full | none | proposed | none | full |
+| Dashboard overview | full | full | full | partial | partial | full | full |
+| Unified Alma/ILIAS search + fetch | full | none | full | none | proposed | full | full |
 | Alma timetable snapshot | full | partial | full | partial | full | full | full |
-| Alma timetable controls / grid / PDF / feed refresh | full | full | partial | none | partial | none | full |
-| Alma exams / progress | full | full | full | partial | proposed | partial | full |
-| Alma study-service documents summary | full | full | full | partial | proposed | partial | full |
-| Alma report PDF generation | full | partial | proposed | none | proposed | partial | full |
-| Alma study planner | full | full | full | none | proposed | none | full |
-| Alma authenticated course search | full | full | full | none | proposed | none | full |
-| Alma public module catalog search | full | full | full | none | full | partial | full |
-| Alma module detail | full | full | full | none | partial | none | full |
-| Alma course registration | full | partial | proposed | none | proposed | none | full |
-| Combined Alma course detail + portal statuses | full | full | full | none | partial | none | full |
-| ILIAS memberships / tasks | full | full | full | partial | partial | none | full |
-| ILIAS search | full | full | full | none | proposed | none | full |
-| ILIAS learning-space detail | full | full | full | none | proposed | partial | full |
-| ILIAS info screen | full | none | proposed | none | proposed | none | full |
-| ILIAS favorites / waitlist actions | full | partial | proposed | none | proposed | none | partial |
-| Mail inbox / message detail | full | full | full | partial | full | none | full |
-| Moodle dashboard and detail routes | full | full | proposed | partial | partial | none | full |
-| Moodle enrolment action | full | partial | proposed | none | proposed | none | none |
-| Campus buildings / canteens | full | full | proposed | none | partial | none | full |
-| Career / Praxisportal | full | full | proposed | none | full | none | full |
-| TIMMS archive | full | full | proposed | none | proposed | none | full |
-| Talks calendar | full | full | partial | partial | full | none | partial |
+| Alma timetable controls / grid / PDF / feed refresh | full | full | partial | none | partial | full | full |
+| Alma exams / progress | full | full | full | partial | proposed | full | full |
+| Alma study-service documents summary | full | full | full | partial | proposed | full | full |
+| Alma report PDF generation | full | partial | proposed | none | proposed | full | full |
+| Alma study planner | full | full | full | none | proposed | full | full |
+| Alma authenticated course search | full | full | full | none | proposed | full | full |
+| Alma public module catalog search | full | full | full | none | full | full | full |
+| Alma module detail | full | full | full | none | partial | full | full |
+| Alma course registration | full | partial | proposed | none | proposed | full | full |
+| Combined Alma course detail + portal statuses | full | full | full | none | partial | full | full |
+| Course discovery index/search | full | full | full | full | proposed | full | full |
+| ILIAS memberships / tasks | full | full | full | partial | partial | full | full |
+| ILIAS search | full | full | full | none | proposed | full | full |
+| ILIAS learning-space detail | full | full | full | none | proposed | full | full |
+| ILIAS info screen | full | none | proposed | none | proposed | full | full |
+| ILIAS favorites / waitlist actions | full | partial | proposed | none | proposed | full | full |
+| Mail inbox / message detail | full | full | full | partial | full | full | full |
+| Moodle dashboard and detail routes | full | full | proposed | partial | partial | full | full |
+| Moodle enrolment action | full | partial | proposed | none | proposed | full | full |
+| Campus buildings / canteens / live | full | full | proposed | partial | partial | full | full |
+| People directory search | full | full | proposed | partial | full | full | full |
+| Career / Praxisportal | full | full | proposed | none | full | full | full |
+| TIMMS archive | full | full | proposed | none | proposed | full | full |
+| Talks calendar | full | full | partial | partial | full | full | full |
 | Native reminders / widgets / live activities | none | proposed | none | proposed | full | none | none |
 
 ## Surface Notes
@@ -47,8 +49,8 @@ Status legend:
 - The ChatGPT app is strong for read workflows: study snapshots, schedule, tasks, grades, documents, mail, study planner, course lookup, unified search, and ILIAS search/inspection. Critical actions should be added as human-in-the-loop confirmation widgets, not direct mutating tool calls.
 - The desktop app currently reads `/api/dashboard`, manages local credentials, and opens backend or portal URLs. It inherits summary slices but not the deeper web flows.
 - The iOS app is a native Alma-first client. It logs in to Alma directly, caches timetable entries for widgets and Live Activities, supports local lecture reminders, browses current lectures, exposes native calendar/course detail views, and can optionally call the backend for module search, portal statuses, ILIAS tasks, and Moodle deadlines.
-- The Go CLI now exposes most backend route groups through JSON-first commands. Native Go implementations still only exist for selected stable flows.
-- The Python CLI remains useful for legacy/local flows but should not be the primary target for new product parity unless a workflow is automation-heavy.
+- The Python SDK exposes the same core study, discovery, campus, mail, Moodle, ILIAS, Alma, TIMMS, and Praxisportal workflows used by the desktop backend. It should be the primary installable interface for student projects.
+- The Go CLI exposes backend route groups through JSON-first commands. Native Go implementations still only exist for selected stable flows; newer capabilities intentionally call the local or hosted FastAPI backend.
 
 ## StudyOS Platform Direction
 

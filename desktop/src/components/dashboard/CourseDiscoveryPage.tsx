@@ -1,4 +1,5 @@
 import type { CourseDiscoveryResult } from "../../lib/course-discovery-types";
+import { DiscoveryFilterCombobox } from "./DiscoveryFilterCombobox";
 import type { CourseDiscoveryPageProps } from "./types";
 
 const SOURCE_OPTIONS = [
@@ -15,9 +16,9 @@ export function CourseDiscoveryPage({
   onOpenCourseDetail,
   onSearchDiscovery,
   onSyncDiscovery,
-  setDiscoveryDegree,
+  setDiscoveryDegrees,
   setDiscoveryIncludePrivate,
-  setDiscoveryModuleCode,
+  setDiscoveryModuleCodes,
   setDiscoveryQuery,
   setDiscoverySources
 }: CourseDiscoveryPageProps) {
@@ -54,31 +55,20 @@ export function CourseDiscoveryPage({
           ))}
         </div>
         <div className="discovery-filter-grid">
-          <label className="field">
-            <span>Module area</span>
-            <input
-              list="course-discovery-module-codes"
-              onChange={(event) => setDiscoveryModuleCode(event.target.value)}
-              placeholder="All areas"
-              value={discovery.moduleCode}
-            />
-            <datalist id="course-discovery-module-codes">
-              {status?.facets.module_codes.map((option) => (
-                <option key={option.value} value={option.value}>{option.label} ({option.count})</option>
-              ))}
-            </datalist>
-          </label>
-          <label className="field">
-            <span>Degree</span>
-            <select value={discovery.degree} onChange={(event) => setDiscoveryDegree(event.target.value)}>
-              <option value="">All degrees</option>
-              {status?.facets.degrees.slice(0, 80).map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label} ({option.count})
-                </option>
-              ))}
-            </select>
-          </label>
+          <DiscoveryFilterCombobox
+            label="Module area or code"
+            onChange={setDiscoveryModuleCodes}
+            options={status?.facets.module_codes ?? []}
+            placeholder="All areas and codes"
+            values={discovery.moduleCodes}
+          />
+          <DiscoveryFilterCombobox
+            label="Study program"
+            onChange={setDiscoveryDegrees}
+            options={status?.facets.degrees ?? []}
+            placeholder="All programs"
+            values={discovery.degrees}
+          />
         </div>
         <label className="check-row">
           <input

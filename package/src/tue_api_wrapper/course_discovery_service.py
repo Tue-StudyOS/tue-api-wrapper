@@ -13,12 +13,11 @@ from .course_discovery_embeddings import build_embedding_provider
 from .course_discovery_lance import build_lance_store
 from .course_discovery_models import (
     CourseDiscoveryDocument,
-    CourseDiscoveryFacetOption,
-    CourseDiscoveryFacets,
     CourseDiscoveryFilters,
     CourseDiscoverySearchResponse,
     CourseDiscoveryStatus,
 )
+from .course_discovery_facets import build_facets, metadata_values
 from .course_discovery_sources import (
     alma_course_documents,
     alma_current_lecture_documents,
@@ -26,6 +25,7 @@ from .course_discovery_sources import (
     ilias_membership_documents,
     moodle_course_documents,
 )
+from .course_discovery_program_search import fetch_program_scoped_documents
 from .course_discovery_store import InMemoryDiscoveryStore
 from .ilias_client import IliasClient
 from .moodle_auth import build_moodle_client
@@ -51,6 +51,7 @@ class CourseDiscoveryService:
         self._cache = CourseDiscoveryCache()
         self._last_refresh: str | None = None
         self._errors: list[str] = []
+        self._available_degree_labels: tuple[str, ...] = ()
         cached_documents, self._last_refresh = self._cache.load()
         if cached_documents:
             self._store.replace(cached_documents)
@@ -85,6 +86,17 @@ class CourseDiscoveryService:
             documents, errors = self._collect_documents(query=query, include_private=include_private, limit=max(limit * 3, 30))
             self._store.replace(_dedupe_documents(documents))
         results = self._store.search(query, filters, limit)
+        if filters.degrees and not results:
+            scoped_documents, scoped_errors = fetch_program_scoped_documents(
+                self._public_alma,
+                query=query,
+                labels=filters.degrees,
+                limit=max(limit * 3, 30),
+            )
+            errors = (*errors, *scoped_errors)
+            if scoped_documents:
+                self._store.add(_dedupe_documents(scoped_documents))
+                results = self._store.search(query, filters, limit)
         return CourseDiscoverySearchResponse(query=query, results=results, status=self.status(), errors=errors)
 
     def status(self) -> CourseDiscoveryStatus:
@@ -94,7 +106,7 @@ class CourseDiscoveryService:
             vector_store=self._store_name,
             embedding_model=self._embedding_provider.model_name,
             last_refresh=self._last_refresh,
-            facets=_build_facets(self._store.documents()),
+            facets=build_facets(self._store.documents(), extra_degrees=self._degree_labels()),
             errors=tuple(self._errors),
         )
 
@@ -126,11 +138,17 @@ class CourseDiscoveryService:
         documents = []
         try:
             filters = self._public_alma.fetch_public_module_search_filters()
+            self._available_degree_labels = _option_labels(filters.subjects)
+            for option in filters.subjects:
+                if len(documents) >= limit:
+                    break
+                modules = self._public_alma.search_public_module_descriptions(subjects=(option.value,), max_results=300)
+                documents.extend(_annotate_documents(alma_module_documents(modules.results), degree=option.label))
             for option in filters.degrees:
                 if len(documents) >= limit:
                     break
-                modules = self._public_alma.search_public_module_descriptions(degrees=(option.value,), max_results=300)
-                documents.extend(_annotate_documents(alma_module_documents(modules.results), degree=option.label))
+                modules = self._public_alma.search_public_module_descriptions(degrees=(option.value,), max_results=200)
+                documents.extend(_annotate_documents(alma_module_documents(modules.results), tag=option.label))
             for option in filters.subjects:
                 if len(documents) >= limit:
                     break
@@ -139,6 +157,16 @@ class CourseDiscoveryService:
         except AlmaError as error:
             errors.append(f"Alma corpus sync failed: {error}")
         return documents
+
+    def _degree_labels(self) -> tuple[str, ...]:
+        if self._available_degree_labels:
+            return self._available_degree_labels
+        try:
+            filters = self._public_alma.fetch_public_module_search_filters()
+        except AlmaError:
+            return ()
+        self._available_degree_labels = _option_labels(filters.subjects)
+        return self._available_degree_labels
 
     def _private_documents(self, *, query: str, limit: int, errors: list[str]):
         documents = []
@@ -191,7 +219,7 @@ def _dedupe_documents(documents) -> tuple[CourseDiscoveryDocument, ...]:
         if existing is None:
             merged[document.id] = document
             continue
-        degrees = _metadata_values(existing.metadata, "degrees")
+        degrees = metadata_values(existing.metadata, "degrees")
         if existing.degree:
             degrees.add(existing.degree)
         if document.degree:
@@ -251,41 +279,8 @@ def _annotate_documents(
     return tuple(annotated)
 
 
-def _build_facets(documents: tuple[CourseDiscoveryDocument, ...]) -> CourseDiscoveryFacets:
-    return CourseDiscoveryFacets(
-        sources=_facet(document.source for document in documents),
-        kinds=_facet(document.kind for document in documents),
-        module_codes=_facet((category for document in documents for category in document.module_categories), limit=500),
-        degrees=_facet(_document_degrees(documents), limit=300),
-        tags=_facet((tag for document in documents for tag in document.tags), limit=300),
-    )
-
-
-def _document_degrees(documents: tuple[CourseDiscoveryDocument, ...]):
-    for document in documents:
-        if document.degree:
-            yield document.degree
-        yield from document.degrees
-        yield from _metadata_values(document.metadata, "degrees")
-
-
-def _facet(values, *, limit: int = 120) -> tuple[CourseDiscoveryFacetOption, ...]:
-    counts: dict[str, int] = {}
-    for value in values:
-        normalized = str(value).strip()
-        if normalized:
-            counts[normalized] = counts.get(normalized, 0) + 1
-    return tuple(
-        CourseDiscoveryFacetOption(value=value, label=value, count=count)
-        for value, count in sorted(counts.items(), key=lambda item: (-item[1], item[0].lower()))[:limit]
-    )
-
-
-def _metadata_values(metadata: dict[str, object], key: str) -> set[str]:
-    values = metadata.get(key)
-    if isinstance(values, (list, tuple)):
-        return {str(value) for value in values if value}
-    return set()
+def _option_labels(options) -> tuple[str, ...]:
+    return tuple(option.label for option in options if option.label and option.value != "ISNULL")
 
 
 def _merge_tuple(left: tuple[str, ...], right: tuple[str, ...]) -> tuple[str, ...]:

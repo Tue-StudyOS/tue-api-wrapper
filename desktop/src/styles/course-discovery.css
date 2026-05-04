@@ -1,6 +1,6 @@
 .course-discovery-layout {
   display: grid;
-  grid-template-columns: minmax(260px, 0.42fr) minmax(0, 1fr);
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
   gap: 16px;
   align-items: start;
 }
@@ -10,6 +10,7 @@
 .discovery-result-list {
   display: grid;
   gap: 12px;
+  min-width: 0;
 }
 
 .source-toggle-list {
@@ -20,7 +21,7 @@
 
 .discovery-filter-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
 }
 
@@ -34,6 +35,124 @@
   color: inherit;
   font: inherit;
   padding: 10px 12px;
+}
+
+.discovery-combobox-field {
+  min-width: 0;
+}
+
+.discovery-filter-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.discovery-filter-chip-list button {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(161, 30, 59, 0.22);
+  border-radius: 999px;
+  background: #fff3f5;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 8px;
+}
+
+.discovery-filter-chip-list button span {
+  min-width: 0;
+  overflow: hidden;
+  color: inherit;
+  font-size: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.discovery-filter-chip-list button strong {
+  font-size: 0.74rem;
+}
+
+.discovery-combobox {
+  position: relative;
+  display: grid;
+  min-width: 0;
+}
+
+.discovery-combobox input {
+  padding-right: 36px;
+}
+
+.discovery-combobox-toggle {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 34px;
+  height: calc(100% - 2px);
+  border: 0;
+  border-left: 1px solid var(--panel-border);
+  border-radius: 0 7px 7px 0;
+  background: #ffffff;
+  color: var(--muted-strong);
+  cursor: pointer;
+  font-weight: 750;
+}
+
+.discovery-combobox-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 30;
+  width: min(420px, calc(100vw - 48px));
+  min-width: 100%;
+  max-height: min(300px, 42vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 16px 34px rgba(31, 28, 24, 0.16);
+  padding: 5px;
+}
+
+.discovery-combobox-option {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 8px 9px;
+  text-align: left;
+}
+
+.discovery-combobox-option:hover,
+.discovery-combobox-option:focus-visible {
+  background: var(--panel-muted);
+  outline: 0;
+}
+
+.discovery-combobox-option strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.discovery-combobox-option span,
+.discovery-combobox-empty {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.discovery-combobox-empty {
+  margin: 0;
+  padding: 8px 9px;
 }
 
 .check-row {

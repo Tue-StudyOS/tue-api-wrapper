@@ -29,16 +29,13 @@ class LanceDiscoveryStore:
         if not rows:
             self._table = None
             return
-        if "courses" in self._db.table_names():
-            self._db.drop_table("courses")
-        self._table = self._db.create_table("courses", data=rows)
+        self._table = self._db.create_table("courses", data=rows, mode="overwrite")
 
     def add(self, documents: tuple[CourseDiscoveryDocument, ...]) -> None:
         if self._table is None:
             self.replace(documents)
             return
-        self._table.add(self._rows(documents))
-        self._lexical.add(documents)
+        self.replace((*self._lexical.documents(), *documents))
 
     def documents(self) -> tuple[CourseDiscoveryDocument, ...]:
         return self._lexical.documents()
@@ -50,10 +47,12 @@ class LanceDiscoveryStore:
         rows = self._table.search(vector).limit(max(limit * 4, limit)).to_list()
         documents = {document.id: document for document in self._lexical.documents()}
         results: list[CourseDiscoveryResult] = []
+        seen_ids: set[str] = set()
         for row in rows:
             document = documents.get(str(row["id"]))
-            if document is None or not _matches(document, filters):
+            if document is None or document.id in seen_ids or not _matches(document, filters):
                 continue
+            seen_ids.add(document.id)
             distance = float(row.get("_distance", 0.0))
             results.append(CourseDiscoveryResult(document, _distance_to_similarity(distance), "Semantic vector match"))
             if len(results) >= limit:

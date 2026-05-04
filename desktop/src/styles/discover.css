@@ -34,16 +34,19 @@
   grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1fr);
   gap: 16px;
   align-items: start;
+  min-width: 0;
 }
 
 .timms-layout {
-  grid-template-columns: minmax(240px, 0.72fr) minmax(280px, 0.88fr) minmax(0, 1fr);
+  grid-template-columns: minmax(260px, 330px) minmax(260px, 360px) minmax(0, 1fr);
 }
 
 .discover-search-panel,
 .archive-tree-panel {
   display: grid;
   gap: 12px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .search-input {
@@ -66,6 +69,7 @@
   display: grid;
   grid-template-columns: 76px minmax(0, 1fr);
   gap: 12px;
+  min-width: 0;
   width: 100%;
   border: 1px solid var(--panel-border);
   border-radius: 10px;
@@ -92,6 +96,7 @@
 .tree-items {
   display: grid;
   gap: 8px;
+  min-width: 0;
 }
 
 .media-row span,
@@ -110,6 +115,7 @@
   display: grid;
   grid-template-columns: 18px minmax(0, 1fr);
   gap: 8px;
+  min-width: 0;
   width: 100%;
   border: 0;
   border-radius: 8px;
@@ -118,6 +124,28 @@
   cursor: pointer;
   padding: 8px 8px 8px calc(8px + var(--tree-depth, 0) * 12px);
   text-align: left;
+}
+
+.timms-layout > .panel,
+.media-row div,
+.tree-node strong,
+.tree-items .link-row,
+.tree-items .link-row div {
+  min-width: 0;
+}
+
+.media-row strong,
+.media-row span,
+.tree-node strong,
+.tree-items .link-row strong,
+.tree-items .link-row span {
+  overflow-wrap: anywhere;
+}
+
+.tree-node strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tree-node.active,

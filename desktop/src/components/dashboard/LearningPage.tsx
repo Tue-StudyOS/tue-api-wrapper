@@ -15,7 +15,7 @@ export function LearningPage({ data, moodle }: DashboardPageProps & { moodle: Re
                 <strong>{task.title}</strong>
                 <span>{task.item_type || "ILIAS item"}</span>
               </div>
-              <span>{task.end ? `Due ${task.end}` : "Open"}</span>
+              <span className="row-action-label">{task.end ? `Due ${task.end}` : "Open"}</span>
             </button>
           ))}
           {data?.ilias.tasks.length === 0 ? <EmptyState>No ILIAS tasks returned by the backend.</EmptyState> : null}
@@ -31,7 +31,7 @@ export function LearningPage({ data, moodle }: DashboardPageProps & { moodle: Re
                 <strong>{space.title}</strong>
                 <span>{space.description || space.properties[0] || "Open learning space"}</span>
               </div>
-              <span>{space.kind || "Space"}</span>
+              <span className="row-action-label">{space.kind || "Space"}</span>
             </button>
           ))}
           {data?.ilias.memberships.length === 0 ? <EmptyState>No learning spaces returned by ILIAS.</EmptyState> : null}

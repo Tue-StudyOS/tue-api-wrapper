@@ -1,0 +1,56 @@
+.today-content-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+}
+
+.today-column {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.today-column > .panel {
+  min-width: 0;
+}
+
+.fill-column-panel {
+  height: 100%;
+}
+
+.portal-message-row {
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+}
+
+.portal-message-row:hover:not(:disabled) {
+  border-color: rgba(161, 30, 59, 0.34);
+}
+
+.portal-message-copy {
+  gap: 4px;
+}
+
+.portal-message-copy strong {
+  font-size: 0.98rem;
+  line-height: 1.18;
+  overflow-wrap: normal;
+}
+
+.portal-message-copy span {
+  font-size: 0.86rem;
+  line-height: 1.25;
+}
+
+@media (max-width: 1180px) {
+  .today-content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fill-column-panel {
+    height: auto;
+  }
+}

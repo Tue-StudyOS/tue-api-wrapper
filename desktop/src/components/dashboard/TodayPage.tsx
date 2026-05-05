@@ -25,8 +25,9 @@ export function TodayPage({ data }: DashboardPageProps) {
         ))}
       </section>
 
-      <section className="content-grid">
-        <article className="panel">
+      <section className="today-content-grid">
+        <div className="today-column">
+          <article className="panel">
           <PanelHeader
             title="Mitteilungen"
             meta={`${data?.portalMessages?.items.length ?? 0} Alma`}
@@ -35,24 +36,53 @@ export function TodayPage({ data }: DashboardPageProps) {
             {(data?.portalMessages?.items ?? []).slice(0, 3).map((item) => (
               <button
                 key={item.id}
-                className="stack-row compact-row"
+                className="stack-row compact-row portal-message-row"
                 disabled={!item.url}
                 onClick={() => item.url ? void window.desktop.openExternal(item.url) : undefined}
                 type="button"
               >
-                <div>
+                <div className="portal-message-copy">
                   <strong>{item.title}</strong>
                   <span>{item.created_at ? formatTimestamp(item.created_at) : item.created_at_label ?? "Alma Mitteilung"}</span>
                 </div>
-                <span>{item.target === "_blank" ? "PDF" : "Open"}</span>
+                <span className="row-action-label">{item.target === "_blank" ? "PDF" : "Open"}</span>
               </button>
             ))}
             {data?.portalMessages?.error ? <p className="inline-error">{data.portalMessages.error}</p> : null}
             {data?.portalMessages?.items.length === 0 ? <EmptyState>No Alma Mitteilungen returned.</EmptyState> : null}
           </div>
-        </article>
+          </article>
 
-        <article className="panel">
+          <article className="panel">
+            <PanelHeader title="Study snapshot" meta={formatCredits(data?.study.currentSemesterCredits)} />
+            <div className="stack-list">
+              <div className="stack-row compact-row">
+                <div>
+                  <strong>Passed exams</strong>
+                  <span>{data?.study.selectedTerm ?? "No selected term"}</span>
+                </div>
+                <span>{data?.study.passedExamCount ?? 0}</span>
+              </div>
+              <div className="stack-row compact-row">
+                <div>
+                  <strong>Open ILIAS tasks</strong>
+                  <span>{data?.ilias.title ?? "Learning platform"}</span>
+                </div>
+                <span>{data?.ilias.tasks.length ?? 0}</span>
+              </div>
+              <div className="stack-row compact-row">
+                <div>
+                  <strong>Unread mail</strong>
+                  <span>{data?.mail.available ? "Mailbox preview loaded" : data?.mail.error || "Mail unavailable"}</span>
+                </div>
+                <span>{data?.mail.unreadCount ?? 0}</span>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div className="today-column">
+          <article className="panel fill-column-panel">
           <PanelHeader title="Next events" meta={`${data?.agenda.items.length ?? 0} upcoming`} />
           <div className="stack-list">
             {(data?.agenda.items ?? []).slice(0, 4).map((item) => (
@@ -66,34 +96,8 @@ export function TodayPage({ data }: DashboardPageProps) {
             ))}
             {data?.agenda.items.length === 0 ? <EmptyState>No upcoming events returned by Alma.</EmptyState> : null}
           </div>
-        </article>
-
-        <article className="panel">
-          <PanelHeader title="Study snapshot" meta={formatCredits(data?.study.currentSemesterCredits)} />
-          <div className="stack-list">
-            <div className="stack-row compact-row">
-              <div>
-                <strong>Passed exams</strong>
-                <span>{data?.study.selectedTerm ?? "No selected term"}</span>
-              </div>
-              <span>{data?.study.passedExamCount ?? 0}</span>
-            </div>
-            <div className="stack-row compact-row">
-              <div>
-                <strong>Open ILIAS tasks</strong>
-                <span>{data?.ilias.title ?? "Learning platform"}</span>
-              </div>
-              <span>{data?.ilias.tasks.length ?? 0}</span>
-            </div>
-            <div className="stack-row compact-row">
-              <div>
-                <strong>Unread mail</strong>
-                <span>{data?.mail.available ? "Mailbox preview loaded" : data?.mail.error || "Mail unavailable"}</span>
-              </div>
-              <span>{data?.mail.unreadCount ?? 0}</span>
-            </div>
-          </div>
-        </article>
+          </article>
+        </div>
       </section>
     </div>
   );

@@ -100,7 +100,7 @@ function MoodleList({
               <strong>{item.title}</strong>
               <span>{item.detail}</span>
             </div>
-            <span>{item.url ? "Open" : "View"}</span>
+            <span className="row-action-label">{item.url ? "Open" : "View"}</span>
           </button>
         ))}
         {!items.length ? <EmptyState>No {title.toLowerCase()} returned.</EmptyState> : null}

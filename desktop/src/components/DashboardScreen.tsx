@@ -3,11 +3,14 @@ import { useState } from "react";
 import type { DesktopRuntimeState } from "../../shared/desktop-types";
 import type { DashboardData } from "../lib/dashboard-types";
 import { useCampusSnapshot } from "../lib/use-campus-snapshot";
+import { useCareerSearch } from "../lib/use-career-search";
 import { useCourseDiscovery } from "../lib/use-course-discovery";
 import { useMailSurface } from "../lib/use-mail-surface";
+import { useMoodleSnapshot } from "../lib/use-moodle-snapshot";
 import { AssistantPage } from "./dashboard/AssistantPage";
 import { CalendarPage } from "./dashboard/CalendarPage";
 import { CampusPage } from "./dashboard/CampusPage";
+import { CareerPage } from "./dashboard/CareerPage";
 import { CourseDetailPage } from "./dashboard/CourseDetailPage";
 import { CourseDiscoveryPage } from "./dashboard/CourseDiscoveryPage";
 import { DashboardNav } from "./dashboard/DashboardNav";
@@ -38,8 +41,10 @@ export function DashboardScreen({
   const [activePage, setActivePage] = useState<DashboardPageId>("today");
   const [courseDetailTarget, setCourseDetailTarget] = useState<CourseDetailTarget | null>(null);
   const campus = useCampusSnapshot(state.backendUrl ?? null, activePage === "campus");
+  const career = useCareerSearch(state.backendUrl ?? null, activePage === "career");
   const discovery = useCourseDiscovery(state.backendUrl ?? null, activePage === "discovery");
   const mail = useMailSurface(state.backendUrl ?? null, activePage === "mail");
+  const moodle = useMoodleSnapshot(state.backendUrl ?? null, activePage === "learning");
   const changePage = (page: DashboardPageId) => {
     setCourseDetailTarget(null);
     setActivePage(page);
@@ -70,7 +75,7 @@ export function DashboardScreen({
         {!courseDetailTarget && activePage === "calendar" ? (
           <CalendarPage data={data} onOpenCourseDetail={setCourseDetailTarget} state={state} />
         ) : null}
-        {!courseDetailTarget && activePage === "learning" ? <LearningPage data={data} state={state} /> : null}
+        {!courseDetailTarget && activePage === "learning" ? <LearningPage data={data} moodle={moodle} state={state} /> : null}
         {!courseDetailTarget && activePage === "study" ? <StudyPage data={data} state={state} /> : null}
         {!courseDetailTarget && activePage === "mail" ? (
           <MailPage
@@ -109,14 +114,15 @@ export function DashboardScreen({
             onSearchDiscovery={discovery.search}
             onOpenCourseDetail={setCourseDetailTarget}
             onSyncDiscovery={discovery.sync}
-            setDiscoveryDegree={discovery.setDegree}
+            setDiscoveryDegrees={discovery.setDegrees}
             setDiscoveryIncludePrivate={discovery.setIncludePrivate}
-            setDiscoveryModuleCode={discovery.setModuleCode}
+            setDiscoveryModuleCodes={discovery.setModuleCodes}
             setDiscoveryQuery={discovery.setQuery}
             setDiscoverySources={discovery.setSources}
             state={state}
           />
         ) : null}
+        {!courseDetailTarget && activePage === "career" ? <CareerPage career={career} data={data} state={state} /> : null}
         {!courseDetailTarget && activePage === "assistant" ? <AssistantPage data={data} state={state} /> : null}
         {!courseDetailTarget && activePage === "tools" ? (
           <ToolsPage

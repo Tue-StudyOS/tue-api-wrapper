@@ -23,6 +23,7 @@ class AlmaEnrollmentHtmlTests(unittest.TestCase):
               <td>
                 <div>1. Parallelgruppe Neural Data Science</div>
                 <div>jeden Mittwoch (15.04.26 bis 22.07.26) von 10:15 bis 11:45 wöchentlich</div>
+                <div>Status Aktionen Details anzeigen Informationen zu Belegzeiträumen</div>
                 <a href="/alma/pages/cm/exa/searchRoomDetail.xhtml?roomId=471">Raumdetails für Hörsaal A2 anzeigen</a>
               </td>
               <td>
@@ -46,6 +47,8 @@ class AlmaEnrollmentHtmlTests(unittest.TestCase):
         self.assertEqual(page.entries[0].status, "storniert")
         self.assertEqual(page.entries[0].semester, "SoSe 2026")
         self.assertIn("jeden Mittwoch", page.entries[0].schedule_text)
+        self.assertNotIn("Details anzeigen", page.entries[0].schedule_text)
+        self.assertNotIn("Informationen zu Belegzeiträumen", page.entries[0].schedule_text)
         self.assertTrue(page.entries[0].detail_url.endswith("unitId=42&periodId=229"))
 
 

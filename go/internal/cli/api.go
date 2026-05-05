@@ -41,7 +41,7 @@ func runAPIGet(args []string) int {
 func printAPIUsage() {
 	fmt.Println("Usage:")
 	fmt.Println("  tue api get /api/dashboard --query term=Sommer\\ 2026")
-	fmt.Println("  tue api get /api/alma/timetable-pdf --query term=Sommer\\ 2026 --output timetable.pdf")
+	fmt.Println("  tue api get /api/alma/timetable/pdf --query term=Sommer\\ 2026 --output timetable.pdf")
 	fmt.Println()
 	fmt.Println("Flags:")
 	fmt.Println("  --query key=value   Repeat to add query parameters")

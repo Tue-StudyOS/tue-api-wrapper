@@ -98,15 +98,20 @@ export function StudyPage({ data, state }: DashboardPageProps) {
       </article>
 
       <article className="panel">
-        <PanelHeader title="Module areas" meta={data?.study.planner?.title ?? "Alma planner"} />
+        <div className="section-heading study-module-heading">
+          <div>
+            <h3>Module areas</h3>
+            <span>{plannerSubtitle(data?.study.planner?.title)}</span>
+          </div>
+        </div>
         <div className="stack-list">
           {plannerModules.map((module) => (
             <div key={`${module.number}-${module.title}`} className="stack-row compact-row">
               <div>
-                <strong>{module.title}</strong>
+                <strong>{moduleAreaTitle(module.title)}</strong>
                 <span>{module.number ?? "No module code"}</span>
                 {typeof module.progress_percent === "number" ? (
-                  <div className="progress-track" aria-label={`${module.title} progress`}>
+                  <div className="progress-track" aria-label={`${moduleAreaTitle(module.title)} progress`}>
                     <span style={{ width: `${module.progress_percent}%` }} />
                   </div>
                 ) : null}
@@ -190,5 +195,41 @@ function progressModules(modules: DashboardStudyPlannerModule[]): DashboardStudy
 }
 
 function enrollmentMeta(entry: DashboardEnrollmentEntry): string {
-  return [entry.number, entry.event_type, entry.semester, entry.schedule_text].filter(Boolean).join(" · ");
+  return [entry.number, entry.event_type, entry.semester, summarizeSchedule(entry.schedule_text)]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function plannerSubtitle(title?: string | null): string {
+  const cleaned = title
+    ?.replace(/^Studienplaner\s+/i, "")
+    .replace(/\s+-\s+Eberhard Karls Universität Tübingen$/i, "")
+    .replace(/\s*\/\s*/g, ", ")
+    .trim();
+  return cleaned || "Alma planner";
+}
+
+function moduleAreaTitle(title: string): string {
+  return title.replace(/^Studienbereich\s+/i, "").trim() || title;
+}
+
+function summarizeSchedule(text?: string | null): string | null {
+  if (!text) return null;
+  const cleaned = cleanEnrollmentText(text);
+  const recurring = [...cleaned.matchAll(/jeden\s+([A-Za-zÄÖÜäöüß]+).*?\bvon\s+(\d{2}:\d{2})\s+bis\s+(\d{2}:\d{2})/g)]
+    .slice(0, 2)
+    .map((match) => `${match[1]} ${match[2]}-${match[3]}`);
+  if (recurring.length) return recurring.join(", ");
+
+  const single = cleaned.match(/([A-ZÄÖÜ][A-Za-zÄÖÜäöüß]+),\s*\d{2}\.\d{2}\.\d{2}\s+von\s+(\d{2}:\d{2})\s+bis\s+(\d{2}:\d{2})/);
+  if (single) return `${single[1]} ${single[2]}-${single[3]}`;
+
+  return cleaned.length > 120 ? `${cleaned.slice(0, 117).trim()}...` : cleaned;
+}
+
+function cleanEnrollmentText(text: string): string {
+  return text
+    .replace(/\b(Status|Aktionen|Details anzeigen|Informationen zu Belegzeiträumen)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }

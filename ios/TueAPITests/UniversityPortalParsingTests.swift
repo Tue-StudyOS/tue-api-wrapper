@@ -73,4 +73,39 @@ final class UniversityPortalParsingTests: XCTestCase {
             XCTAssertEqual(error.localizedDescription, "Invalid sesskey")
         }
     }
+
+    func testAlmaPortalMessagesParserExtractsVisibleMitteilungen() throws {
+        let pageURL = URL(string: "https://alma.uni-tuebingen.de/alma/pages/cs/sys/portal/hisinoneStartPage.faces")!
+        let partial = """
+        <partial-response><changes>
+          <update id="startPage:portletInstanceId_1013311:portletInstanceId_1013311"><![CDATA[
+            <div class="portalMessagesContent">
+              <ul>
+                <li class="menu menuList">
+                  <div class="menuWrap">
+                    <img src="/HISinOne/images/icons/print_pdf.svg" />
+                    <a href="/alma/pages/startFlow.xhtml?_flowId=document-download-flow&amp;doc=4557346" target="_blank">
+                      <div class="portalMessageText">In Ihrem Bewerbungsportal ist ein neues Dokument verfügbar.</div>
+                    </a>
+                    <small class="menuListDate">04.05.2026 - 18:32 Uhr</small>
+                    <button onclick="jsf.ajax.request(this,event,{'messageId':'7694275'})"></button>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          ]]></update>
+        </changes></partial-response>
+        """
+
+        let page = try AlmaPortalMessagesHTMLParser.parsePartialResponse(partial, pageURL: pageURL)
+
+        XCTAssertEqual(page.items.count, 1)
+        XCTAssertEqual(page.items[0].id, "7694275")
+        XCTAssertEqual(page.items[0].target, "_blank")
+        XCTAssertEqual(page.items[0].createdAtLabel, "04.05.2026 - 18:32 Uhr")
+        XCTAssertEqual(
+            page.items[0].url,
+            "https://alma.uni-tuebingen.de/alma/pages/startFlow.xhtml?_flowId=document-download-flow&doc=4557346"
+        )
+    }
 }

@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from tue_api_wrapper.alma_course_assignments_models import AlmaTimetableCourseAssignmentsPage
+from tue_api_wrapper.alma_portal_messages_models import AlmaPortalMessagesPage
 from tue_api_wrapper.alma_planner_models import AlmaStudyPlannerPage, AlmaStudyPlannerViewState
 from tue_api_wrapper.alma_studyservice_models import AlmaStudyServicePage
 from tue_api_wrapper.dashboard_builder import build_dashboard_payload
@@ -94,6 +95,9 @@ class _FakeAlmaClient:
             modules=(),
             view_state=AlmaStudyPlannerViewState(True, True, False),
         )
+
+    def fetch_portal_messages(self) -> AlmaPortalMessagesPage:
+        return AlmaPortalMessagesPage(page_url="https://alma.example/start", items=())
 
 
 class _FakeIliasClient:

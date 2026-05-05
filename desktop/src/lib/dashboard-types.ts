@@ -90,6 +90,23 @@ export interface DashboardTalksPanel {
   error?: string | null;
 }
 
+export interface DashboardPortalMessageItem {
+  id: string;
+  title: string;
+  url?: string | null;
+  target?: string | null;
+  icon_url?: string | null;
+  created_at?: string | null;
+  created_at_label?: string | null;
+}
+
+export interface DashboardPortalMessagesPanel {
+  available: boolean;
+  sourcePageUrl?: string | null;
+  items: DashboardPortalMessageItem[];
+  error?: string | null;
+}
+
 export interface DashboardDocumentsPanel {
   reports: DashboardDocumentReport[];
   currentDownloadAvailable: boolean;
@@ -162,6 +179,7 @@ export interface DashboardData {
     items: DashboardMailItem[];
     error?: string | null;
   };
+  portalMessages?: DashboardPortalMessagesPanel;
   talks: DashboardTalksPanel;
 }
 

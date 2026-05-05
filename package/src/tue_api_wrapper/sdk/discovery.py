@@ -16,6 +16,8 @@ class CourseDiscoveryApi:
         *,
         sources: tuple[str, ...] = (),
         kinds: tuple[str, ...] = (),
+        degrees: tuple[str, ...] = (),
+        module_codes: tuple[str, ...] = (),
         degree: str | None = None,
         module_code: str | None = None,
         term: str | None = None,
@@ -28,6 +30,8 @@ class CourseDiscoveryApi:
             filters=CourseDiscoveryFilters(
                 sources=sources,
                 kinds=kinds,
+                degrees=degrees,
+                module_codes=module_codes,
                 degree=degree,
                 module_code=module_code,
                 term=term,

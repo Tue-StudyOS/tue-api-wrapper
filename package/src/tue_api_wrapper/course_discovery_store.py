@@ -39,9 +39,11 @@ def _matches_filters(document: CourseDiscoveryDocument, filters: CourseDiscovery
         return False
     if filters.kinds and document.kind not in filters.kinds:
         return False
-    if filters.degree and not _contains_any(document.degrees or ((document.degree,) if document.degree else ()), filters.degree):
+    degree_filters = _selected_degrees(filters)
+    if degree_filters and not _contains_all(_degree_values(document), degree_filters):
         return False
-    if filters.module_code and not _contains_any(document.module_categories, filters.module_code):
+    module_filters = _selected_module_codes(filters)
+    if module_filters and not any(_contains_any(_module_area_values(document), value) for value in module_filters):
         return False
     if filters.term and filters.term.lower() not in (document.term or "").lower():
         return False
@@ -89,3 +91,30 @@ def _haystack(document: CourseDiscoveryDocument) -> str:
 def _contains_any(values: tuple[str, ...], needle: str) -> bool:
     lowered = needle.lower()
     return any(lowered in value.lower() for value in values)
+
+
+def _contains_all(values: tuple[str, ...], needles: tuple[str, ...]) -> bool:
+    return all(_contains_any(values, needle) for needle in needles)
+
+
+def _degree_values(document: CourseDiscoveryDocument) -> tuple[str, ...]:
+    return (
+        *((document.degree,) if document.degree else ()),
+        *document.degrees,
+    )
+
+
+def _selected_degrees(filters: CourseDiscoveryFilters) -> tuple[str, ...]:
+    return (*filters.degrees, *((filters.degree,) if filters.degree else ()))
+
+
+def _selected_module_codes(filters: CourseDiscoveryFilters) -> tuple[str, ...]:
+    return (*filters.module_codes, *((filters.module_code,) if filters.module_code else ()))
+
+
+def _module_area_values(document: CourseDiscoveryDocument) -> tuple[str, ...]:
+    return (
+        *document.module_categories,
+        *((document.module_code,) if document.module_code else ()),
+        *document.tags,
+    )

@@ -1,7 +1,9 @@
+import type { useMoodleSnapshot } from "../../lib/use-moodle-snapshot";
 import { EmptyState, PanelHeader } from "./DashboardPrimitives";
+import { MoodlePanel } from "./MoodlePanel";
 import type { DashboardPageProps } from "./types";
 
-export function LearningPage({ data }: DashboardPageProps) {
+export function LearningPage({ data, moodle }: DashboardPageProps & { moodle: ReturnType<typeof useMoodleSnapshot> }) {
   return (
     <div className="content-grid">
       <article className="panel">
@@ -13,7 +15,7 @@ export function LearningPage({ data }: DashboardPageProps) {
                 <strong>{task.title}</strong>
                 <span>{task.item_type || "ILIAS item"}</span>
               </div>
-              <span>{task.end ? `Due ${task.end}` : "Open"}</span>
+              <span className="row-action-label">{task.end ? `Due ${task.end}` : "Open"}</span>
             </button>
           ))}
           {data?.ilias.tasks.length === 0 ? <EmptyState>No ILIAS tasks returned by the backend.</EmptyState> : null}
@@ -29,12 +31,19 @@ export function LearningPage({ data }: DashboardPageProps) {
                 <strong>{space.title}</strong>
                 <span>{space.description || space.properties[0] || "Open learning space"}</span>
               </div>
-              <span>{space.kind || "Space"}</span>
+              <span className="row-action-label">{space.kind || "Space"}</span>
             </button>
           ))}
           {data?.ilias.memberships.length === 0 ? <EmptyState>No learning spaces returned by ILIAS.</EmptyState> : null}
         </div>
       </article>
+
+      <MoodlePanel
+        data={moodle.data}
+        error={moodle.error}
+        loading={moodle.loading}
+        onRefresh={() => void moodle.refresh()}
+      />
     </div>
   );
 }

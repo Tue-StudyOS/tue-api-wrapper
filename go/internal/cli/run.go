@@ -32,10 +32,16 @@ func Run(args []string) int {
 		return runMoodle(args[1:])
 	case "timms":
 		return runTimms(args[1:])
+	case "discovery":
+		return runDiscovery(args[1:])
 	case "praxisportal":
 		return runPraxisportal(args[1:])
 	case "campus":
 		return runCampus(args[1:])
+	case "talks":
+		return runTalks(args[1:])
+	case "people":
+		return runPeople(args[1:])
 	case "-h", "--help", "help":
 		printRootUsage()
 		return 0
@@ -54,8 +60,11 @@ func printRootUsage() {
 	fmt.Println("  tue ilias info --target REF_ID_OR_URL [--json]")
 	fmt.Println("  tue ilias <root|memberships|tasks|content|forum|exercise|search-api|search-options|info-api> ...")
 	fmt.Println("  tue mail <mailboxes|inbox|message> ...")
-	fmt.Println("  tue moodle <dashboard|calendar|courses|categories|category|category-courses|course|course-enrolment|grades|messages|notifications> ...")
+	fmt.Println("  tue moodle <dashboard|calendar|courses|categories|category|category-courses|course|course-enrolment|course-enrol|grades|messages|notifications> ...")
 	fmt.Println("  tue timms <search|suggest|item|streams|cite|tree> ...")
+	fmt.Println("  tue discovery <search|refresh|status> ...")
 	fmt.Println("  tue praxisportal <filters|search|project> ...")
-	fmt.Println("  tue campus <canteens|canteen|buildings|building-detail> ...")
+	fmt.Println("  tue campus <canteens|canteen|buildings|building-detail|events|kuf|seats> ...")
+	fmt.Println("  tue talks <search|item> ...")
+	fmt.Println("  tue people <search|action> ...")
 }

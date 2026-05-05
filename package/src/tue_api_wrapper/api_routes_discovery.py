@@ -18,8 +18,8 @@ def course_discovery_search(
     q: str = Query("", max_length=200),
     source: list[str] = Query(default=[]),
     kind: list[str] = Query(default=[]),
-    degree: str = "",
-    module_code: str = "",
+    degree: list[str] = Query(default=[]),
+    module_code: list[str] = Query(default=[]),
     term: str = "",
     tag: list[str] = Query(default=[]),
     include_private: bool = Query(True),
@@ -32,8 +32,8 @@ def course_discovery_search(
                 filters=CourseDiscoveryFilters(
                     sources=tuple(_clean(source)),
                     kinds=tuple(_clean(kind)),
-                    degree=degree.strip() or None,
-                    module_code=module_code.strip() or None,
+                    degrees=tuple(_clean_values(degree)),
+                    module_codes=tuple(_clean_values(module_code)),
                     term=term.strip() or None,
                     tags=tuple(_clean(tag)),
                 ),
@@ -71,3 +71,7 @@ def _discovery_service() -> CourseDiscoveryService:
 
 def _clean(values: list[str]) -> list[str]:
     return [value.strip().lower() for value in values if value.strip()]
+
+
+def _clean_values(values: list[str]) -> list[str]:
+    return [value.strip() for value in values if value.strip()]

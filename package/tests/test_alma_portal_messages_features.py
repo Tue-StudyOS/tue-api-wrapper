@@ -7,7 +7,11 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from tue_api_wrapper.alma_portal_messages_client import fetch_portal_messages_feed, refresh_portal_messages_feed
+from tue_api_wrapper.alma_portal_messages_client import (
+    fetch_portal_messages,
+    fetch_portal_messages_feed,
+    refresh_portal_messages_feed,
+)
 from tue_api_wrapper.client import AlmaClient
 
 
@@ -58,6 +62,56 @@ SETTINGS_PARTIAL_RESPONSE = """<?xml version="1.0" encoding="UTF-8"?>
 
 REFRESHED_SETTINGS_PARTIAL_RESPONSE = SETTINGS_PARTIAL_RESPONSE.replace("hash-old", "hash-new").replace("view-2", "view-3")
 
+COLLAPSED_MESSAGES_PAGE = """
+<form id="startPage" action="/alma/pages/cs/sys/portal/hisinoneStartPage.faces">
+  <input type="hidden" name="startPage_SUBMIT" value="1" />
+  <input type="hidden" name="javax.faces.ViewState" value="view-1" />
+  <input type="hidden" name="startPage:portletInstanceId_1013311:portletInstanceId_1013311CollapsedState" value="true" />
+  <div id="startPage:messages-infobox"></div>
+  <div id="startPage:portletInstanceId_1013311:portletInstanceId_1013311">
+    <a id="startPage:portletInstanceId_1013311:titlemin_portletInstanceId_1013311"
+       title="Öffnen des Abschnitts: Meine Meldungen"></a>
+    <h2>Meine Meldungen</h2>
+  </div>
+</form>
+"""
+
+MESSAGES_PARTIAL_RESPONSE = """<?xml version="1.0" encoding="UTF-8"?>
+<partial-response id="j_id__v_7"><changes>
+  <update id="startPage:portletInstanceId_1013311:portletInstanceId_1013311"><![CDATA[
+    <div id="startPage:portletInstanceId_1013311:portalMessagesContainer">
+      <div class="portalMessagesContent">
+        <ul class="ListingNavigationPage mailMenu">
+          <li class="menu menuList mailMenuNoLine">
+            <div class="menuWrap readMessageContainerStyling">
+              <img src="/HISinOne/images/icons/print_pdf.svg" />
+              <a href="/alma/pages/startFlow.xhtml?_flowId=document-download-flow&amp;doc=4557346"
+                 id="startPage:portletInstanceId_1013311:mainMessages:0:messageUrlLink__1013311"
+                 target="_blank">
+                <div class="portalMessageText">In Ihrem Bewerbungsportal ist ein neues Dokument verfügbar.</div>
+              </a>
+              <small class="menuListDate">04.05.2026 - 18:32 Uhr</small>
+              <button onclick="jsf.ajax.request(this,event,{'messageId':'7694275'})"></button>
+            </div>
+          </li>
+          <li class="menu menuList mailMenu">
+            <div class="menuWrap readMessageContainerStyling">
+              <img src="/HISinOne/images/icons/graduation_cap.svg" />
+              <a href="/alma/pages/sul/common/entrancePage.xhtml?_flowId=onlineapplication-overview-flow"
+                 target="_self">
+                <div class="portalMessageText">Der Status Ihrer Studienbewerbung im Hochschulportal hat sich geändert.</div>
+              </a>
+              <small class="menuListDate">04.05.2026 - 18:31 Uhr</small>
+              <button onclick="jsf.ajax.request(this,event,{'messageId':'7694256'})"></button>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  ]]></update>
+</changes></partial-response>
+"""
+
 
 class _FakeResponse:
     def __init__(self, *, url: str, text: str = "", status_code: int = 200) -> None:
@@ -100,6 +154,27 @@ class _FakeAlmaClient(AlmaClient):
 
 
 class AlmaPortalMessagesFeatureTests(unittest.TestCase):
+    def test_fetch_portal_messages_expands_mitteilungen_portlet(self) -> None:
+        session = _RecordingSession(
+            get_responses=[_FakeResponse(url="https://alma.example/start", text=COLLAPSED_MESSAGES_PAGE)],
+            post_responses=[_FakeResponse(url="https://alma.example/start", text=MESSAGES_PARTIAL_RESPONSE)],
+        )
+        client = _FakeAlmaClient(session=session)
+
+        page = fetch_portal_messages(client)
+
+        self.assertEqual(len(page.items), 2)
+        self.assertEqual(page.items[0].id, "7694275")
+        self.assertEqual(page.items[0].target, "_blank")
+        self.assertEqual(page.items[0].created_at_label, "04.05.2026 - 18:32 Uhr")
+        self.assertEqual(page.items[0].created_at.isoformat(), "2026-05-04T18:32:00")
+        self.assertEqual(page.items[1].id, "7694256")
+        self.assertIn("onlineapplication-overview-flow", page.items[1].url or "")
+        self.assertEqual(
+            session.posts[0][1]["javax.faces.partial.render"],
+            "startPage:portletInstanceId_1013311:portletInstanceId_1013311 startPage:messages-infobox",
+        )
+
     def test_fetch_portal_messages_feed_opens_settings_panel(self) -> None:
         session = _RecordingSession(
             get_responses=[_FakeResponse(url="https://alma.example/start", text=START_PAGE_HTML)],

@@ -7,8 +7,8 @@ export function useCourseDiscovery(baseUrl: string | null, enabled: boolean) {
   const [query, setQuery] = useState("machine learning");
   const [sources, setSources] = useState<string[]>(["alma", "ilias", "moodle"]);
   const [includePrivate, setIncludePrivate] = useState(true);
-  const [degree, setDegree] = useState("");
-  const [moduleCode, setModuleCode] = useState("");
+  const [degrees, setDegrees] = useState<string[]>([]);
+  const [moduleCodes, setModuleCodes] = useState<string[]>([]);
   const [response, setResponse] = useState<CourseDiscoverySearchResponse | null>(null);
   const [status, setStatus] = useState<CourseDiscoveryStatus | null>(null);
   const [loading, setLoading] = useState(false);
@@ -36,8 +36,8 @@ export function useCourseDiscovery(baseUrl: string | null, enabled: boolean) {
       const next = await searchCourseDiscovery(baseUrl, {
         query: query.trim(),
         sources,
-        degree,
-        moduleCode,
+        degrees,
+        moduleCodes,
         includePrivate
       });
       setResponse(next);
@@ -47,7 +47,7 @@ export function useCourseDiscovery(baseUrl: string | null, enabled: boolean) {
     } finally {
       setLoading(false);
     }
-  }, [baseUrl, degree, enabled, includePrivate, moduleCode, query, sources]);
+  }, [baseUrl, degrees, enabled, includePrivate, moduleCodes, query, sources]);
 
   const sync = useCallback(async () => {
     if (!baseUrl || !enabled) {
@@ -71,15 +71,15 @@ export function useCourseDiscovery(baseUrl: string | null, enabled: boolean) {
   return {
     error,
     includePrivate,
-    degree,
+    degrees,
     loading,
-    moduleCode,
+    moduleCodes,
     query,
     response,
     search,
     setIncludePrivate,
-    setDegree,
-    setModuleCode,
+    setDegrees,
+    setModuleCodes,
     setQuery,
     setSources,
     sources,

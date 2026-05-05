@@ -213,6 +213,19 @@
   align-items: flex-start;
 }
 
+.study-module-heading {
+  align-items: flex-start;
+}
+
+.study-module-heading h3 {
+  white-space: nowrap;
+}
+
+.study-module-heading span {
+  display: block;
+  margin-top: 4px;
+}
+
 .stack-row,
 .link-row {
   display: flex;
@@ -229,13 +242,22 @@
 .link-row div {
   display: grid;
   gap: 5px;
+  min-width: 0;
 }
 
 .link-row {
+  min-width: 0;
   width: 100%;
   text-align: left;
   color: inherit;
   cursor: pointer;
+}
+
+.stack-row strong,
+.stack-row span,
+.link-row strong,
+.link-row span {
+  overflow-wrap: anywhere;
 }
 
 .compact-row {

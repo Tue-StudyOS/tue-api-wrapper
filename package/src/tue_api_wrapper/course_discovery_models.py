@@ -25,6 +25,8 @@ class CourseDiscoveryDocument:
 class CourseDiscoveryFilters:
     sources: tuple[str, ...] = ()
     kinds: tuple[str, ...] = ()
+    degrees: tuple[str, ...] = ()
+    module_codes: tuple[str, ...] = ()
     degree: str | None = None
     module_code: str | None = None
     term: str | None = None

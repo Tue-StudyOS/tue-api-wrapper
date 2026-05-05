@@ -6,7 +6,7 @@ from fastapi.responses import Response
 from .alma_catalog_client import fetch_course_catalog_page
 from .alma_course_search_client import search_courses
 from .alma_feature_client import fetch_current_lectures
-from .alma_portal_messages_client import fetch_portal_messages_feed, refresh_portal_messages_feed
+from .alma_portal_messages_client import fetch_portal_messages, fetch_portal_messages_feed, refresh_portal_messages_feed
 from .alma_planner_client import fetch_study_planner
 from .alma_timetable_client import (
     fetch_timetable_controls,
@@ -164,6 +164,14 @@ def alma_timetable_export_refresh(term: str = "") -> dict[str, object]:
 def alma_portal_messages_feed() -> dict[str, object]:
     try:
         return serialize(fetch_portal_messages_feed(_alma_client()))
+    except AlmaError as error:
+        raise _translate_error(error) from error
+
+
+@router.get("/api/alma/portal-messages")
+def alma_portal_messages() -> dict[str, object]:
+    try:
+        return serialize(fetch_portal_messages(_alma_client()))
     except AlmaError as error:
         raise _translate_error(error) from error
 

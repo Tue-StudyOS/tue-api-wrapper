@@ -19,6 +19,8 @@ func runAlma(args []string) int {
 	switch args[0] {
 	case "current-lectures":
 		return runAlmaCurrentLectures(args[1:])
+	case "exams":
+		return runAlmaExams(args[1:])
 	case "-h", "--help", "help":
 		printAlmaUsage()
 		return 0
@@ -33,7 +35,6 @@ func runAlma(args []string) int {
 var almaRoutes = map[string]backendRoute{
 	"timetable":               {Path: "/api/alma/timetable", Description: "Term timetable. Use --query term=...."},
 	"enrollments":             {Path: "/api/alma/enrollments", Description: "Enrollment page payload."},
-	"exams":                   {Path: "/api/alma/exams", Description: "Exam overview. Optional query: limit."},
 	"catalog":                 {Path: "/api/alma/catalog", Description: "Authenticated Alma catalog nodes. Optional queries: term, limit."},
 	"module-search":           {Path: "/api/alma/module-search", Description: "Public module search. Pass filters through repeated --query flags."},
 	"module-search-filters":   {Path: "/api/alma/module-search/filters", Description: "Valid public module-search filter values."},
@@ -64,10 +65,38 @@ var almaRoutes = map[string]backendRoute{
 func printAlmaUsage() {
 	fmt.Println("Usage:")
 	fmt.Println("  tue alma current-lectures [--date DD.MM.YYYY] [--limit N] [--json]")
+	fmt.Println("  tue alma exams [--limit N|--query limit=N]")
 	fmt.Println("  tue alma <backend-command> [--query key=value ...] [--output PATH] [--raw]")
 	fmt.Println()
 	fmt.Println("Backend-backed commands:")
 	printBackendGroupUsage("alma", almaRoutes)
+}
+
+func runAlmaExams(args []string) int {
+	fs := flag.NewFlagSet("alma exams", flag.ContinueOnError)
+	limit := fs.Int("limit", 50, "Maximum exam rows")
+	fs.Bool("raw", false, "Accepted for backend CLI compatibility; output is JSON either way")
+	query := multiValueFlag{}
+	fs.Var(&query, "query", "key=value query value")
+	if err := fs.Parse(args); err != nil {
+		return 1
+	}
+	if fs.NArg() != 0 {
+		return output.PrintError(fmt.Errorf("unexpected argument %q", fs.Arg(0)))
+	}
+	if queryLimit := query.first("limit"); queryLimit != "" {
+		parsed, err := parsePositiveInt(queryLimit)
+		if err != nil {
+			return output.PrintError(fmt.Errorf("invalid limit query value %q", queryLimit))
+		}
+		*limit = parsed
+	}
+
+	client, ok := authenticatedAlmaClient()
+	if !ok {
+		return 1
+	}
+	return printNativeJSON(client.FetchExamOverview(*limit))
 }
 
 func runAlmaCurrentLectures(args []string) int {
@@ -79,19 +108,9 @@ func runAlmaCurrentLectures(args []string) int {
 		return 1
 	}
 
-	username, password := env.AlmaCredentials()
-	if username == "" || password == "" {
-		return output.PrintError(fmt.Errorf(
-			"set UNI_USERNAME and UNI_PASSWORD before using authenticated commands; legacy ALMA_* and ILIAS_* env vars are still supported as fallbacks",
-		))
-	}
-
-	client, err := alma.NewClient(config.DefaultTimeout())
-	if err != nil {
-		return output.PrintError(err)
-	}
-	if err := client.Login(username, password); err != nil {
-		return output.PrintError(err)
+	client, ok := authenticatedAlmaClient()
+	if !ok {
+		return 1
 	}
 
 	page, err := client.FetchCurrentLectures(*date, *limit)
@@ -119,6 +138,26 @@ func runAlmaCurrentLectures(args []string) int {
 		fmt.Printf("%02d. %s - %s | %s | %s\n", index+1, start, end, item.Title, room)
 	}
 	return 0
+}
+
+func authenticatedAlmaClient() (*alma.Client, bool) {
+	username, password := env.AlmaCredentials()
+	if username == "" || password == "" {
+		output.PrintError(fmt.Errorf(
+			"set UNI_USERNAME and UNI_PASSWORD before using authenticated commands; legacy ALMA_* and ILIAS_* env vars are still supported as fallbacks",
+		))
+		return nil, false
+	}
+	client, err := alma.NewClient(config.DefaultTimeout())
+	if err != nil {
+		output.PrintError(err)
+		return nil, false
+	}
+	if err := client.Login(username, password); err != nil {
+		output.PrintError(err)
+		return nil, false
+	}
+	return client, true
 }
 
 func valueOr(value *string, fallback string) string {

@@ -32,3 +32,19 @@ type CurrentLecturesPage struct {
 	SelectedDate *string          `json:"selected_date"`
 	Results      []CurrentLecture `json:"results"`
 }
+
+type ExamNode struct {
+	Level       int     `json:"level"`
+	Kind        *string `json:"kind"`
+	Title       string  `json:"title"`
+	Number      *string `json:"number"`
+	Attempt     *string `json:"attempt"`
+	Grade       *string `json:"grade"`
+	CP          *string `json:"cp"`
+	Malus       *string `json:"malus"`
+	Status      *string `json:"status"`
+	FreeTrial   *string `json:"free_trial"`
+	Remark      *string `json:"remark"`
+	Exception   *string `json:"exception"`
+	ReleaseDate *string `json:"release_date"`
+}

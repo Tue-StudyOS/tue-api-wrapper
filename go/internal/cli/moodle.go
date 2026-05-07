@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"strconv"
 
 	"github.com/SebastianBoehler/tue-api-wrapper/go/internal/config"
 	"github.com/SebastianBoehler/tue-api-wrapper/go/internal/env"
@@ -53,6 +54,14 @@ func runMoodle(args []string) int {
 	default:
 		return output.PrintError(fmt.Errorf("unknown moodle command %q", args[0]))
 	}
+}
+
+func parsePositiveInt(value string) (int, error) {
+	parsed, err := strconv.Atoi(value)
+	if err != nil || parsed < 0 {
+		return 0, fmt.Errorf("expected a non-negative integer")
+	}
+	return parsed, nil
 }
 
 func printMoodleUsage() {

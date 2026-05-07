@@ -6,6 +6,7 @@ Current commands:
 
 ```bash
 tue alma current-lectures --date 14.03.2026 --json
+tue alma exams --query limit=5
 tue ilias search --term graphics --page 1 --json
 tue ilias info --target 5289871 --json
 tue api get /api/dashboard --query term="Sommer 2026"
@@ -13,12 +14,13 @@ tue alma study-planner
 tue mail inbox --query unread_only=true
 tue moodle dashboard
 tue timms search --query query=machine+learning
+tue discovery status --raw
 ```
 
-The Go CLI now has full backend read coverage in two layers:
+The Go CLI uses native implementations where the board needs standalone behavior, with backend routes kept for endpoints that have not been ported yet:
 
-- native Go flows for `alma current-lectures`, `ilias search`, and `ilias info`
-- backend-backed read commands for the rest of the FastAPI surface, plus the generic `tue api get ...` escape hatch for any new read endpoint
+- native Go flows for `alma current-lectures`, `alma exams`, `ilias search`, `ilias info`, Moodle read/enrolment commands, and `discovery status`
+- backend-backed read commands for the remaining FastAPI surface, plus the generic `tue api get ...` escape hatch for any new read endpoint
 
 The backend-backed commands use `PORTAL_API_BASE_URL` and default to `http://127.0.0.1:8000`.
 

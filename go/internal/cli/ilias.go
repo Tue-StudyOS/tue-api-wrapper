@@ -21,6 +21,22 @@ func runIlias(args []string) int {
 		return runIliasSearch(args[1:])
 	case "info":
 		return runIliasInfo(args[1:])
+	case "root":
+		return runIliasRoot(args[1:])
+	case "memberships":
+		return runIliasMemberships(args[1:])
+	case "tasks":
+		return runIliasTasks(args[1:])
+	case "content":
+		return runIliasContent(args[1:])
+	case "forum":
+		return runIliasForum(args[1:])
+	case "exercise":
+		return runIliasExercise(args[1:])
+	case "search-api":
+		return runIliasSearchAPI(args[1:])
+	case "info-api":
+		return runIliasInfoAPI(args[1:])
 	case "-h", "--help", "help":
 		printIliasUsage()
 		return 0
@@ -51,10 +67,132 @@ func printIliasUsage() {
 	fmt.Println("Usage:")
 	fmt.Println("  tue ilias search --term QUERY [--page N] [--json]")
 	fmt.Println("  tue ilias info --target REF_ID_OR_URL [--json]")
-	fmt.Println("  tue ilias <backend-command> [--query key=value ...] [--output PATH] [--raw]")
+	fmt.Println("  tue ilias <root|memberships|tasks|content|forum|exercise> [--query key=value ...]")
 	fmt.Println()
-	fmt.Println("Backend-backed read commands:")
+	fmt.Println("Backend-backed write/support commands:")
 	printBackendGroupUsage("ilias", iliasRoutes)
+}
+
+func runIliasRoot(args []string) int {
+	if len(args) != 0 {
+		return output.PrintError(fmt.Errorf("usage: tue ilias root"))
+	}
+	client, ok := authenticatedIliasClient()
+	if !ok {
+		return 1
+	}
+	return printNativeJSON(client.FetchRootPage())
+}
+
+func runIliasMemberships(args []string) int {
+	options, err := parseBackendRequestOptions(args)
+	if err != nil {
+		return output.PrintError(err)
+	}
+	limit := 20
+	if value := options.Query.Get("limit"); value != "" {
+		limit, err = parsePositiveInt(value)
+		if err != nil {
+			return output.PrintError(fmt.Errorf("invalid limit query value %q", value))
+		}
+	}
+	client, ok := authenticatedIliasClient()
+	if !ok {
+		return 1
+	}
+	return printNativeJSON(client.FetchMembershipOverview(limit))
+}
+
+func runIliasTasks(args []string) int {
+	options, err := parseBackendRequestOptions(args)
+	if err != nil {
+		return output.PrintError(err)
+	}
+	limit := 20
+	if value := options.Query.Get("limit"); value != "" {
+		limit, err = parsePositiveInt(value)
+		if err != nil {
+			return output.PrintError(fmt.Errorf("invalid limit query value %q", value))
+		}
+	}
+	client, ok := authenticatedIliasClient()
+	if !ok {
+		return 1
+	}
+	return printNativeJSON(client.FetchTaskOverview(limit))
+}
+
+func runIliasContent(args []string) int {
+	return runIliasTargetJSON(args, "content", func(client *ilias.Client, target string) (any, error) {
+		return client.FetchContentPage(target)
+	})
+}
+
+func runIliasForum(args []string) int {
+	return runIliasTargetJSON(args, "forum", func(client *ilias.Client, target string) (any, error) {
+		return client.FetchForumTopics(target)
+	})
+}
+
+func runIliasExercise(args []string) int {
+	return runIliasTargetJSON(args, "exercise", func(client *ilias.Client, target string) (any, error) {
+		return client.FetchExerciseAssignments(target)
+	})
+}
+
+func runIliasTargetJSON(args []string, command string, fetch func(*ilias.Client, string) (any, error)) int {
+	options, err := parseBackendRequestOptions(args)
+	if err != nil {
+		return output.PrintError(err)
+	}
+	target := options.Query.Get("target")
+	if target == "" {
+		return output.PrintError(fmt.Errorf("usage: tue ilias %s --query target=TARGET", command))
+	}
+	client, ok := authenticatedIliasClient()
+	if !ok {
+		return 1
+	}
+	return printNativeJSON(fetch(client, target))
+}
+
+func runIliasSearchAPI(args []string) int {
+	options, err := parseBackendRequestOptions(args)
+	if err != nil {
+		return output.PrintError(err)
+	}
+	term := options.Query.Get("term")
+	if term == "" {
+		return output.PrintError(fmt.Errorf("usage: tue ilias search-api --query term=QUERY"))
+	}
+	page := 1
+	if value := options.Query.Get("page"); value != "" {
+		page, err = parsePositiveInt(value)
+		if err != nil || page == 0 {
+			return output.PrintError(fmt.Errorf("invalid page query value %q", value))
+		}
+	}
+	client, ok := authenticatedIliasClient()
+	if !ok {
+		return 1
+	}
+	return printNativeJSON(client.Search(term, page))
+}
+
+func runIliasInfoAPI(args []string) int {
+	options, err := parseBackendRequestOptions(args)
+	if err != nil {
+		return output.PrintError(err)
+	}
+	target := options.Query.Get("target")
+	if target == "" {
+		return output.PrintError(fmt.Errorf("usage: tue ilias info-api --query target=TARGET"))
+	}
+	client, ok := authenticatedIliasClient()
+	if !ok {
+		return 1
+	}
+	return printNativeJSON(client.FetchInfo(target))
 }
 
 func runIliasSearch(args []string) int {

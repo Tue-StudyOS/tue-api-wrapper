@@ -44,3 +44,70 @@ type InfoPage struct {
 	PageURL  string        `json:"page_url"`
 	Sections []InfoSection `json:"sections"`
 }
+
+type Link struct {
+	Label string `json:"label"`
+	URL   string `json:"url"`
+}
+
+type RootPage struct {
+	Title         string `json:"title"`
+	MainbarLinks  []Link `json:"mainbar_links"`
+	TopCategories []Link `json:"top_categories"`
+}
+
+type ContentItem struct {
+	Label      string   `json:"label"`
+	URL        string   `json:"url"`
+	Kind       *string  `json:"kind"`
+	Properties []string `json:"properties"`
+}
+
+type ContentSection struct {
+	Label string        `json:"label"`
+	Items []ContentItem `json:"items"`
+}
+
+type ContentPage struct {
+	Title    string           `json:"title"`
+	PageURL  string           `json:"page_url"`
+	Sections []ContentSection `json:"sections"`
+}
+
+type MembershipItem struct {
+	Title       string   `json:"title"`
+	URL         string   `json:"url"`
+	Kind        *string  `json:"kind"`
+	Description *string  `json:"description"`
+	InfoURL     *string  `json:"info_url"`
+	Properties  []string `json:"properties"`
+}
+
+type TaskItem struct {
+	Title    string  `json:"title"`
+	URL      string  `json:"url"`
+	ItemType *string `json:"item_type"`
+	Start    *string `json:"start"`
+	End      *string `json:"end"`
+}
+
+type ForumTopic struct {
+	Title    string  `json:"title"`
+	URL      string  `json:"url"`
+	Author   *string `json:"author"`
+	Posts    *string `json:"posts"`
+	LastPost *string `json:"last_post"`
+	Visits   *string `json:"visits"`
+}
+
+type ExerciseAssignment struct {
+	Title          string  `json:"title"`
+	URL            string  `json:"url"`
+	DueHint        *string `json:"due_hint"`
+	DueAt          *string `json:"due_at"`
+	Requirement    *string `json:"requirement"`
+	LastSubmission *string `json:"last_submission"`
+	SubmissionType *string `json:"submission_type"`
+	Status         *string `json:"status"`
+	TeamActionURL  *string `json:"team_action_url"`
+}

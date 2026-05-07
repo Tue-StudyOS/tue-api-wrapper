@@ -1,280 +1,284 @@
-<h1 align="center">tue-api-wrapper</h1>
+# tue-api-wrapper
 
-<p align="center">
-  Request clients, parsers, and app surfaces for University of Tübingen systems.
-  <br />
-  Alma, ILIAS, Moodle, mail, campus data, and reusable contracts for course projects.
-</p>
+Python SDK, local API server, MCP tools, and app clients for University of Tuebingen study systems.
 
-<p align="center">
-  <a href="https://github.com/SebastianBoehler/tue-api-wrapper/actions/workflows/ci.yml">
-    <img src="https://github.com/SebastianBoehler/tue-api-wrapper/actions/workflows/ci.yml/badge.svg" alt="CI" />
-  </a>
-  <img src="https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white" alt="Python 3.11+" />
-  <img src="https://img.shields.io/badge/go-1.21%2B-00ADD8?logo=go&logoColor=white" alt="Go 1.21+" />
-  <img src="https://img.shields.io/badge/next.js-15-000000?logo=nextdotjs&logoColor=white" alt="Next.js 15" />
-  <img src="https://img.shields.io/badge/node-20-5FA04E?logo=nodedotjs&logoColor=white" alt="Node 20" />
-  <a href="./LICENSE">
-    <img src="https://img.shields.io/badge/license-Apache--2.0-D22128.svg" alt="Apache License 2.0" />
-  </a>
-</p>
+The project wraps live university systems such as Alma, ILIAS, Moodle, university mail, TIMMS, campus pages, and public course data. It does not ship mock data or replace those upstream systems. Public features work without credentials; private student features require credentials in your local process.
 
-<p align="center">
-  <a href="#why-this-project-exists">Why</a>
-  ·
-  <a href="#what-you-can-build">Build</a>
-  ·
-  <a href="./docs/index.html">Download</a>
-  ·
-  <a href="#quick-start">Quick Start</a>
-  ·
-  <a href="#architecture">Architecture</a>
-  ·
-  <a href="#contributing">Contributing</a>
-  ·
-  <a href="#security-and-ethics">Security</a>
-</p>
+![CI](https://github.com/SebastianBoehler/tue-api-wrapper/actions/workflows/ci.yml/badge.svg)
+![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)
+![License](https://img.shields.io/badge/license-Apache--2.0-D22128.svg)
 
-## Why this project exists
+## Install
 
-University of Tübingen study data is spread across several systems: Alma for timetables, modules, exams, and registrations; ILIAS and Moodle for learning spaces and course work; university mail for messages; and separate public pages for campus services.
-
-Most useful data is not available through a clean public API. Students often end up scraping browser pages directly, mixing network discovery, parsing, credentials, and app logic in one fragile script. That makes projects hard to maintain, hard to test, and risky when credentials or session artifacts are involved.
-
-This repository separates those concerns:
-
-- clients perform the portal requests
-- parsers turn HTML, JSON, ICS, and feeds into typed contracts
-- API routes expose stable JSON for apps and tools
-- examples show how to build web, desktop, iOS, CLI, and ChatGPT surfaces on top
-
-The upstream university systems remain the source of truth. This project does not replace Alma, ILIAS, Moodle, or university mail; it provides a cleaner integration layer for research, teaching, and student-built tools.
-
-## What you can build
-
-This project is intended for practical course work and open source contributions. Useful project directions include:
-
-- public campus tools using canteen, building, fitness, event, or public course data
-- personal dashboards that combine timetable, tasks, mail, and learning spaces
-- parsers that make brittle portal pages easier to consume safely
-- agents or assistants that query normalized study data instead of scraping pages ad hoc
-- mobile, desktop, or web clients that reuse the same backend contracts
-
-Prefer public and unauthenticated data for course projects unless a project explicitly needs private student data. If a feature does need private data, keep credentials local to the student device or local development backend.
-
-## Screenshots
-
-Desktop app:
-
-![Desktop app preview](./docs/assets/previews/desktop-app-preview.png)
-
-iOS app:
-
-<img src="./docs/assets/previews/ios-calendar-preview.png" alt="iOS calendar preview" width="360" />
-
-## Repository layout
-
-| Path | Purpose |
-| --- | --- |
-| [`package/`](./package/) | Python clients, parsers, FastAPI routes, contracts, and CLI entry points |
-| [`go/`](./go/) | Native Go CLI for stable Alma and ILIAS request flows |
-| [`nextjs/`](./nextjs/) | Browser dashboard built with Next.js |
-| [`chatgpt/`](./chatgpt/) | ChatGPT app, MCP server, and widget UI |
-| [`desktop/`](./desktop/) | Electron desktop app with local credential storage and managed backend |
-| [`ios/`](./ios/) | Native SwiftUI app, WidgetKit extension, and on-device clients |
-| [`cli/`](./cli/) | Repo-local wrapper scripts around package entry points |
-| [`docs/`](./docs/) | Download page, install notes, discovery notes, screenshots, and supporting documentation |
-
-## Quick start
-
-The Python package is the best starting point for most contributors. It contains the shared request clients, parsers, API routes, and tests.
-
-For student projects, start with the high-level SDK docs in [`docs/python-sdk.md`](./docs/python-sdk.md). For agent projects, start with the local MCP server docs in [`docs/mcp.md`](./docs/mcp.md).
-
-### 1. Install the Python package
+Install the published Python package:
 
 ```bash
-cd package
+pip install tue-api-wrapper
+```
+
+Install directly from GitHub:
+
+```bash
+pip install "tue-api-wrapper @ git+https://github.com/SebastianBoehler/tue-api-wrapper.git#subdirectory=package"
+```
+
+Install from a local checkout for development:
+
+```bash
+git clone https://github.com/SebastianBoehler/tue-api-wrapper.git
+cd tue-api-wrapper/package
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
 ```
 
-### 2. Start the local API
+Optional extras:
+
+```bash
+pip install "tue-api-wrapper[mcp]"
+pip install "tue-api-wrapper[discovery]"
+```
+
+## Python Module Usage
+
+Use `TuebingenPublicClient` for public data. It does not need a university login.
+
+```python
+from tue_api_wrapper import TuebingenPublicClient
+
+client = TuebingenPublicClient()
+
+modules = client.alma.search_modules("machine learning", max_results=10)
+lectures = client.alma.current_lectures(date="02.05.2026", limit=20)
+canteens = client.campus.canteens()
+events = client.campus.events(query="KI", limit=10)
+recordings = client.timms.search("theoretische informatik", limit=5)
+```
+
+Use `TuebingenAuthenticatedClient` for private student data. Credentials stay local to the Python process.
+
+```python
+import os
+from tue_api_wrapper import TuebingenAuthenticatedClient
+
+client = TuebingenAuthenticatedClient.login(
+    username=os.environ["UNI_USERNAME"],
+    password=os.environ["UNI_PASSWORD"],
+)
+
+timetable = client.alma.timetable("Sommer 2026")
+documents = client.alma.studyservice_documents()
+tasks = client.ilias.tasks()
+deadlines = client.moodle.deadlines(days=30)
+inbox = client.mail.inbox(limit=5)
+
+client.close()
+```
+
+Credentials can also be loaded from `.env`:
+
+```bash
+UNI_USERNAME=your-zdv-id
+UNI_PASSWORD=your-password
+```
+
+```python
+from tue_api_wrapper import TuebingenAuthenticatedClient, UniversityCredentials
+
+credentials = UniversityCredentials.from_env(".env")
+client = TuebingenAuthenticatedClient(credentials)
+```
+
+## Common Methods
+
+### Public Alma
+
+```python
+client.alma.search_modules("informatics", max_results=20)
+client.alma.module_search_filters()
+client.alma.module_detail(detail_url)
+client.alma.current_lectures(date="02.05.2026", limit=20)
+```
+
+### Public Campus
+
+```python
+client.campus.canteens(menu_date="2026-05-07")
+client.campus.canteen(611, menu_date="2026-05-07")
+client.campus.buildings()
+client.campus.building_detail("/einrichtungen/...")
+client.campus.events(query="lecture", limit=24)
+client.campus.gym_occupancy()
+client.campus.kuf_occupancy()
+client.campus.seat_availability()
+```
+
+### Public Directory, TIMMS, Talks, and Career Data
+
+```python
+client.directory.search("informatik")
+client.timms.suggest("analysis", limit=8)
+client.timms.search("theoretische informatik", offset=0, limit=20)
+client.timms.item("item-id")
+client.timms.streams("item-id")
+client.timms.tree(node_id="root")
+client.talks.search(query="AI", limit=16)
+client.talks.item(123)
+client.praxisportal.filters()
+client.praxisportal.search(query="internship", per_page=20)
+client.praxisportal.project(12345)
+```
+
+### Authenticated Alma
+
+```python
+client.alma.timetable("Sommer 2026")
+client.alma.timetable_controls()
+client.alma.timetable_view(term="Sommer 2026", limit=50)
+client.alma.refresh_timetable_export_url(term="Sommer 2026")
+client.alma.timetable_course_assignments("Sommer 2026", limit=20)
+client.alma.current_lectures(date="02.05.2026", limit=50)
+client.alma.course_offerings(query="data science", term="Sommer 2026")
+client.alma.course_registration_support(detail_url)
+client.alma.course_registration_options(detail_url)
+client.alma.register_for_course(detail_url, planelement_id="...")
+client.alma.catalog_page(term="Sommer 2026", limit=80)
+client.alma.study_planner()
+client.alma.portal_messages()
+client.alma.exams()
+client.alma.exam_reports()
+client.alma.download_exam_report()
+client.alma.enrollments()
+client.alma.studyservice_documents()
+client.alma.download_document(doc_id)
+```
+
+### Authenticated ILIAS
+
+```python
+client.ilias.root()
+client.ilias.memberships()
+client.ilias.tasks()
+client.ilias.content(target)
+client.ilias.forum_topics(target)
+client.ilias.exercise_assignments(target)
+client.ilias.search_filters()
+client.ilias.search("algorithms", page=1)
+client.ilias.info(target)
+client.ilias.add_favorite(url)
+client.ilias.waitlist_support(url)
+client.ilias.join_waitlist(url, accept_agreement=True)
+```
+
+### Authenticated Moodle
+
+```python
+client.moodle.dashboard(event_limit=6, course_limit=12, recent_limit=9)
+client.moodle.deadlines(days=30, limit=50)
+client.moodle.courses(classification="all", limit=24, offset=0)
+client.moodle.categories()
+client.moodle.course(course_id)
+client.moodle.enrol_in_course(course_id, enrolment_key=None)
+client.moodle.grades()
+client.moodle.messages()
+client.moodle.notifications()
+```
+
+### Authenticated Mail and Portal
+
+```python
+client.mail.inbox(limit=12)
+client.mail.mailbox(name="INBOX", limit=12, unread_only=False, query="")
+client.mail.mailboxes()
+client.mail.message(uid, mailbox="INBOX")
+
+client.portal.dashboard(term="Sommer 2026", limit=8)
+client.portal.search("seminar", term="Sommer 2026")
+client.portal.item(item_id, term="Sommer 2026")
+client.portal.course_detail(title="Machine Learning", term="Sommer 2026")
+```
+
+### Course Discovery
+
+```python
+client.discovery.search("machine learning", limit=20)
+client.discovery.search(
+    "seminar",
+    sources=("alma", "ilias"),
+    term="Sommer 2026",
+    include_private=True,
+)
+client.discovery.refresh(include_private=True, limit=3000)
+client.discovery.status()
+```
+
+## Local API Server
+
+Start the FastAPI server:
 
 ```bash
 tue-api-server
 ```
 
-The API starts at `http://127.0.0.1:8000`.
-
-Useful local URLs:
+Useful URLs:
 
 - API root: `http://127.0.0.1:8000/`
 - health check: `http://127.0.0.1:8000/api/health`
 - OpenAPI docs: `http://127.0.0.1:8000/docs`
 
-### 3. Add credentials only when needed
+Public routes work without credentials. Authenticated routes read local credentials from environment variables such as `UNI_USERNAME` and `UNI_PASSWORD`.
 
-Public routes should work without university credentials. Private account routes need a local university login:
+## Local MCP Server
+
+Install the MCP extra and start the server:
 
 ```bash
-export UNI_USERNAME="your-uni-login"
-export UNI_PASSWORD="your-password"
+pip install "tue-api-wrapper[mcp]"
+tue-mcp
 ```
 
-The same university username and password are used for Alma, ILIAS, Moodle, and mail.
-
-Authenticated routes return explicit errors when credentials or upstream systems fail. The project should not silently switch to mock data.
-
-### 4. Run a frontend
-
-Next.js dashboard:
+Use stdio for local agent clients. For HTTP clients:
 
 ```bash
-cd nextjs
-npm ci --workspaces=false
-PORTAL_API_BASE_URL=http://127.0.0.1:8000 npm run dev
+tue-mcp --transport streamable-http --host 127.0.0.1 --port 8765
 ```
 
-ChatGPT app and MCP server:
+## Repository Layout
+
+| Path | Purpose |
+| --- | --- |
+| `package/` | Python clients, parsers, SDK, FastAPI routes, MCP server, and tests |
+| `nextjs/` | Next.js dashboard |
+| `desktop/` | Electron desktop app with local credential handling |
+| `ios/` | SwiftUI app and native client work |
+| `chatgpt/` | ChatGPT app, MCP integration, and widget UI |
+| `go/` | Go CLI experiments for stable request flows |
+| `cli/` | Repo-local wrapper scripts |
+| `docs/` | Discovery notes, release notes, SDK docs, and screenshots |
+| `examples/` | Small example projects and usage snippets |
+
+## Development
+
+Run the checks that match your change:
 
 ```bash
-cd chatgpt
-npm ci --workspaces=false
-PORTAL_API_BASE_URL=http://127.0.0.1:8000 npm run dev
-```
-
-Electron desktop app:
-
-```bash
-cd desktop
-npm ci
-npm run dev
-```
-
-iOS app:
-
-```bash
+cd package && pytest
+npm --prefix desktop run build
+npm --prefix nextjs run build
 npm run generate:ios
 npm run build:ios
 ```
 
-Go CLI:
+When adding integrations, start with the Python package, parse upstream responses into typed contracts, add focused tests, and expose shared JSON through FastAPI when app surfaces need it.
 
-```bash
-cd go
-go build ./cmd/tue
-./tue --help
-```
+## Security
 
-## Architecture
-
-```mermaid
-flowchart LR
-    Alma["Alma"] --> Python["Python clients and parsers"]
-    ILIAS["ILIAS"] --> Python
-    Moodle["Moodle"] --> Python
-    Mail["University mail"] --> Python
-    Campus["Public campus pages"] --> Python
-    Python --> API["FastAPI JSON contracts"]
-    API --> Web["Next.js dashboard"]
-    API --> ChatGPT["ChatGPT app and MCP tools"]
-    API --> Desktop["Electron desktop app"]
-    Python --> PyCLI["Python CLI"]
-    Alma --> Go["Go CLI"]
-    ILIAS --> Go
-    Alma --> iOS["Native iOS app"]
-    Mail --> iOS
-```
-
-Typical development flow:
-
-1. Discover the upstream request flow in `package/`.
-2. Parse the response into a typed contract.
-3. Add tests with fixtures or focused parser examples.
-4. Expose the contract through FastAPI if apps or tools should reuse it.
-5. Consume the same JSON contract from web, desktop, ChatGPT, iOS, or CLI surfaces.
-
-## Current capabilities
-
-- Alma: timetable export, current lectures, exam overview, portal messages, study-service documents, study planner parsing, module search, module details, and course detail bundles
-- ILIAS: root navigation, memberships, task overview, content parsing, forum topics, exercise assignments, search, info-page resolution, and learning-space matching
-- Moodle: dashboard, calendar, courses, categories, grades, messages, and notifications
-- Mail: read-only mailbox, inbox, and message access over IMAP through the backend, plus direct on-device IMAP in iOS
-- Campus: canteens, buildings, events, and fitness occupancy surfaces
-- Apps: Python package, FastAPI backend, Go CLI, Next.js dashboard, ChatGPT MCP app, Electron desktop shell, and native iOS app
-
-## Development checks
-
-Run the checks that match the part of the repository you changed:
-
-```bash
-cd package && python3 -m unittest discover -s tests -v
-cd go && go test ./... && go build ./cmd/tue
-cd nextjs && npm ci --workspaces=false && npm run check && npm run build
-cd chatgpt && npm ci --workspaces=false && npm run check && npm run build
-cd desktop && npm ci && npm run build
-npm run generate:ios && npm run build:ios
-```
-
-GitHub Actions runs the main Python, Go, Next.js, ChatGPT, desktop, and iOS checks on pushes and pull requests.
-
-## Contributing
-
-Contributions are welcome from students and external contributors. Good first issues usually involve one small portal flow, one parser, one endpoint, or one UI improvement.
-
-When adding or changing integrations:
-
-- start from the Python package unless you are working on a native-only surface
-- keep credentialed flows local to a client or local backend
-- prefer typed parsers and structured contracts over ad hoc string handling
-- add tests for parser behavior and API contracts
-- keep files focused and below 300 lines where practical
-- return clear errors instead of mock data or hidden fallbacks
-- avoid committing HAR files, cookies, downloaded PDFs, tokens, or session artifacts
-
-Agent-assisted contributions are welcome. Before using an agent on this repo, point it at [`AGENTS.md`](./AGENTS.md) and ask it to preserve unrelated work, keep changes scoped, and explain verification steps.
-
-Before opening a PR, read:
-
-- [`CONTRIBUTING.md`](./CONTRIBUTING.md)
-- [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md)
-- [`SECURITY.md`](./SECURITY.md)
-- [`MAINTAINERS.md`](./MAINTAINERS.md)
-
-## Security and ethics
-
-This project touches university systems and may handle private student data. Treat that data carefully.
-
-- Do not commit credentials, cookies, HAR captures, signed URLs, PDFs, or mailbox exports.
-- Do not build hosted services that collect other students' university passwords.
-- Prefer public university pages for teaching projects when possible.
-- Use private authenticated routes only with accounts you are allowed to use.
-- Respect upstream rate limits, terms, and robots guidance.
-- Report vulnerabilities privately as described in [`SECURITY.md`](./SECURITY.md).
-
-## Related documentation
-
-- [`package/README.md`](./package/README.md)
-- [`docs/python-sdk.md`](./docs/python-sdk.md)
-- [`docs/mcp.md`](./docs/mcp.md)
-- [`docs/release-pypi.md`](./docs/release-pypi.md)
-- [`examples/`](./examples/)
-- [`go/README.md`](./go/README.md)
-- [`chatgpt/README.md`](./chatgpt/README.md)
-- [`desktop/README.md`](./desktop/README.md)
-- [`ios/README.md`](./ios/README.md)
-- [`docs/surface-parity.md`](./docs/surface-parity.md)
-- [`docs/alma-ilias-discovery.md`](./docs/alma-ilias-discovery.md)
-- [`docs/moodle-discovery.md`](./docs/moodle-discovery.md)
-- [`docs/mail-discovery.md`](./docs/mail-discovery.md)
-- [`docs/campus-logistics-discovery.md`](./docs/campus-logistics-discovery.md)
+- Do not commit credentials, cookies, HAR files, signed URLs, PDFs, mailbox exports, or session artifacts.
+- Keep authenticated flows local to the client or local backend.
+- Do not route student credentials through hosted services.
+- Prefer public data for teaching and demos unless private account data is required.
+- Return clear errors for missing credentials or upstream failures.
 
 ## License
 
 This repository is licensed under the Apache License 2.0. See [`LICENSE`](./LICENSE).
-
-Versions first distributed before April 28, 2026 remain available under the licenses they were originally published under, including MIT and Business Source License 1.1 where applicable.
-
-The license applies to the code and documentation in this repository. It does not grant rights to third-party systems, trademarks, or data exposed by Alma, ILIAS, Moodle, or the University of Tübingen.

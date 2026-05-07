@@ -1,0 +1,42 @@
+plugins {
+    id "java-library"
+    id "maven-publish"
+}
+
+group = "io.github.sebastianboehler"
+version = "0.2.1-SNAPSHOT"
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+dependencies {
+    api "org.jsoup:jsoup:1.22.2"
+    implementation "com.sun.mail:android-mail:1.6.8"
+    implementation "com.sun.mail:android-activation:1.6.8"
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            pom {
+                name = "tue-api-wrapper-java"
+                description = "Native Java and Android clients for University of Tuebingen study systems."
+                url = "https://github.com/SebastianBoehler/tue-api-wrapper"
+                licenses {
+                    license {
+                        name = "Apache License 2.0"
+                        url = "https://www.apache.org/licenses/LICENSE-2.0"
+                    }
+                }
+            }
+        }
+    }
+}

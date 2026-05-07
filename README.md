@@ -248,6 +248,7 @@ tue-mcp --transport streamable-http --host 127.0.0.1 --port 8765
 | Path | Purpose |
 | --- | --- |
 | `package/` | Python clients, parsers, SDK, FastAPI routes, MCP server, and tests |
+| `java/` | Native Java/Android clients for upstream university systems |
 | `nextjs/` | Next.js dashboard |
 | `desktop/` | Electron desktop app with local credential handling |
 | `ios/` | SwiftUI app and native client work |
@@ -263,6 +264,7 @@ Run the checks that match your change:
 
 ```bash
 cd package && pytest
+cd java && gradle build
 npm --prefix desktop run build
 npm --prefix nextjs run build
 npm run generate:ios

@@ -1,6 +1,7 @@
 package httpx
 
 import (
+	"bytes"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -45,6 +46,19 @@ func (c *Client) PostForm(target string, payload url.Values) (*http.Response, []
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("User-Agent", userAgent)
+	return c.do(req)
+}
+
+func (c *Client) PostJSON(target string, body []byte, referer string) (*http.Response, []byte, error) {
+	req, err := http.NewRequest(http.MethodPost, target, bytes.NewReader(body))
+	if err != nil {
+		return nil, nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", userAgent)
+	if referer != "" {
+		req.Header.Set("Referer", referer)
+	}
 	return c.do(req)
 }
 

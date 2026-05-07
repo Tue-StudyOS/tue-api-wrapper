@@ -24,7 +24,7 @@ struct CampusDiscoverView: View {
             case .food:
                 CampusFoodView(model: model)
             case .seats:
-                CampusSeatView(model: model)
+                CampusSeatView()
             }
         }
     }

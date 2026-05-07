@@ -1,8 +1,6 @@
 import SwiftUI
 
 struct CampusSeatView: View {
-    var model: AppModel
-
     @State private var phase: CampusSeatLoadPhase = .idle
     @State private var availability: CampusSeatAvailability?
 
@@ -25,8 +23,6 @@ struct CampusSeatView: View {
         switch phase {
         case .loading where availability != nil:
             CampusSeatStatusLine(text: "Refreshing library seat availability.", tint: .accentColor, isLoading: true)
-        case .unavailable:
-            CampusSeatStatusLine(text: "The bundled backend URL is not available in this build.", systemImage: "exclamationmark.triangle", tint: .orange)
         case .failed(let message):
             CampusSeatStatusLine(text: message, systemImage: "exclamationmark.triangle", tint: .orange)
         default:
@@ -110,8 +106,6 @@ struct CampusSeatView: View {
 
     private var unavailableTitle: String {
         switch phase {
-        case .unavailable:
-            "Backend unavailable"
         case .failed:
             "Could not load seats"
         default:
@@ -121,7 +115,7 @@ struct CampusSeatView: View {
 
     private var unavailableSystemImage: String {
         switch phase {
-        case .unavailable, .failed:
+        case .failed:
             "exclamationmark.triangle"
         default:
             "chair"
@@ -130,8 +124,6 @@ struct CampusSeatView: View {
 
     private var unavailableDescription: String {
         switch phase {
-        case .unavailable:
-            "This build has no valid public backend URL for the library seat feed."
         case .failed(let message):
             message
         default:
@@ -140,15 +132,18 @@ struct CampusSeatView: View {
     }
 
     private func refreshSeats() async {
-        guard let client = BackendClient(baseURLString: model.portalAPIBaseURLString) else {
-            phase = .unavailable
-            return
-        }
-
         phase = .loading
         do {
-            availability = try await client.fetchCampusSeatAvailability()
+            availability = try await SeatfinderClient().fetchAvailability()
             phase = .loaded(Date())
+        } catch is CancellationError {
+            if availability == nil {
+                phase = .idle
+            }
+        } catch let error as URLError where error.code == .cancelled {
+            if availability == nil {
+                phase = .idle
+            }
         } catch {
             phase = .failed(error.localizedDescription)
         }

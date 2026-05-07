@@ -18,7 +18,7 @@ enum IliasTaskHTMLParser {
             )
         }
 
-        if tasks.isEmpty, !html.contains("ILIAS Universität Tübingen") {
+        if tasks.isEmpty, unauthenticatedMarkers.contains(where: html.contains) {
             throw UniversityPortalError.parsing("The response did not look like an authenticated ILIAS task overview.")
         }
         return tasks
@@ -82,4 +82,12 @@ enum IliasTaskHTMLParser {
     private static func resolve(_ rawURL: String, pageURL: URL) -> URL? {
         URL(string: rawURL, relativeTo: pageURL)?.absoluteURL
     }
+
+    private static let unauthenticatedMarkers = [
+        "SAML" + "Response",
+        "j_username",
+        "j_" + "password",
+        "shib_login.php",
+        "Login mit zentraler Universitäts-Kennung"
+    ]
 }

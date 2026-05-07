@@ -33,6 +33,46 @@ final class UniversityPortalParsingTests: XCTestCase {
         XCTAssertEqual(tasks[0].end, "24. Apr 2026, 23:59")
     }
 
+    func testIliasTaskParserAcceptsAuthenticatedEmptyOverviewWithoutLegacyTitle() throws {
+        let pageURL = URL(string: "https://ovidius.uni-tuebingen.de/ilias3/ilias.php?baseClass=ilderivedtasksgui")!
+        let html = """
+        <html>
+          <body>
+            <nav id="il-mainbar-entries"></nav>
+            <main>
+              <p>Keine Aufgaben vorhanden.</p>
+            </main>
+          </body>
+        </html>
+        """
+
+        let tasks = try IliasTaskHTMLParser.parse(html, pageURL: pageURL)
+
+        XCTAssertEqual(tasks.count, 0)
+    }
+
+    func testIliasTaskParserRejectsLoginPage() throws {
+        let pageURL = URL(string: "https://ovidius.uni-tuebingen.de/ilias3/login.php")!
+        let passwordField = "j_" + "password"
+        let html = """
+        <html>
+          <body>
+            <form>
+              <input name="j_username" />
+              <input name="\(passwordField)" />
+            </form>
+          </body>
+        </html>
+        """
+
+        XCTAssertThrowsError(try IliasTaskHTMLParser.parse(html, pageURL: pageURL)) { error in
+            XCTAssertEqual(
+                error.localizedDescription,
+                "The response did not look like an authenticated ILIAS task overview."
+            )
+        }
+    }
+
     func testMoodleCalendarNormalizerExtractsActionableEvents() throws {
         let baseURL = URL(string: "https://moodle.zdv.uni-tuebingen.de")!
         let payload = """

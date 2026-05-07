@@ -80,6 +80,12 @@ npm run dist:mac:signed
 
 If the certificate is already in your login keychain, the helper uses the first `Developer ID Application` identity it finds. If you keep the certificate as an exported `.p12`, set `CSC_LINK` and `CSC_KEY_PASSWORD` instead. The command builds the release, then verifies `codesign`, `spctl`, and stapled notarization tickets for the generated `.app` and `.dmg`.
 
+You can run the same command from the repository root:
+
+```bash
+npm run dist:desktop:mac:signed
+```
+
 ## Releases
 
 Two GitHub workflows are included:
@@ -89,13 +95,16 @@ Two GitHub workflows are included:
 
 `desktop-build.yml` disables signing on CI intentionally so pull request and branch builds stay deterministic.
 
-`desktop-release.yml` now supports:
+`desktop-release.yml` requires signed and notarized macOS artifacts. The macOS job fails instead of publishing an unsigned or signed-only DMG when required secrets are missing.
+
+`desktop-release.yml` supports:
 
 - macOS signing when `APPLE_SIGNING_CERTIFICATE_P12_BASE64` and `APPLE_SIGNING_CERTIFICATE_PASSWORD` are set
 - macOS notarization when the signing certificate secrets are present and `APPLE_ID`, `APPLE_APP_SPECIFIC_PASSWORD`, and `APPLE_TEAM_ID` are also set
+- macOS notarization with an App Store Connect API key when `APPLE_API_KEY_BASE64`, `APPLE_API_KEY_ID`, and `APPLE_API_ISSUER` are set
 - Windows code signing when `WINDOWS_SIGNING_CERTIFICATE_PFX_BASE64` and `WINDOWS_SIGNING_CERTIFICATE_PASSWORD` are set
 
-If those secrets are missing, the workflow still builds release artifacts but emits an explicit warning and the resulting installers remain unsigned.
+If Windows secrets are missing, the workflow still builds the Windows installer and emits an explicit warning. Linux AppImage artifacts are not code signed.
 
 ### Recommended GitHub secrets
 
@@ -106,6 +115,12 @@ macOS:
 - `APPLE_ID`: Apple account email used for notarization
 - `APPLE_APP_SPECIFIC_PASSWORD`: app-specific password for notarization
 - `APPLE_TEAM_ID`: Apple Developer team identifier
+
+Alternative macOS notarization:
+
+- `APPLE_API_KEY_BASE64`: base64-encoded App Store Connect API key `.p8`
+- `APPLE_API_KEY_ID`: App Store Connect API key identifier
+- `APPLE_API_ISSUER`: App Store Connect API issuer UUID
 
 Windows:
 

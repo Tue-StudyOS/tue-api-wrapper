@@ -53,35 +53,55 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
         run: |
           set -euo pipefail
 
-          if [[ -n "${APPLE_SIGNING_CERTIFICATE_P12_BASE64:-}" && -n "${APPLE_SIGNING_CERTIFICATE_PASSWORD:-}" ]]; then
-            CERT_PATH="$RUNNER_TEMP/apple-signing-cert.p12"
-            CERT_PATH="$CERT_PATH" APPLE_SIGNING_CERTIFICATE_P12_BASE64="$APPLE_SIGNING_CERTIFICATE_P12_BASE64" python -c "import base64, os, pathlib; pathlib.Path(os.environ['CERT_PATH']).write_bytes(base64.b64decode(os.environ['APPLE_SIGNING_CERTIFICATE_P12_BASE64']))"
+          if [[ -z "${APPLE_SIGNING_CERTIFICATE_P12_BASE64:-}" || -z "${APPLE_SIGNING_CERTIFICATE_PASSWORD:-}" ]]; then
+            echo "::error::Missing APPLE_SIGNING_CERTIFICATE_P12_BASE64 or APPLE_SIGNING_CERTIFICATE_PASSWORD. Refusing to publish an unsigned macOS release."
+            exit 1
+          fi
 
-            {
-              echo "CSC_LINK=$CERT_PATH"
-              echo "CSC_KEY_PASSWORD=$APPLE_SIGNING_CERTIFICATE_PASSWORD"
-            } >> "$GITHUB_ENV"
+          CERT_PATH="$RUNNER_TEMP/apple-signing-cert.p12"
+          CERT_PATH="$CERT_PATH" APPLE_SIGNING_CERTIFICATE_P12_BASE64="$APPLE_SIGNING_CERTIFICATE_P12_BASE64" python -c "import base64, os, pathlib; pathlib.Path(os.environ['CERT_PATH']).write_bytes(base64.b64decode(os.environ['APPLE_SIGNING_CERTIFICATE_P12_BASE64']))"
 
-            if [[ -n "${APPLE_ID:-}" && -n "${APPLE_APP_SPECIFIC_PASSWORD:-}" && -n "${APPLE_TEAM_ID:-}" ]]; then
-              {
-                echo "APPLE_ID=$APPLE_ID"
-                echo "APPLE_APP_SPECIFIC_PASSWORD=$APPLE_APP_SPECIFIC_PASSWORD"
-                echo "APPLE_TEAM_ID=$APPLE_TEAM_ID"
-                echo "MAC_SIGNING_MODE=signed-and-notarized"
-              } >> "$GITHUB_ENV"
-            else
-              echo "::warning::macOS signing certificate found, but notarization secrets are incomplete. The DMG will be signed but not notarized."
-              echo "MAC_SIGNING_MODE=signed-only" >> "$GITHUB_ENV"
+          {
+            echo "CSC_LINK=$CERT_PATH"
+            echo "CSC_KEY_PASSWORD=$APPLE_SIGNING_CERTIFICATE_PASSWORD"
+          } >> "$GITHUB_ENV"
+
+          if [[ -n "${APPLE_API_KEY_BASE64:-}" || -n "${APPLE_API_KEY_ID:-}" || -n "${APPLE_API_ISSUER:-}" ]]; then
+            if [[ -z "${APPLE_API_KEY_BASE64:-}" || -z "${APPLE_API_KEY_ID:-}" || -z "${APPLE_API_ISSUER:-}" ]]; then
+              echo "::error::Incomplete App Store Connect API key notarization secrets. Set APPLE_API_KEY_BASE64, APPLE_API_KEY_ID, and APPLE_API_ISSUER."
+              exit 1
             fi
-          else
-            echo "::warning::Apple signing certificate secrets are missing. The macOS release artifact will be unsigned."
+
+            API_KEY_PATH="$RUNNER_TEMP/AuthKey_${APPLE_API_KEY_ID}.p8"
+            API_KEY_PATH="$API_KEY_PATH" APPLE_API_KEY_BASE64="$APPLE_API_KEY_BASE64" python -c "import base64, os, pathlib; pathlib.Path(os.environ['API_KEY_PATH']).write_bytes(base64.b64decode(os.environ['APPLE_API_KEY_BASE64']))"
+
             {
-              echo "CSC_IDENTITY_AUTO_DISCOVERY=false"
-              echo "MAC_SIGNING_MODE=unsigned"
+              echo "APPLE_API_KEY=$API_KEY_PATH"
+              echo "APPLE_API_KEY_ID=$APPLE_API_KEY_ID"
+              echo "APPLE_API_ISSUER=$APPLE_API_ISSUER"
+              echo "MAC_SIGNING_MODE=signed-and-notarized"
             } >> "$GITHUB_ENV"
+          elif [[ -n "${APPLE_ID:-}" || -n "${APPLE_APP_SPECIFIC_PASSWORD:-}" || -n "${APPLE_TEAM_ID:-}" ]]; then
+            if [[ -z "${APPLE_ID:-}" || -z "${APPLE_APP_SPECIFIC_PASSWORD:-}" || -z "${APPLE_TEAM_ID:-}" ]]; then
+              echo "::error::Incomplete Apple ID notarization secrets. Set APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, and APPLE_TEAM_ID."
+              exit 1
+            fi
+
+            {
+              echo "APPLE_ID=$APPLE_ID"
+              echo "APPLE_APP_SPECIFIC_PASSWORD=$APPLE_APP_SPECIFIC_PASSWORD"
+              echo "APPLE_TEAM_ID=$APPLE_TEAM_ID"
+              echo "MAC_SIGNING_MODE=signed-and-notarized"
+            } >> "$GITHUB_ENV"
+          else
+            echo "::error::Missing notarization secrets. Set either App Store Connect API key secrets or Apple ID notarization secrets."
+            exit 1
           fi
 
       - name: Prepare Windows signing inputs

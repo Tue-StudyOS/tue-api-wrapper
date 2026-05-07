@@ -10,6 +10,7 @@
     "dev:desktop": "npm --prefix desktop run dev",
     "build:desktop": "npm --prefix desktop run build",
     "package:desktop": "npm --prefix desktop run package",
+    "dist:desktop:mac:signed": "npm --prefix desktop run dist:mac:signed",
     "generate:ios": "ios/scripts/generate-project.sh",
     "build:ios": "npm run generate:ios && xcodebuild -project ios/TueAPI.xcodeproj -scheme TueAPI -destination 'generic/platform=iOS Simulator' build",
     "build:ios:ci": "ios/scripts/build-ci.sh",

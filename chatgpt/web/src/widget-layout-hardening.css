@@ -1,0 +1,52 @@
+.widget-card,
+.metric-card {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+}
+
+.widget-card-header {
+  overflow: hidden;
+}
+
+.widget-card-header > div,
+.widget-row > div,
+.widget-agenda-content {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.widget-card-actions,
+.widget-row-actions,
+.widget-modal-actions {
+  min-width: 0;
+}
+
+.widget-card-actions > *,
+.widget-row-actions > *,
+.widget-modal-actions > * {
+  max-width: 100%;
+}
+
+.widget-button,
+.widget-tab {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+}
+
+.widget-source-card {
+  min-height: 0;
+}
+
+.widget-source-card .widget-card-actions {
+  justify-content: flex-start;
+}
+
+@media (max-width: 720px) {
+  .widget-card,
+  .metric-card {
+    border-radius: 14px;
+  }
+}

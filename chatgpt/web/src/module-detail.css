@@ -19,10 +19,18 @@
   white-space: nowrap;
 }
 .widget-table-wrap {
+  contain: layout paint;
   max-width: 100%;
   min-width: 0;
+  width: 100%;
+  display: block;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  max-height: min(22rem, 58dvh);
   scrollbar-gutter: stable;
 }
 .widget-table {
@@ -37,7 +45,19 @@
   padding: 0.55rem 0.65rem;
   text-align: left;
   vertical-align: top;
-  max-width: 18rem;
+  min-width: 8rem;
+  max-width: 16rem;
   overflow-wrap: anywhere;
+  word-break: normal;
 }
-.widget-table th { color: var(--muted); font-weight: 700; }
+.widget-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--card);
+  color: var(--muted);
+  font-weight: 700;
+}
+.widget-table td {
+  background: var(--card);
+}

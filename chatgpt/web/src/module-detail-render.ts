@@ -123,10 +123,12 @@ function renderSourceAction(detail: ModuleDetail, escapeHtml: EscapeHtml): strin
   const href = detail.permalink ?? detail.source_url;
   return href
     ? `
-      <section class="widget-card widget-card-wide">
-        <button class="widget-button" data-action="open-external" data-href="${escapeHtml(href)}">
-          Open Alma source
-        </button>
+      <section class="widget-card widget-source-card">
+        <div class="widget-card-actions">
+          <button class="widget-button" data-action="open-external" data-href="${escapeHtml(href)}">
+            Open Alma source
+          </button>
+        </div>
       </section>
     `
     : "";

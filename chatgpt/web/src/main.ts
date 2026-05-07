@@ -1,4 +1,5 @@
 import "./styles.css";
+import "./widget-layout-hardening.css";
 import { isCriticalActionView, renderActionTemplate } from "./action-confirmation-render.js";
 import { renderDocuments } from "./documents-render.js";
 import { bindMensaFoodPlanActions, isMensaFoodPlanView, renderMensaFoodPlan } from "./mensa-render.js";

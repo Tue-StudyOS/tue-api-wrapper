@@ -10,7 +10,9 @@ export async function searchCareerProjects(
   input: {
     query: string;
     projectTypeId: number | null;
+    projectSubtypeId: number | null;
     industryId: number | null;
+    postalCode: string;
     page: number;
     perPage?: number;
   }
@@ -23,8 +25,14 @@ export async function searchCareerProjects(
   if (input.projectTypeId) {
     params.append("project_type_id", String(input.projectTypeId));
   }
+  if (input.projectSubtypeId) {
+    params.append("project_subtype_id", String(input.projectSubtypeId));
+  }
   if (input.industryId) {
     params.append("industry_id", String(input.industryId));
+  }
+  if (input.postalCode.trim()) {
+    params.append("postal_code", input.postalCode.trim());
   }
   return fetchJson<CareerSearchResponse>(baseUrl, `/api/praxisportal/search?${params.toString()}`);
 }

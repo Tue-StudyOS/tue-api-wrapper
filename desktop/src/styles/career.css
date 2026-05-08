@@ -14,7 +14,7 @@
 
 .career-filter-grid {
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(190px, 240px) minmax(190px, 240px) auto;
+  grid-template-columns: minmax(260px, 1fr) repeat(4, minmax(150px, 220px)) auto;
   gap: 12px;
   align-items: end;
 }

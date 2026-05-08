@@ -6,7 +6,9 @@ import type { CareerProjectDetail, CareerSearchFilters, CareerSearchResponse } f
 export function useCareerSearch(baseUrl: string | null, enabled: boolean) {
   const [query, setQuery] = useState("");
   const [projectTypeId, setProjectTypeId] = useState<number | null>(null);
+  const [projectSubtypeId, setProjectSubtypeId] = useState<number | null>(null);
   const [industryId, setIndustryId] = useState<number | null>(null);
+  const [postalCode, setPostalCode] = useState("");
   const [response, setResponse] = useState<CareerSearchResponse | null>(null);
   const [filters, setFilters] = useState<CareerSearchFilters | null>(null);
   const [detail, setDetail] = useState<CareerProjectDetail | null>(null);
@@ -30,7 +32,7 @@ export function useCareerSearch(baseUrl: string | null, enabled: boolean) {
     try {
       const [nextFilters, nextResponse] = await Promise.all([
         filters ? Promise.resolve(filters) : fetchCareerFilters(baseUrl),
-        searchCareerProjects(baseUrl, { query, projectTypeId, industryId, page })
+        searchCareerProjects(baseUrl, { query, projectTypeId, projectSubtypeId, industryId, postalCode, page })
       ]);
       setFilters(nextFilters);
       setResponse(nextResponse);
@@ -73,6 +75,8 @@ export function useCareerSearch(baseUrl: string | null, enabled: boolean) {
     filters,
     industryId,
     loading,
+    postalCode,
+    projectSubtypeId,
     projectTypeId,
     query,
     refresh,
@@ -80,6 +84,8 @@ export function useCareerSearch(baseUrl: string | null, enabled: boolean) {
     selectedId,
     selectProject,
     setIndustryId,
+    setPostalCode,
+    setProjectSubtypeId,
     setProjectTypeId,
     setQuery
   };

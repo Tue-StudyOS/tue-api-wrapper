@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { buildCareerHref } from "./career-links";
 import type {
   CareerProjectDetail,
   CareerSearchFilters,
@@ -17,40 +18,15 @@ function formatDate(value: string | null) {
   return new Intl.DateTimeFormat("de-DE", { dateStyle: "medium" }).format(new Date(value));
 }
 
-function buildCareerHref(options: {
-  query?: string;
-  projectTypeId?: number | null;
-  industryId?: number | null;
-  projectId?: number | null;
-  page?: number | null;
-}) {
-  const params = new URLSearchParams();
-  if (options.query?.trim()) {
-    params.set("query", options.query.trim());
-  }
-  if (options.projectTypeId) {
-    params.set("projectTypeId", String(options.projectTypeId));
-  }
-  if (options.industryId) {
-    params.set("industryId", String(options.industryId));
-  }
-  if (options.projectId) {
-    params.set("projectId", String(options.projectId));
-  }
-  if (options.page && options.page > 1) {
-    params.set("page", String(options.page));
-  }
-  const query = params.toString();
-  return query ? `/career?${query}` : "/career";
-}
-
 export function CareerHub({
   search,
   filters,
   detail,
   query,
   selectedProjectTypeId,
+  selectedProjectSubtypeId,
   selectedIndustryId,
+  selectedPostalCode,
   currentPage
 }: {
   search: CareerSearchResponse;
@@ -58,7 +34,9 @@ export function CareerHub({
   detail: CareerProjectDetail | null;
   query: string;
   selectedProjectTypeId: number | null;
+  selectedProjectSubtypeId: number | null;
   selectedIndustryId: number | null;
+  selectedPostalCode: string;
   currentPage: number;
 }) {
   return (
@@ -81,7 +59,7 @@ export function CareerHub({
           </CardAction>
         </CardHeader>
         <CardContent>
-          <form action="/career" method="get" className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_220px_220px_auto] lg:items-end">
+          <form action="/career" method="get" className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_190px_190px_190px_190px_auto] lg:items-end">
             <div className="min-w-0">
               <label htmlFor="career-query" className="text-xs uppercase tracking-wide text-muted-foreground">
                 Search
@@ -105,6 +83,22 @@ export function CareerHub({
               </select>
             </div>
             <div>
+              <label htmlFor="career-project-subtype" className="text-xs uppercase tracking-wide text-muted-foreground">
+                Subtype
+              </label>
+              <select
+                id="career-project-subtype"
+                name="projectSubtypeId"
+                defaultValue={selectedProjectSubtypeId ? String(selectedProjectSubtypeId) : ""}
+                className="h-9 w-full rounded-lg border border-input bg-input/50 px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
+              >
+                <option value="">Any</option>
+                {filters.project_subtypes.map((option) => (
+                  <option key={option.id} value={option.id}>{option.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
               <label htmlFor="career-industry" className="text-xs uppercase tracking-wide text-muted-foreground">
                 Industry
               </label>
@@ -117,6 +111,22 @@ export function CareerHub({
                 <option value="">Any</option>
                 {filters.industries.map((option) => (
                   <option key={option.id} value={option.id}>{option.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="career-postal-code" className="text-xs uppercase tracking-wide text-muted-foreground">
+                Town
+              </label>
+              <select
+                id="career-postal-code"
+                name="postalCode"
+                defaultValue={selectedPostalCode}
+                className="h-9 w-full rounded-lg border border-input bg-input/50 px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
+              >
+                <option value="">Any</option>
+                {filters.postal_codes.map((option) => (
+                  <option key={option.code} value={option.code}>{option.label}</option>
                 ))}
               </select>
             </div>
@@ -140,7 +150,9 @@ export function CareerHub({
                 href={buildCareerHref({
                   query,
                   projectTypeId: selectedProjectTypeId,
+                  projectSubtypeId: selectedProjectSubtypeId,
                   industryId: selectedIndustryId,
+                  postalCode: selectedPostalCode,
                   projectId: item.id,
                   page: currentPage
                 }) as Route}
@@ -173,7 +185,9 @@ export function CareerHub({
                     href={buildCareerHref({
                       query,
                       projectTypeId: selectedProjectTypeId,
+                      projectSubtypeId: selectedProjectSubtypeId,
                       industryId: selectedIndustryId,
+                      postalCode: selectedPostalCode,
                       page: currentPage - 1
                     }) as Route}
                   >
@@ -188,7 +202,9 @@ export function CareerHub({
                     href={buildCareerHref({
                       query,
                       projectTypeId: selectedProjectTypeId,
+                      projectSubtypeId: selectedProjectSubtypeId,
                       industryId: selectedIndustryId,
+                      postalCode: selectedPostalCode,
                       page: currentPage + 1
                     }) as Route}
                   >

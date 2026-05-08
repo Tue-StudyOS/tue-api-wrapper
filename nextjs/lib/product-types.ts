@@ -107,9 +107,26 @@ export interface CareerFacetOption {
   count: number;
 }
 
+export interface CareerPostalCodeOption {
+  code: string;
+  label: string;
+  count: number;
+  location: string | null;
+}
+
+export interface CareerSubscriptionType {
+  id: number;
+  title: string;
+  short_name: string;
+}
+
 export interface CareerSearchFilters {
   project_types: CareerFacetOption[];
+  project_subtypes: CareerFacetOption[];
   industries: CareerFacetOption[];
+  organizations: CareerFacetOption[];
+  postal_codes: CareerPostalCodeOption[];
+  subscription_types: CareerSubscriptionType[];
 }
 
 export interface CareerProjectSummary {

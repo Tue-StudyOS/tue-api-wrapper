@@ -98,7 +98,10 @@ export function getCareerFilters(): Promise<CareerSearchFilters> {
 export function getCareerSearch(options: {
   query?: string;
   projectTypeIds?: number[];
+  projectSubtypeIds?: number[];
   industryIds?: number[];
+  postalCodes?: string[];
+  organizationIds?: number[];
   page?: number;
   perPage?: number;
 } = {}): Promise<CareerSearchResponse> {
@@ -109,8 +112,17 @@ export function getCareerSearch(options: {
   for (const id of options.projectTypeIds ?? []) {
     params.append("project_type_id", String(id));
   }
+  for (const id of options.projectSubtypeIds ?? []) {
+    params.append("project_subtype_id", String(id));
+  }
   for (const id of options.industryIds ?? []) {
     params.append("industry_id", String(id));
+  }
+  for (const code of options.postalCodes ?? []) {
+    params.append("postal_code", code);
+  }
+  for (const id of options.organizationIds ?? []) {
+    params.append("organization_id", String(id));
   }
   params.set("page", String(options.page ?? 0));
   params.set("per_page", String(options.perPage ?? 20));

@@ -47,10 +47,21 @@ export function CareerPage({ career, state }: DashboardPageProps & { career: Car
             value={career.projectTypeId}
           />
           <CareerSelect
+            label="Subtype"
+            onChange={(value) => career.setProjectSubtypeId(value)}
+            options={career.filters?.project_subtypes ?? response?.filters.project_subtypes ?? []}
+            value={career.projectSubtypeId}
+          />
+          <CareerSelect
             label="Industry"
             onChange={(value) => career.setIndustryId(value)}
             options={career.filters?.industries ?? response?.filters.industries ?? []}
             value={career.industryId}
+          />
+          <CareerPostalCodeSelect
+            onChange={(value) => career.setPostalCode(value)}
+            options={career.filters?.postal_codes ?? response?.filters.postal_codes ?? []}
+            value={career.postalCode}
           />
           <button className="primary-button" disabled={!state.backendUrl || career.loading} onClick={() => void career.refresh(0)} type="button">
             {career.loading ? "Searching..." : "Search"}
@@ -107,6 +118,28 @@ function CareerSelect({
         <option value="">Any</option>
         {options.map((option) => (
           <option key={option.id} value={option.id}>{option.label} ({option.count})</option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function CareerPostalCodeSelect({
+  onChange,
+  options,
+  value
+}: {
+  onChange: (value: string) => void;
+  options: { code: string; label: string; count: number }[];
+  value: string;
+}) {
+  return (
+    <label className="field">
+      <span>Town</span>
+      <select className="career-select" onChange={(event) => onChange(event.target.value)} value={value}>
+        <option value="">Any</option>
+        {options.map((option) => (
+          <option key={option.code} value={option.code}>{option.label} ({option.count})</option>
         ))}
       </select>
     </label>

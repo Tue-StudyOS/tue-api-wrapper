@@ -32,12 +32,34 @@ struct CareerView: View {
                 )
 
                 AppFilterMenuButton(
+                    title: "Subtype",
+                    anyLabel: "Any subtype",
+                    options: filters?.projectSubtypes ?? [],
+                    selection: $request.projectSubtypeId,
+                    optionLabel: \.label,
+                    optionValue: \.id,
+                    isLoading: phase.isLoading,
+                    onSelectionChanged: { _ in submitFilterSearch() }
+                )
+
+                AppFilterMenuButton(
                     title: "Industry",
                     anyLabel: "Any industry",
                     options: filters?.industries ?? [],
                     selection: $request.industryId,
                     optionLabel: \.label,
                     optionValue: \.id,
+                    isLoading: phase.isLoading,
+                    onSelectionChanged: { _ in submitFilterSearch() }
+                )
+
+                AppFilterMenuButton(
+                    title: "Town",
+                    anyLabel: "Any town",
+                    options: filters?.postalCodes ?? [],
+                    selection: $request.postalCode,
+                    optionLabel: \.label,
+                    optionValue: \.code,
                     isLoading: phase.isLoading,
                     onSelectionChanged: { _ in submitFilterSearch() }
                 )
@@ -50,6 +72,8 @@ struct CareerView: View {
                     onSearch: { Task { await search(resetPage: true) } },
                     onReset: resetSearch
                 )
+
+                CareerSubscribeButton(model: model, request: request, isDisabled: phase.isLoading || !hasActiveFiltersOrQuery)
             }
 
             resultsSection
@@ -144,7 +168,9 @@ struct CareerView: View {
     private var hasActiveFiltersOrQuery: Bool {
         !request.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             || request.projectTypeId != nil
+            || request.projectSubtypeId != nil
             || request.industryId != nil
+            || request.postalCode != nil
     }
 
     @ViewBuilder
@@ -189,7 +215,9 @@ struct CareerView: View {
             async let searchFetch = client.searchCareerProjects(
                 query: request.query,
                 projectTypeId: request.projectTypeId,
+                projectSubtypeId: request.projectSubtypeId,
                 industryId: request.industryId,
+                postalCode: request.postalCode ?? "",
                 page: request.page,
                 perPage: request.perPage
             )
@@ -216,7 +244,9 @@ struct CareerView: View {
             let fetchedResponse = try await client.searchCareerProjects(
                 query: request.query,
                 projectTypeId: request.projectTypeId,
+                projectSubtypeId: request.projectSubtypeId,
                 industryId: request.industryId,
+                postalCode: request.postalCode ?? "",
                 page: request.page,
                 perPage: request.perPage
             )

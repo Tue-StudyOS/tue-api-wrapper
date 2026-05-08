@@ -22,9 +22,12 @@ struct PortalHTTPSession {
         self.userAgent = userAgent
     }
 
-    func get(_ url: URL) async throws -> PortalHTTPResponse {
+    func get(_ url: URL, headers: [String: String] = [:]) async throws -> PortalHTTPResponse {
         var request = URLRequest(url: url)
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
+        for (name, value) in headers {
+            request.setValue(value, forHTTPHeaderField: name)
+        }
         return try await load(request)
     }
 

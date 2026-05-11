@@ -1,6 +1,9 @@
 package alma
 
-import "net/url"
+import (
+	"net/url"
+	"time"
+)
 
 type CurrentLecturesForm struct {
 	ActionURL       string
@@ -47,4 +50,33 @@ type ExamNode struct {
 	Remark      *string `json:"remark"`
 	Exception   *string `json:"exception"`
 	ReleaseDate *string `json:"release_date"`
+}
+
+type TimetableResult struct {
+	TermLabel      string               `json:"term_label"`
+	TermID         string               `json:"term_id"`
+	ExportURL      string               `json:"export_url"`
+	RawICS         string               `json:"raw_ics"`
+	Events         []CalendarEvent      `json:"events"`
+	Occurrences    []CalendarOccurrence `json:"occurrences"`
+	AvailableTerms map[string]string    `json:"available_terms"`
+}
+
+type CalendarEvent struct {
+	Summary        string      `json:"summary"`
+	Start          time.Time   `json:"start"`
+	End            *time.Time  `json:"end"`
+	Location       *string     `json:"location"`
+	Description    *string     `json:"description"`
+	UID            *string     `json:"uid"`
+	RecurrenceRule *string     `json:"recurrence_rule"`
+	ExcludedStarts []time.Time `json:"excluded_starts"`
+}
+
+type CalendarOccurrence struct {
+	Summary     string     `json:"summary"`
+	Start       time.Time  `json:"start"`
+	End         *time.Time `json:"end"`
+	Location    *string    `json:"location"`
+	Description *string    `json:"description"`
 }

@@ -8,6 +8,7 @@ from ..client import AlmaClient
 from ..directory_client import UniversityDirectoryClient
 from ..event_calendar_client import EventCalendarClient
 from ..fitness_client import FitnessClient
+from ..hsp_client import HspClient
 from ..praxisportal_client import PraxisportalClient
 from ..seatfinder_client import SeatfinderClient
 from ..talks_client import TalksClient
@@ -37,6 +38,7 @@ class PublicCampusApi:
     campus_client: CampusClient = field(default_factory=CampusClient)
     event_client: EventCalendarClient = field(default_factory=EventCalendarClient)
     fitness_client: FitnessClient = field(default_factory=FitnessClient)
+    hsp_client: HspClient = field(default_factory=HspClient)
     seatfinder_client: SeatfinderClient = field(default_factory=SeatfinderClient)
 
     def canteens(self, *, menu_date: str | None = None):
@@ -59,6 +61,24 @@ class PublicCampusApi:
 
     def gym_occupancy(self):
         return self.kuf_occupancy()
+
+    def fitness_courses(
+        self,
+        *,
+        query: str = "",
+        area: str | None = None,
+        include_unavailable: bool = False,
+        limit: int = 50,
+    ):
+        return self.hsp_client.search_courses(
+            query=query,
+            area=area,
+            include_unavailable=include_unavailable,
+            limit=limit,
+        )
+
+    def fitness_offer(self, title: str):
+        return self.hsp_client.fetch_offer(title)
 
     def seat_availability(self):
         return self.seatfinder_client.fetch_availability()

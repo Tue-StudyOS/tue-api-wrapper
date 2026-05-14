@@ -4,14 +4,14 @@ struct KufTicketView: View {
     var model: AppModel
 
     private let store: KufTicketStore?
-    @State private var ticket: KufTicket?
+    @State private var tickets: [KufTicket]
     @State private var isScannerPresented = false
     @State private var errorMessage: String?
 
     init(model: AppModel, store: KufTicketStore? = KufTicketStore()) {
         self.model = model
         self.store = store
-        self._ticket = State(initialValue: store?.loadTicket())
+        self._tickets = State(initialValue: store?.loadTickets() ?? [])
     }
 
     var body: some View {
@@ -19,12 +19,12 @@ struct KufTicketView: View {
             LazyVStack(alignment: .leading, spacing: 16) {
                 header
 
-                if let ticket {
-                    KufTicketCard(ticket: ticket)
-                    savedTicketActions
-                    ticketDetails(ticket)
-                } else {
+                if tickets.isEmpty {
                     emptyTicketState
+                } else {
+                    ForEach(tickets) { ticket in
+                        ticketSection(ticket)
+                    }
                 }
             }
             .padding(16)
@@ -36,7 +36,7 @@ struct KufTicketView: View {
                 Button {
                     isScannerPresented = true
                 } label: {
-                    Label(ticket == nil ? "Scan" : "Replace", systemImage: "barcode.viewfinder")
+                    Label(tickets.isEmpty ? "Scan" : "Add", systemImage: "barcode.viewfinder")
                 }
             }
         }
@@ -56,9 +56,9 @@ struct KufTicketView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("KuF card")
+            Text("KuF tickets")
                 .font(.system(.largeTitle, design: .rounded, weight: .bold))
-            Text("Local barcode pass for the Kraft und Fitnesshalle entry scanner.")
+            Text("Local barcode passes for the Kraft und Fitnesshalle entry scanner.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
         }
@@ -85,18 +85,13 @@ struct KufTicketView: View {
         }
     }
 
-    private var savedTicketActions: some View {
-        HStack(spacing: 12) {
-            Button {
-                isScannerPresented = true
-            } label: {
-                Label("Replace", systemImage: "barcode.viewfinder")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
+    private func ticketSection(_ ticket: KufTicket) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            KufTicketCard(ticket: ticket)
+            ticketDetails(ticket)
 
             Button(role: .destructive) {
-                deleteTicket()
+                deleteTicket(ticket)
             } label: {
                 Label("Delete", systemImage: "trash")
                     .frame(maxWidth: .infinity)
@@ -121,10 +116,13 @@ struct KufTicketView: View {
     }
 
     private func saveScan(_ result: KufBarcodeScanResult) {
+        let existingTicket = tickets.first {
+            $0.matches(barcodeValue: result.value, symbology: result.symbology)
+        }
         let nextTicket = KufTicket(
             barcodeValue: result.value,
             symbology: result.symbology,
-            displayName: ticket?.displayName ?? model.profileName,
+            displayName: existingTicket?.displayName ?? model.profileName,
             scannedAt: .now
         )
 
@@ -135,7 +133,7 @@ struct KufTicketView: View {
 
         do {
             try store.save(nextTicket)
-            ticket = nextTicket
+            tickets = store.loadTickets()
             isScannerPresented = false
         } catch {
             showScannerError(error.localizedDescription)
@@ -147,9 +145,13 @@ struct KufTicketView: View {
         errorMessage = message
     }
 
-    private func deleteTicket() {
-        store?.deleteTicket()
-        ticket = nil
+    private func deleteTicket(_ ticket: KufTicket) {
+        do {
+            try store?.deleteTicket(ticket)
+            tickets = store?.loadTickets() ?? []
+        } catch {
+            showScannerError(error.localizedDescription)
+        }
     }
 }
 

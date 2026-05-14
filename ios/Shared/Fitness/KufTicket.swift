@@ -6,13 +6,17 @@ struct KufTicket: Codable, Equatable, Identifiable {
     var displayName: String?
     var scannedAt: Date
 
-    var id: String { barcodeValue }
+    var id: String { "\(symbology):\(barcodeValue)" }
 
     var formattedCode: String {
         guard barcodeValue.range(of: #"^[A-Za-z0-9]+$"#, options: .regularExpression) != nil else {
             return barcodeValue
         }
         return barcodeValue.chunked(every: 4).joined(separator: " ")
+    }
+
+    func matches(barcodeValue: String, symbology: String) -> Bool {
+        self.barcodeValue == barcodeValue && self.symbology == symbology
     }
 }
 

@@ -3,6 +3,9 @@ import SwiftUI
 
 enum KufBarcodeRenderer {
     static func image(for ticket: KufTicket) -> UIImage? {
+        if ticket.symbology.localizedCaseInsensitiveContains("QR") {
+            return qrImage(for: ticket.barcodeValue)
+        }
         if ticket.symbology.localizedCaseInsensitiveContains("EAN-13")
             || ticket.symbology.localizedCaseInsensitiveContains("EAN13") {
             return ean13Image(for: ticket.barcodeValue)
@@ -68,8 +71,22 @@ enum KufBarcodeRenderer {
         filter.message = data
         filter.quietSpace = 24
 
-        guard let outputImage = filter.outputImage else { return nil }
-        let scaledImage = outputImage.transformed(by: CGAffineTransform(scaleX: 4, y: 4))
+        return image(from: filter.outputImage, scale: 4)
+    }
+
+    private static func qrImage(for value: String) -> UIImage? {
+        guard let data = value.data(using: .utf8) else { return nil }
+
+        let filter = CIFilter.qrCodeGenerator()
+        filter.message = data
+        filter.correctionLevel = "M"
+
+        return image(from: filter.outputImage, scale: 8)
+    }
+
+    private static func image(from outputImage: CIImage?, scale: CGFloat) -> UIImage? {
+        guard let outputImage else { return nil }
+        let scaledImage = outputImage.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
         guard let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) else {
             return nil
         }

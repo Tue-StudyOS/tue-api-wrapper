@@ -253,6 +253,15 @@
       }
     },
     {
+      "identity" : "swift-xet",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/huggingface/swift-xet.git",
+      "state" : {
+        "revision" : "341bfd4172f6a57119bfd49bafa11cf5d21fab75",
+        "version" : "0.2.3"
+      }
+    },
+    {
       "identity" : "yyjson",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ibireme/yyjson.git",

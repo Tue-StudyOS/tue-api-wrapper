@@ -54,7 +54,7 @@ targets:
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         ITSAppUsesNonExemptEncryption: false
         LSRequiresIPhoneOS: true
-        NSCameraUsageDescription: "The camera is used to scan your Hochschulsport KuF barcode and save it locally on this device."
+        NSCameraUsageDescription: "The camera is used to scan your Hochschulsport KuF and Deutschlandticket barcodes and save them locally on this device."
         NSLocationWhenInUseUsageDescription: "Your location is used to show your position on the campus map and help you navigate around Tübingen."
         NSSupportsLiveActivities: true
         UIApplicationSupportsIndirectInputEvents: true

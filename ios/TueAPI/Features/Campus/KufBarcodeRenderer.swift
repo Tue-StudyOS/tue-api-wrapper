@@ -3,20 +3,26 @@ import SwiftUI
 
 enum KufBarcodeRenderer {
     static func image(for ticket: KufTicket) -> UIImage? {
-        if ticket.symbology.localizedCaseInsensitiveContains("QR") {
-            return qrImage(for: ticket.barcodeValue)
+        image(for: ticket.barcodeValue, symbology: ticket.symbology)
+    }
+
+    static func image(for value: String, symbology: String) -> UIImage? {
+        switch renderFormat(for: symbology) {
+        case .qr:
+            return qrImage(for: value)
+        case .aztec:
+            return aztecImage(for: value)
+        case .pdf417:
+            return pdf417Image(for: value)
+        case .ean13:
+            return ean13Image(for: value)
+        case .code39:
+            return code39Image(for: value)
+        case .interleaved2of5:
+            return interleaved2of5Image(for: value)
+        case .code128:
+            return code128Image(for: value)
         }
-        if ticket.symbology.localizedCaseInsensitiveContains("EAN-13")
-            || ticket.symbology.localizedCaseInsensitiveContains("EAN13") {
-            return ean13Image(for: ticket.barcodeValue)
-        }
-        if ticket.symbology.contains("Code39") {
-            return code39Image(for: ticket.barcodeValue)
-        }
-        if ticket.symbology.contains("Interleaved2of5") || ticket.symbology.contains("ITF14") {
-            return interleaved2of5Image(for: ticket.barcodeValue)
-        }
-        return code128Image(for: ticket.barcodeValue)
     }
 
     private static func ean13Image(for value: String) -> UIImage? {
@@ -37,7 +43,7 @@ enum KufBarcodeRenderer {
         }
 
         guard let firstDigit = payload.first,
-              let parity = ean13Parity[firstDigit] else {
+              let parity = KufBarcodePatterns.ean13Parity[firstDigit] else {
             return nil
         }
 
@@ -48,7 +54,7 @@ enum KufBarcodeRenderer {
         for (index, digit) in leftDigits.enumerated() {
             let parityIndex = parity.index(parity.startIndex, offsetBy: index)
             let patternSet = parity[parityIndex]
-            let patterns = patternSet == "L" ? ean13LeftPatterns : ean13LeftOddPatterns
+            let patterns = patternSet == "L" ? KufBarcodePatterns.ean13Left : KufBarcodePatterns.ean13LeftOdd
             guard let pattern = patterns[digit] else { return nil }
             modules += pattern
         }
@@ -56,7 +62,7 @@ enum KufBarcodeRenderer {
         modules += "01010"
 
         for digit in rightDigits {
-            guard let pattern = ean13RightPatterns[digit] else { return nil }
+            guard let pattern = KufBarcodePatterns.ean13Right[digit] else { return nil }
             modules += pattern
         }
 
@@ -84,6 +90,31 @@ enum KufBarcodeRenderer {
         return image(from: filter.outputImage, scale: 8)
     }
 
+    private static func aztecImage(for value: String) -> UIImage? {
+        guard let data = barcodeMessageData(for: value),
+              let filter = CIFilter(name: "CIAztecCodeGenerator") else {
+            return nil
+        }
+
+        filter.setValue(data, forKey: "inputMessage")
+        filter.setValue(23, forKey: "inputCorrectionLevel")
+        return image(from: filter.outputImage, scale: 8)
+    }
+
+    private static func pdf417Image(for value: String) -> UIImage? {
+        guard let data = barcodeMessageData(for: value),
+              let filter = CIFilter(name: "CIPDF417BarcodeGenerator") else {
+            return nil
+        }
+
+        filter.setValue(data, forKey: "inputMessage")
+        return image(from: filter.outputImage, scale: 4)
+    }
+
+    private static func barcodeMessageData(for value: String) -> Data? {
+        value.data(using: .isoLatin1) ?? value.data(using: .utf8)
+    }
+
     private static func image(from outputImage: CIImage?, scale: CGFloat) -> UIImage? {
         guard let outputImage else { return nil }
         let scaledImage = outputImage.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
@@ -96,7 +127,7 @@ enum KufBarcodeRenderer {
 
     private static func code39Image(for value: String) -> UIImage? {
         let encodedValue = "*\(value.uppercased())*"
-        guard encodedValue.allSatisfy({ code39Patterns[$0] != nil }) else { return nil }
+        guard encodedValue.allSatisfy({ KufBarcodePatterns.code39[$0] != nil }) else { return nil }
 
         let narrowWidth = Metrics.narrowWidth
         let wideWidth = Metrics.wideWidth
@@ -106,7 +137,7 @@ enum KufBarcodeRenderer {
         var width = quietZone * 2
 
         for character in encodedValue {
-            width += code39Patterns[character]?.reduce(0) { partial, element in
+            width += KufBarcodePatterns.code39[character]?.reduce(0) { partial, element in
                 partial + (element == "w" ? wideWidth : narrowWidth)
             } ?? 0
             width += characterGap
@@ -120,7 +151,7 @@ enum KufBarcodeRenderer {
 
             var cursor = quietZone
             for character in encodedValue {
-                guard let pattern = code39Patterns[character] else { return }
+                guard let pattern = KufBarcodePatterns.code39[character] else { return }
                 for (index, element) in pattern.enumerated() {
                     let elementWidth = element == "w" ? wideWidth : narrowWidth
                     if index.isMultiple(of: 2) {
@@ -157,8 +188,8 @@ enum KufBarcodeRenderer {
         ]
 
         for pair in pairs {
-            guard let barPattern = interleaved2of5Patterns[pair.0],
-                  let spacePattern = interleaved2of5Patterns[pair.1] else {
+            guard let barPattern = KufBarcodePatterns.interleaved2of5[pair.0],
+                  let spacePattern = KufBarcodePatterns.interleaved2of5[pair.1] else {
                 return nil
             }
             for offset in 0..<5 {
@@ -235,54 +266,6 @@ enum KufBarcodeRenderer {
         static let height = 112
         static let quietZone = 24
     }
-
-    private static let code39Patterns: [Character: String] = [
-        "0": "nnnwwnwnn", "1": "wnnwnnnnw", "2": "nnwwnnnnw",
-        "3": "wnwwnnnnn", "4": "nnnwwnnnw", "5": "wnnwwnnnn",
-        "6": "nnwwwnnnn", "7": "nnnwnnwnw", "8": "wnnwnnwnn",
-        "9": "nnwwnnwnn", "A": "wnnnnwnnw", "B": "nnwnnwnnw",
-        "C": "wnwnnwnnn", "D": "nnnnwwnnw", "E": "wnnnwwnnn",
-        "F": "nnwnwwnnn", "G": "nnnnnwwnw", "H": "wnnnnwwnn",
-        "I": "nnwnnwwnn", "J": "nnnnwwwnn", "K": "wnnnnnnww",
-        "L": "nnwnnnnww", "M": "wnwnnnnwn", "N": "nnnnwnnww",
-        "O": "wnnnwnnwn", "P": "nnwnwnnwn", "Q": "nnnnnnwww",
-        "R": "wnnnnnwwn", "S": "nnwnnnwwn", "T": "nnnnwnwwn",
-        "U": "wwnnnnnnw", "V": "nwwnnnnnw", "W": "wwwnnnnnn",
-        "X": "nwnnwnnnw", "Y": "wwnnwnnnn", "Z": "nwwnwnnnn",
-        "-": "nwnnnnwnw", ".": "wwnnnnwnn", " ": "nwwnnnwnn",
-        "$": "nwnwnwnnn", "/": "nwnwnnnwn", "+": "nwnnnwnwn",
-        "%": "nnnwnwnwn", "*": "nwnnwnwnn"
-    ]
-
-    private static let interleaved2of5Patterns: [Character: String] = [
-        "0": "nnwwn", "1": "wnnnw", "2": "nwnnw", "3": "wwnnn",
-        "4": "nnwnw", "5": "wnwnn", "6": "nwwnn", "7": "nnnww",
-        "8": "wnnwn", "9": "nwnwn"
-    ]
-
-    private static let ean13Parity: [Character: String] = [
-        "0": "LLLLLL", "1": "LLGLGG", "2": "LLGGLG", "3": "LLGGGL",
-        "4": "LGLLGG", "5": "LGGLLG", "6": "LGGGLL", "7": "LGLGLG",
-        "8": "LGLGGL", "9": "LGGLGL"
-    ]
-
-    private static let ean13LeftPatterns: [Character: String] = [
-        "0": "0001101", "1": "0011001", "2": "0010011", "3": "0111101",
-        "4": "0100011", "5": "0110001", "6": "0101111", "7": "0111011",
-        "8": "0110111", "9": "0001011"
-    ]
-
-    private static let ean13LeftOddPatterns: [Character: String] = [
-        "0": "0100111", "1": "0110011", "2": "0011011", "3": "0100001",
-        "4": "0011101", "5": "0111001", "6": "0000101", "7": "0010001",
-        "8": "0001001", "9": "0010111"
-    ]
-
-    private static let ean13RightPatterns: [Character: String] = [
-        "0": "1110010", "1": "1100110", "2": "1101100", "3": "1000010",
-        "4": "1011100", "5": "1001110", "6": "1010000", "7": "1000100",
-        "8": "1001000", "9": "1110100"
-    ]
 }
 
 private extension String {

@@ -115,26 +115,25 @@ enum AlmaTimetableRoomHTMLParser {
     }
 
     private static func displayText(for details: LectureRoomDetails) -> String? {
-        [
+        let candidates: [String?] = [
             details.roomDefault ?? details.roomShort ?? details.roomLong,
             details.floorDefault ?? details.floorShort ?? details.floorLong,
             details.buildingDefault ?? details.buildingShort ?? details.buildingLong,
             details.campusDefault ?? details.campusLong ?? details.campusShort
         ]
-        .reduce(into: (parts: [String](), seen: Set<String>())) { result, value in
-            guard let value = value?.nilIfBlank else {
-                return
-            }
+
+        var parts: [String] = []
+        var seen = Set<String>()
+
+        for candidate in candidates {
+            guard let value = candidate?.nilIfBlank else { continue }
             let compactKey = key(value)
-            guard !compactKey.isEmpty, !result.seen.contains(compactKey) else {
-                return
-            }
-            result.parts.append(value)
-            result.seen.insert(compactKey)
+            guard !compactKey.isEmpty, !seen.contains(compactKey) else { continue }
+            parts.append(value)
+            seen.insert(compactKey)
         }
-        .parts
-        .joined(separator: ", ")
-        .nilIfBlank
+
+        return parts.joined(separator: ", ").nilIfBlank
     }
 
     private static func panelBlocks(in html: String) -> [String] {

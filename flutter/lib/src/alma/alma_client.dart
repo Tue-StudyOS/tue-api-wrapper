@@ -3,6 +3,7 @@ import 'package:html/dom.dart';
 import '../auth/university_credentials.dart';
 import '../html/html_forms.dart';
 import '../http/native_http_session.dart';
+import 'ics_calendar.dart';
 
 class AlmaClient {
   AlmaClient({NativeHttpSession? session, UniversityCredentials? credentials})
@@ -10,7 +11,8 @@ class AlmaClient {
         _credentials = credentials;
 
   static final Uri _base = Uri.parse('https://alma.uni-tuebingen.de');
-  static final Uri _start = _base.resolve('/alma/pages/cs/sys/portal/hisinoneStartPage.faces');
+  static final Uri _start =
+      _base.resolve('/alma/pages/cs/sys/portal/hisinoneStartPage.faces');
   static final Uri _current = _base.resolve(
     '/alma/pages/cm/exa/timetable/currentLectures.xhtml'
     '?_flowId=showEventsAndExaminationsOnDate-flow'
@@ -20,6 +22,11 @@ class AlmaClient {
     '/alma/pages/sul/examAssessment/personExamsReadonly.xhtml'
     '?_flowId=examsOverviewForPerson-flow'
     '&navigationPosition=hisinoneMeinStudium%2CexamAssessmentForStudent&recordRequest=true',
+  );
+  static final Uri _timetable = _base.resolve(
+    '/alma/pages/plan/individualTimetable.xhtml'
+    '?_flowId=individualTimetableSchedule-flow'
+    '&navigationPosition=hisinoneMeinStudium%2CindividualTimetableSchedule&recordRequest=true',
   );
 
   final NativeHttpSession _session;
@@ -40,11 +47,13 @@ class AlmaClient {
     _loggedIn = true;
   }
 
-  Future<Map<String, Object?>> currentLectures({String? date, int limit = 20}) async {
+  Future<Map<String, Object?>> currentLectures(
+      {String? date, int limit = 20}) async {
     var response = await _session.get(_current);
     if (date != null && date.trim().isNotEmpty) {
       final document = parseHtml(response.body, response.uri);
-      final form = formById(response.body, response.uri, 'showEventsAndExaminationsOnDateForm');
+      final form = formById(
+          response.body, response.uri, 'showEventsAndExaminationsOnDateForm');
       final dateField = document.querySelector('input[name\$=":date"]');
       final search = document.querySelector('button[name\$=":searchButtonId"]');
       if (dateField == null || search == null) {
@@ -66,13 +75,33 @@ class AlmaClient {
     return _parseExams(response.body, limit);
   }
 
+  Future<Map<String, Object?>> upcomingLectures(
+      {int days = 14, int limit = 32}) async {
+    await _ensureLoggedIn();
+    final page = await _session.get(_timetable);
+    final term = _selectedTerm(page.body, page.uri);
+    final exportUrl = _exportUri(page.body, page.uri, term['value']!);
+    final rawCalendar = (await _session.get(exportUrl)).body;
+    if (!rawCalendar.contains('BEGIN:VCALENDAR')) {
+      throw StateError(
+          'Expected Alma timetable iCalendar export, but Alma returned a different response.');
+    }
+    final now = DateTime.now();
+    final end = now.add(Duration(days: days));
+    final lectures = expandIcsEvents(parseIcsEvents(rawCalendar), now, end)
+        .take(limit)
+        .map((event) => event.toJson())
+        .toList();
+    return {
+      'source_term': term['label'],
+      'refreshed_at': now.toIso8601String(),
+      'events': lectures,
+    };
+  }
+
   Future<String> timetablePage() async {
     await _ensureLoggedIn();
-    final uri = _base.resolve(
-      '/alma/pages/cm/exa/timetable/studentTimetable.xhtml'
-      '?_flowId=studentSchedule-flow&navigationPosition=hisinoneMeinStudium%2CstudentSchedule',
-    );
-    return (await _session.get(uri)).body;
+    return (await _session.get(_timetable)).body;
   }
 
   Future<String> enrollmentsPage() async {
@@ -88,7 +117,8 @@ class AlmaClient {
   Future<String> studyservicePage() async {
     await _ensureLoggedIn();
     return (await _session.get(
-      _base.resolve('/alma/pages/cs/sys/portal/subMenu.faces?navigationPosition=hisinoneMeinStudium%2Cstudyservice'),
+      _base.resolve(
+          '/alma/pages/cs/sys/portal/subMenu.faces?navigationPosition=hisinoneMeinStudium%2Cstudyservice'),
     ))
         .body;
   }
@@ -106,7 +136,8 @@ class AlmaClient {
     final document = parseHtml(page.body, page.uri);
     final formNode = document.querySelector('form');
     final textInput = document.querySelector('input[type=text][name]');
-    final search = document.querySelector('button[name\$=":search"], input[type=submit][name]');
+    final search = document
+        .querySelector('button[name\$=":search"], input[type=submit][name]');
     if (formNode == null || textInput == null || search == null) {
       throw StateError('Could not identify Alma module-search fields.');
     }
@@ -147,7 +178,8 @@ class AlmaClient {
 
   Map<String, Object?> _parseCurrentLectures(String html, Uri uri, int limit) {
     final document = parseHtml(html, uri);
-    final table = document.querySelector('table[id\$="coursesAndExaminationsOnDateListTableTable"]');
+    final table = document.querySelector(
+        'table[id\$="coursesAndExaminationsOnDateListTableTable"]');
     final results = <Map<String, String?>>[];
     if (table != null) {
       for (final row in table.querySelectorAll('tr')) {
@@ -169,7 +201,8 @@ class AlmaClient {
     }
     return {
       'page_url': uri.toString(),
-      'selected_date': document.querySelector('input[name\$=":date"]')?.attributes['value'],
+      'selected_date':
+          document.querySelector('input[name\$=":date"]')?.attributes['value'],
       'results': results,
     };
   }
@@ -177,8 +210,10 @@ class AlmaClient {
   List<Map<String, Object?>> _parseExams(String html, int limit) {
     final document = parseHtml(html, _exams);
     final rows = <Map<String, Object?>>[];
-    for (final row in document.querySelectorAll('table.treeTableWithIcons tr')) {
-      final title = row.querySelector('[id\$=":defaulttext"], [id\$=":unDeftxt"]');
+    for (final row
+        in document.querySelectorAll('table.treeTableWithIcons tr')) {
+      final title =
+          row.querySelector('[id\$=":defaulttext"], [id\$=":unDeftxt"]');
       if (title == null || (limit > 0 && rows.length >= limit)) {
         continue;
       }
@@ -195,10 +230,38 @@ class AlmaClient {
     return rows;
   }
 
+  Map<String, String> _selectedTerm(String html, Uri uri) {
+    final document = parseHtml(html, uri);
+    final select = document.querySelector(
+        'select[name="plan:scheduleConfiguration:anzeigeoptionen:changeTerm_input"]');
+    final selected = select?.querySelector('option[selected]') ??
+        select?.querySelector('option');
+    final value = selected?.attributes['value']?.trim();
+    final label = selected == null ? null : cleanText(selected);
+    if (value == null || value.isEmpty || label == null || label.isEmpty) {
+      throw StateError('Could not determine the selected Alma timetable term.');
+    }
+    return {'label': label, 'value': value};
+  }
+
+  Uri _exportUri(String html, Uri uri, String termId) {
+    final document = parseHtml(html, uri);
+    final raw = nullableText(document.querySelector(
+        'textarea[name="plan:scheduleConfiguration:anzeigeoptionen:ical:cal_add"]'));
+    if (raw == null) {
+      throw StateError('Could not find the Alma iCalendar export URL.');
+    }
+    final target = uri.resolve(raw);
+    final query = Map<String, String>.from(target.queryParameters)
+      ..['termgroup'] = termId;
+    return target.replace(queryParameters: query);
+  }
+
   int _level(Element row) {
     for (final className in row.classes) {
       if (className.startsWith('treeTableCellLevel')) {
-        return int.tryParse(className.substring('treeTableCellLevel'.length)) ?? 0;
+        return int.tryParse(className.substring('treeTableCellLevel'.length)) ??
+            0;
       }
     }
     return 0;

@@ -4,7 +4,8 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
 class NativeHttpSession {
-  NativeHttpSession({http.Client? client, this.timeout = const Duration(seconds: 30)})
+  NativeHttpSession(
+      {http.Client? client, this.timeout = const Duration(seconds: 30)})
       : _client = client ?? http.Client();
 
   final http.Client _client;
@@ -93,7 +94,8 @@ class NativeHttpSession {
       }
       return _checked(response, currentUri);
     }
-    throw NativeRequestException(message: 'Too many redirects while requesting $uri.');
+    throw NativeRequestException(
+        message: 'Too many redirects while requesting $uri.');
   }
 
   NativeResponse _checked(http.Response response, Uri uri) {
@@ -128,7 +130,9 @@ class NativeHttpSession {
   }
 
   String _cookieHeader() {
-    return _cookies.entries.map((entry) => '${entry.key}=${entry.value}').join('; ');
+    return _cookies.entries
+        .map((entry) => '${entry.key}=${entry.value}')
+        .join('; ');
   }
 
   static bool _isRedirect(int status) => status >= 300 && status < 400;
@@ -155,7 +159,8 @@ class NativeResponse {
 }
 
 class NativeRequestException implements Exception {
-  const NativeRequestException({this.statusCode, this.uri, required this.message});
+  const NativeRequestException(
+      {this.statusCode, this.uri, required this.message});
 
   final int? statusCode;
   final Uri? uri;
@@ -163,7 +168,8 @@ class NativeRequestException implements Exception {
 
   @override
   String toString() {
-    final prefix = statusCode == null ? 'Native request failed' : 'HTTP $statusCode';
+    final prefix =
+        statusCode == null ? 'Native request failed' : 'HTTP $statusCode';
     return uri == null ? '$prefix: $message' : '$prefix for $uri: $message';
   }
 }

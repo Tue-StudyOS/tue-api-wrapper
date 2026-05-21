@@ -7,7 +7,8 @@ class IliasClient {
       : _session = session ?? NativeHttpSession(),
         _credentials = credentials;
 
-  static final Uri _base = Uri.parse('https://ovidius.uni-tuebingen.de/ilias3/');
+  static final Uri _base =
+      Uri.parse('https://ovidius.uni-tuebingen.de/ilias3/');
   static final Uri _login = _base.resolve('login.php?cmd=force_login');
   static const String _ssoPayloadField = 'SAML' 'Response';
   static const String _relayState = 'Relay' 'State';
@@ -27,7 +28,8 @@ class IliasClient {
     if (shib == null) {
       throw StateError('Could not find the ILIAS Shibboleth login link.');
     }
-    final idp = await _session.get(page.uri.resolve(shib.attributes['href'] ?? ''));
+    final idp =
+        await _session.get(page.uri.resolve(shib.attributes['href'] ?? ''));
     final form = formWithInput(idp.body, idp.uri, _passwordField);
     form.set(_userField, credentials.username);
     form.set(_passwordField, credentials.password);
@@ -44,27 +46,32 @@ class IliasClient {
 
   Future<List<Map<String, String?>>> memberships({int limit = 40}) async {
     await _ensureLoggedIn();
-    final page = await _session.get(_base.resolve('ilias.php?baseClass=ilmembershipoverviewgui'));
+    final page = await _session
+        .get(_base.resolve('ilias.php?baseClass=ilmembershipoverviewgui'));
     return _parseStandardItems(page.body, page.uri, limit);
   }
 
   Future<List<Map<String, String?>>> tasks({int limit = 40}) async {
     await _ensureLoggedIn();
-    final page = await _session.get(_base.resolve('ilias.php?baseClass=ilderivedtasksgui'));
+    final page = await _session
+        .get(_base.resolve('ilias.php?baseClass=ilderivedtasksgui'));
     return _parseStandardItems(page.body, page.uri, limit);
   }
 
-  Future<List<Map<String, String?>>> content(String target, {int limit = 80}) async {
+  Future<List<Map<String, String?>>> content(String target,
+      {int limit = 80}) async {
     await _ensureLoggedIn();
     final page = await _session.get(_normalizeTarget(target));
     return _parseStandardItems(page.body, page.uri, limit);
   }
 
-  Future<List<Map<String, String?>>> forumTopics(String target, {int limit = 80}) {
+  Future<List<Map<String, String?>>> forumTopics(String target,
+      {int limit = 80}) {
     return content(target, limit: limit);
   }
 
-  Future<List<Map<String, String?>>> exerciseAssignments(String target, {int limit = 80}) {
+  Future<List<Map<String, String?>>> exerciseAssignments(String target,
+      {int limit = 80}) {
     return content(target, limit: limit);
   }
 
@@ -88,15 +95,18 @@ class IliasClient {
     var current = response;
     for (var attempt = 0; attempt < 6; attempt++) {
       final html = current.body;
-      if (current.uri.host == 'ovidius.uni-tuebingen.de' && !current.uri.path.contains('login')) {
+      if (current.uri.host == 'ovidius.uni-tuebingen.de' &&
+          !current.uri.path.contains('login')) {
         return;
       }
       if (html.contains(_ssoPayloadField) && html.contains(_relayState)) {
-        final form = hiddenFormWithFields(html, current.uri, [_ssoPayloadField, _relayState]);
+        final form = hiddenFormWithFields(
+            html, current.uri, [_ssoPayloadField, _relayState]);
         current = await _session.postForm(form.action, form.fields);
         continue;
       }
-      if (current.uri.host == 'idp.uni-tuebingen.de' && html.contains(_eventProceed)) {
+      if (current.uri.host == 'idp.uni-tuebingen.de' &&
+          html.contains(_eventProceed)) {
         final form = hiddenFormWithFields(html, current.uri, [_eventProceed]);
         current = await _session.postForm(form.action, form.fields);
         continue;
@@ -122,10 +132,12 @@ class IliasClient {
     return links;
   }
 
-  List<Map<String, String?>> _parseStandardItems(String html, Uri uri, int limit) {
+  List<Map<String, String?>> _parseStandardItems(
+      String html, Uri uri, int limit) {
     final document = parseHtml(html, uri);
     final items = <Map<String, String?>>[];
-    for (final item in document.querySelectorAll('div.il-item.il-std-item, div.ilContainerListItemOuter')) {
+    for (final item in document.querySelectorAll(
+        'div.il-item.il-std-item, div.ilContainerListItemOuter')) {
       final link = item.querySelector('a[href]');
       if (link == null || (limit > 0 && items.length >= limit)) {
         continue;

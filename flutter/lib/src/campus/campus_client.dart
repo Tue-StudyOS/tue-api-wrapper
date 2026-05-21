@@ -5,9 +5,11 @@ import 'package:xml/xml.dart';
 import '../http/native_http_session.dart';
 
 class CampusClient {
-  CampusClient({NativeHttpSession? session}) : _session = session ?? NativeHttpSession();
+  CampusClient({NativeHttpSession? session})
+      : _session = session ?? NativeHttpSession();
 
-  static final Uri _mealplan = Uri.parse('https://www.my-stuwe.de/wp-json/mealplans/v1/');
+  static final Uri _mealplan =
+      Uri.parse('https://www.my-stuwe.de/wp-json/mealplans/v1/');
   static final Uri _buildings = Uri.parse(
     'https://uni-tuebingen.de/universitaet/standort-und-anfahrt/lageplaene/adressenliste/',
   );
@@ -17,7 +19,8 @@ class CampusClient {
   static final Uri _kuf = Uri.parse(
     'https://buchung.hsp.uni-tuebingen.de/angebote/aktueller_zeitraum/_Anzahl_der_Trainierenden_in_der_KuF.html',
   );
-  static final Uri _seatfinder = Uri.parse('https://seatfinder.bibliothek.kit.edu/tuebingen/getdata.php');
+  static final Uri _seatfinder =
+      Uri.parse('https://seatfinder.bibliothek.kit.edu/tuebingen/getdata.php');
 
   final NativeHttpSession _session;
 
@@ -30,7 +33,8 @@ class CampusClient {
   }
 
   Future<Object?> canteen(int canteenId, {String? date}) async {
-    final uri = _mealplan.resolve('canteens/$canteenId').replace(queryParameters: {
+    final uri =
+        _mealplan.resolve('canteens/$canteenId').replace(queryParameters: {
       'lang': 'de',
       if (date != null && date.isNotEmpty) 'date': date,
     });
@@ -46,10 +50,13 @@ class CampusClient {
     if (uri != null && uri.hasScheme) {
       return (await _session.get(uri)).body;
     }
-    return (await _session.get(Uri.parse('https://uni-tuebingen.de/').resolve(pathOrUrl))).body;
+    return (await _session
+            .get(Uri.parse('https://uni-tuebingen.de/').resolve(pathOrUrl)))
+        .body;
   }
 
-  Future<List<Map<String, String?>>> events({String query = '', int limit = 24}) async {
+  Future<List<Map<String, String?>>> events(
+      {String query = '', int limit = 24}) async {
     final body = (await _session.get(_events)).body;
     final document = XmlDocument.parse(body);
     final normalizedQuery = query.trim().toLowerCase();

@@ -21,7 +21,7 @@ class CredentialsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppSection(
-      title: 'Account',
+      title: 'University Account',
       icon: Icons.lock_outline,
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -69,51 +69,33 @@ class CredentialsPanel extends StatelessWidget {
 class PublicPanel extends StatelessWidget {
   const PublicPanel({
     required this.date,
-    required this.timms,
     required this.busy,
-    required this.onLoadPublic,
+    required this.onSubmit,
     super.key,
   });
 
   final TextEditingController date;
-  final TextEditingController timms;
   final bool busy;
-  final VoidCallback onLoadPublic;
+  final VoidCallback onSubmit;
 
   @override
   Widget build(BuildContext context) {
     return AppSection(
-      title: 'Public',
+      title: 'Discover Public Data',
       icon: Icons.public,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: date,
-                    decoration: const InputDecoration(labelText: 'Lecture date'),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    controller: timms,
-                    decoration: const InputDecoration(labelText: 'TIMMS search'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: FilledButton.icon(
-                onPressed: busy ? null : onLoadPublic,
-                icon: const Icon(Icons.cloud_sync_outlined),
-                label: const Text('Load public'),
-              ),
+            TextField(
+              controller: date,
+              onSubmitted: (_) {
+                if (!busy) {
+                  onSubmit();
+                }
+              },
+              decoration:
+                  const InputDecoration(labelText: 'Public lecture date'),
             ),
           ],
         ),

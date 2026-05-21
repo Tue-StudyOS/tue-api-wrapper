@@ -35,10 +35,12 @@ HtmlForm formWithInput(String html, Uri pageUri, String inputName) {
   throw StateError('Could not find form with input $inputName.');
 }
 
-HtmlForm hiddenFormWithFields(String html, Uri pageUri, Iterable<String> fields) {
+HtmlForm hiddenFormWithFields(
+    String html, Uri pageUri, Iterable<String> fields) {
   final document = parseHtml(html, pageUri);
   for (final form in document.querySelectorAll('form')) {
-    final matches = fields.every((field) => form.querySelector('[name="$field"]') != null);
+    final matches =
+        fields.every((field) => form.querySelector('[name="$field"]') != null);
     if (matches) {
       return formFromElement(form, pageUri);
     }
@@ -48,7 +50,8 @@ HtmlForm hiddenFormWithFields(String html, Uri pageUri, Iterable<String> fields)
 
 HtmlForm formFromElement(Element form, Uri pageUri) {
   final fields = <String, String>{};
-  for (final field in form.querySelectorAll('input[name], select[name], textarea[name]')) {
+  for (final field
+      in form.querySelectorAll('input[name], select[name], textarea[name]')) {
     final name = field.attributes['name'];
     if (name == null || field.attributes.containsKey('disabled')) {
       continue;
@@ -57,7 +60,8 @@ HtmlForm formFromElement(Element form, Uri pageUri) {
     if (const {'button', 'file', 'image', 'reset'}.contains(type)) {
       continue;
     }
-    if ((type == 'checkbox' || type == 'radio') && !field.attributes.containsKey('checked')) {
+    if ((type == 'checkbox' || type == 'radio') &&
+        !field.attributes.containsKey('checked')) {
       continue;
     }
     fields[name] = _fieldValue(field);
@@ -80,7 +84,8 @@ String? nullableText(Element? element) {
 
 String _fieldValue(Element field) {
   if (field.localName == 'select') {
-    final selected = field.querySelector('option[selected]') ?? field.querySelector('option');
+    final selected = field.querySelector('option[selected]') ??
+        field.querySelector('option');
     if (selected == null) {
       return '';
     }

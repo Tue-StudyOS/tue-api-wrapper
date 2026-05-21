@@ -11,9 +11,20 @@ class TueApiFlutterApp extends StatelessWidget {
       title: 'TUE Study',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xff006c67)),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xff0a7c78)),
+        scaffoldBackgroundColor: const Color(0xfff4f5f7),
         useMaterial3: true,
-        inputDecorationTheme: const InputDecorationTheme(border: OutlineInputBorder()),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xfff4f5f7),
+          elevation: 0,
+          centerTitle: true,
+        ),
+        navigationBarTheme: const NavigationBarThemeData(
+          backgroundColor: Color(0xffffffff),
+          height: 72,
+        ),
+        inputDecorationTheme:
+            const InputDecorationTheme(border: OutlineInputBorder()),
       ),
       home: const DashboardScreen(),
     );

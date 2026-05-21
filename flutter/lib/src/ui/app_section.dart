@@ -18,6 +18,7 @@ class AppSection extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
         border: Border.all(color: colors.outlineVariant),
         borderRadius: BorderRadius.circular(8),
       ),
@@ -30,7 +31,13 @@ class AppSection extends StatelessWidget {
               children: [
                 Icon(icon, size: 20, color: colors.primary),
                 const SizedBox(width: 10),
-                Text(title, style: Theme.of(context).textTheme.titleMedium),
+                Text(
+                  title,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600),
+                ),
               ],
             ),
           ),
@@ -61,12 +68,14 @@ class MapItemList extends StatelessWidget {
     required this.items,
     required this.titleKey,
     this.subtitleKeys = const [],
+    this.subtitleBuilder,
     super.key,
   });
 
   final List<Map<String, Object?>> items;
   final String titleKey;
   final List<String> subtitleKeys;
+  final String Function(Map<String, Object?> item)? subtitleBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -81,10 +90,13 @@ class MapItemList extends StatelessWidget {
       itemBuilder: (context, index) {
         final item = items[index];
         final title = _value(item[titleKey]) ?? 'Untitled';
-        final subtitle = subtitleKeys.map((key) => _value(item[key])).nonNulls.join(' · ');
+        final subtitle = subtitleBuilder?.call(item) ??
+            subtitleKeys.map((key) => _value(item[key])).nonNulls.join(' · ');
         return ListTile(
           title: Text(title, maxLines: 2, overflow: TextOverflow.ellipsis),
-          subtitle: subtitle.isEmpty ? null : Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis),
+          subtitle: subtitle.isEmpty
+              ? null
+              : Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis),
         );
       },
     );

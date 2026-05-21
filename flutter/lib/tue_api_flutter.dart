@@ -1,5 +1,3 @@
-library tue_api_flutter;
-
 export 'src/alma/alma_client.dart';
 export 'src/auth/university_credentials.dart';
 export 'src/campus/campus_client.dart';

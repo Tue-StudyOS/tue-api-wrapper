@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { DesktopAppInfo } from "../../../shared/desktop-types";
 import { submitFeedbackIssue } from "../../lib/api";
-import type { FeedbackIssueCategory, FeedbackIssueResponse } from "../../lib/feedback-types";
+import type { FeedbackIssueCategory, FeedbackIssueResponse, FeedbackStatusResponse } from "../../lib/feedback-types";
 import { PanelHeader } from "./DashboardPrimitives";
 
 type SubmitState =
@@ -11,7 +11,13 @@ type SubmitState =
   | { status: "submitted"; response: FeedbackIssueResponse }
   | { status: "error"; message: string };
 
-export function FeedbackPanel({ baseUrl }: { baseUrl: string | null }) {
+export function FeedbackPanel({
+  baseUrl,
+  feedbackStatus
+}: {
+  baseUrl: string | null;
+  feedbackStatus: FeedbackStatusResponse | null;
+}) {
   const [appInfo, setAppInfo] = useState<DesktopAppInfo | null>(null);
   const [category, setCategory] = useState<FeedbackIssueCategory>("bug");
   const [title, setTitle] = useState("");
@@ -35,12 +41,13 @@ export function FeedbackPanel({ baseUrl }: { baseUrl: string | null }) {
 
   const canSubmit = useMemo(() => {
     if (!baseUrl) return false;
+    if (!feedbackStatus?.enabled) return false;
     if (state.status === "submitting") return false;
     return title.trim().length >= 4 && summary.trim().length >= 10;
-  }, [baseUrl, state.status, summary, title]);
+  }, [baseUrl, feedbackStatus?.enabled, state.status, summary, title]);
 
   async function onSubmit(): Promise<void> {
-    if (!baseUrl) return;
+    if (!baseUrl || !feedbackStatus?.enabled) return;
     setState({ status: "submitting" });
     try {
       const payload = {
@@ -70,10 +77,12 @@ export function FeedbackPanel({ baseUrl }: { baseUrl: string | null }) {
 
   return (
     <article className="panel">
-      <PanelHeader title="Feedback" meta={baseUrl ? "Connected" : "Unavailable"} />
+      <PanelHeader title="Feedback" meta={baseUrl && feedbackStatus?.enabled ? "Connected" : "Unavailable"} />
 
       {!baseUrl ? (
         <p className="muted">Connect the local backend to submit feedback.</p>
+      ) : !feedbackStatus?.enabled ? (
+        <p className="muted">{feedbackStatus?.detail ?? "Feedback issue creation is not enabled on this backend."}</p>
       ) : (
         <div className="stack-list">
           <label className="field">

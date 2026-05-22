@@ -62,6 +62,40 @@ final class BackendFeedbackClientTests: XCTestCase {
         )
     }
 
+    func testFetchAppFeedbackStatusReadsConfigurationState() async throws {
+        let responseData = """
+        {"enabled":true,"repository":"SebastianBoehler/tue-api-wrapper","detail":"GitHub feedback issue creation is enabled."}
+        """.data(using: .utf8)!
+
+        var capturedRequest: URLRequest?
+        StubURLProtocol.requestHandler = { request in
+            capturedRequest = request
+            return (
+                HTTPURLResponse(
+                    url: request.url!,
+                    statusCode: 200,
+                    httpVersion: nil,
+                    headerFields: ["Content-Type": "application/json"]
+                )!,
+                responseData
+            )
+        }
+
+        let client = try XCTUnwrap(
+            BackendClient(
+                baseURLString: "https://example.com",
+                session: makeStubSession()
+            )
+        )
+
+        let status = try await client.fetchAppFeedbackStatus()
+
+        XCTAssertEqual(status.enabled, true)
+        XCTAssertEqual(status.repository, "SebastianBoehler/tue-api-wrapper")
+        XCTAssertEqual(capturedRequest?.url?.absoluteString, "https://example.com/api/feedback/status")
+        XCTAssertEqual(capturedRequest?.httpMethod, "GET")
+    }
+
     func testSubmitAppFeedbackSurfacesBackendErrorDetail() async throws {
         StubURLProtocol.requestHandler = { request in
             let body = #"{"detail":"GitHub issue creation failed: HTTP 502: upstream timeout"}"#.data(using: .utf8)!

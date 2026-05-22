@@ -3,8 +3,9 @@ import { PortalNav } from "./portal-nav";
 import { ThemeToggle } from "./theme-toggle";
 import { MobileNav } from "./mobile-nav";
 import { Separator } from "@/components/ui/separator";
+import { getFeedbackStatus } from "@/lib/portal-api";
 
-function SidebarContents() {
+function SidebarContents({ feedbackEnabled }: { feedbackEnabled: boolean }) {
   return (
     <>
       <div className="px-3 pb-4 flex items-center gap-2.5">
@@ -19,7 +20,7 @@ function SidebarContents() {
         </div>
       </div>
       <Separator className="mb-2" />
-      <PortalNav />
+      <PortalNav feedbackEnabled={feedbackEnabled} />
       <div className="mt-auto pt-2">
         <Separator className="mb-2" />
         <ThemeToggle />
@@ -28,7 +29,7 @@ function SidebarContents() {
   );
 }
 
-export function AppShell({
+export async function AppShell({
   title,
   children,
 }: {
@@ -36,18 +37,20 @@ export function AppShell({
   kicker?: string;
   children: ReactNode;
 }) {
+  const feedbackEnabled = await getFeedbackEnabled();
+
   return (
     <div className="grid lg:grid-cols-[248px_minmax(0,1fr)] min-h-screen">
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex sticky top-0 h-screen flex-col gap-1 py-4 px-3 border-r border-sidebar-border bg-sidebar overflow-y-auto">
-        <SidebarContents />
+        <SidebarContents feedbackEnabled={feedbackEnabled} />
       </aside>
 
       <main className="flex flex-col min-h-screen overflow-y-auto">
         {/* Mobile sticky header */}
         <div className="lg:hidden sticky top-0 z-20 flex items-center gap-3 px-4 py-3 bg-sidebar border-b border-sidebar-border">
           <MobileNav>
-            <SidebarContents />
+            <SidebarContents feedbackEnabled={feedbackEnabled} />
           </MobileNav>
           <span className="text-sm font-semibold text-foreground truncate">{title}</span>
         </div>
@@ -62,4 +65,12 @@ export function AppShell({
       </main>
     </div>
   );
+}
+
+async function getFeedbackEnabled(): Promise<boolean> {
+  try {
+    return (await getFeedbackStatus()).enabled;
+  } catch {
+    return false;
+  }
 }

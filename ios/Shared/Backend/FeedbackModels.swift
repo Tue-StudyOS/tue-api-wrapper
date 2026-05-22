@@ -41,3 +41,9 @@ struct AppFeedbackIssueResponse: Decodable, Equatable {
     var issueURL: String
     var title: String
 }
+
+struct AppFeedbackStatusResponse: Decodable, Equatable {
+    var enabled: Bool
+    var repository: String?
+    var detail: String
+}

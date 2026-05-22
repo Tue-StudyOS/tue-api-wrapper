@@ -22,3 +22,8 @@ export interface FeedbackIssueResponse {
   title: string;
 }
 
+export interface FeedbackStatusResponse {
+  enabled: boolean;
+  repository: string | null;
+  detail: string;
+}

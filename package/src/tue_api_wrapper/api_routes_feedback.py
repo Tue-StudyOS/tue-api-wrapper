@@ -44,6 +44,12 @@ class AppFeedbackIssueResponse(BaseModel):
     title: str
 
 
+class AppFeedbackStatusResponse(BaseModel):
+    enabled: bool
+    repository: str | None
+    detail: str
+
+
 class GitHubFeedbackConfigurationError(RuntimeError):
     pass
 
@@ -217,6 +223,32 @@ class FeedbackRateLimiter:
 
 feedback_issue_client = GitHubFeedbackIssueClient()
 feedback_rate_limiter = FeedbackRateLimiter()
+
+
+@router.get("/api/feedback/status", response_model=AppFeedbackStatusResponse)
+def get_feedback_status() -> AppFeedbackStatusResponse:
+    repository = os.getenv("GITHUB_FEEDBACK_REPOSITORY", DEFAULT_GITHUB_FEEDBACK_REPOSITORY).strip()
+    token_configured = bool(os.getenv("GITHUB_FEEDBACK_TOKEN", "").strip())
+
+    if repository.count("/") != 1:
+        return AppFeedbackStatusResponse(
+            enabled=False,
+            repository=None,
+            detail="GitHub feedback repository configuration is invalid.",
+        )
+
+    if not token_configured:
+        return AppFeedbackStatusResponse(
+            enabled=False,
+            repository=repository,
+            detail="GitHub feedback issue creation is not enabled on this backend.",
+        )
+
+    return AppFeedbackStatusResponse(
+        enabled=True,
+        repository=repository,
+        detail="GitHub feedback issue creation is enabled.",
+    )
 
 
 @router.post("/api/feedback/issues", status_code=201, response_model=AppFeedbackIssueResponse)

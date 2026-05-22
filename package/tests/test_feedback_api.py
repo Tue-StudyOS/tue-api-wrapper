@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import sys
 import unittest
@@ -19,6 +20,7 @@ from tue_api_wrapper.api_routes_feedback import (  # noqa: E402
     create_feedback_issue,
     feedback_issue_client,
     feedback_rate_limiter,
+    get_feedback_status,
 )
 
 
@@ -103,6 +105,59 @@ class FeedbackAPITests(unittest.TestCase):
 
         self.assertEqual(context.exception.status_code, 503)
         self.assertEqual(context.exception.detail, "Set GITHUB_FEEDBACK_TOKEN.")
+
+    def test_feedback_status_is_disabled_without_token(self) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            response = get_feedback_status()
+
+        self.assertEqual(
+            response.model_dump(),
+            {
+                "enabled": False,
+                "repository": "SebastianBoehler/tue-api-wrapper",
+                "detail": "GitHub feedback issue creation is not enabled on this backend.",
+            },
+        )
+
+    def test_feedback_status_is_enabled_with_token(self) -> None:
+        with patch.dict(
+            os.environ,
+            {
+                "GITHUB_FEEDBACK_TOKEN": "ghp_test",
+                "GITHUB_FEEDBACK_REPOSITORY": "example/study-hub",
+            },
+            clear=True,
+        ):
+            response = get_feedback_status()
+
+        self.assertEqual(
+            response.model_dump(),
+            {
+                "enabled": True,
+                "repository": "example/study-hub",
+                "detail": "GitHub feedback issue creation is enabled.",
+            },
+        )
+
+    def test_feedback_status_rejects_invalid_repository(self) -> None:
+        with patch.dict(
+            os.environ,
+            {
+                "GITHUB_FEEDBACK_TOKEN": "ghp_test",
+                "GITHUB_FEEDBACK_REPOSITORY": "invalid",
+            },
+            clear=True,
+        ):
+            response = get_feedback_status()
+
+        self.assertEqual(
+            response.model_dump(),
+            {
+                "enabled": False,
+                "repository": None,
+                "detail": "GitHub feedback repository configuration is invalid.",
+            },
+        )
 
     def test_rate_limits_repeated_submissions_from_same_sender(self) -> None:
         with patch.object(

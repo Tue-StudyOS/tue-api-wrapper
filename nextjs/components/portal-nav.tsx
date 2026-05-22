@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const groups: Array<{
+const baseGroups: Array<{
   label?: string;
   items: ReadonlyArray<{ href: `/${string}`; label: string; icon: React.ComponentType<{ className?: string }> }>;
 }> = [
@@ -63,13 +63,17 @@ const groups: Array<{
     label: "Tools",
     items: [
       { href: "/assistant", label: "Assistant", icon: MessageSquare },
-      { href: "/feedback", label: "Feedback", icon: Bug },
     ],
   },
 ] as const;
 
-export function PortalNav() {
+export function PortalNav({ feedbackEnabled }: { feedbackEnabled: boolean }) {
   const pathname = usePathname();
+  const groups = feedbackEnabled
+    ? baseGroups.map((group) => group.label === "Tools"
+      ? { ...group, items: [...group.items, { href: "/feedback", label: "Feedback", icon: Bug }] }
+      : group)
+    : baseGroups;
 
   return (
     <nav className="flex flex-col gap-3" aria-label="Primary">

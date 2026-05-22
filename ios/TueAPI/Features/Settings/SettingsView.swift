@@ -5,6 +5,7 @@ struct SettingsView: View {
     @State private var username = ""
     @State private var password = ""
     @State private var activeSheet: SettingsSheet?
+    @State private var feedbackEnabled = false
 
     var body: some View {
         Form {
@@ -69,15 +70,17 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Feedback") {
-                Button {
-                    activeSheet = .appFeedback
-                } label: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Send app feedback")
-                        Text("Report an issue or suggest a feature without including university login details.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+            if feedbackEnabled {
+                Section("Feedback") {
+                    Button {
+                        activeSheet = .appFeedback
+                    } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Send app feedback")
+                            Text("Report an issue or suggest a feature without including university login details.")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }
@@ -105,6 +108,9 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Settings")
+        .task {
+            await refreshFeedbackAvailability()
+        }
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .appFeedback:
@@ -134,6 +140,20 @@ struct SettingsView: View {
             Task {
                 await model.setReminderLeadTime(minutes: minutes)
             }
+        }
+    }
+
+    @MainActor
+    private func refreshFeedbackAvailability() async {
+        guard let client = BackendClient(baseURLString: model.portalAPIBaseURLString) else {
+            feedbackEnabled = false
+            return
+        }
+
+        do {
+            feedbackEnabled = try await client.fetchAppFeedbackStatus().enabled
+        } catch {
+            feedbackEnabled = false
         }
     }
 }

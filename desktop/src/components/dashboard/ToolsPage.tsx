@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import type { DiscoverySettings } from "../../../shared/desktop-types";
-import { refreshCourseDiscoveryIndex } from "../../lib/api";
+import { fetchFeedbackStatus, refreshCourseDiscoveryIndex } from "../../lib/api";
+import type { FeedbackStatusResponse } from "../../lib/feedback-types";
 import { FeedbackPanel } from "./FeedbackPanel";
 import { PeopleSearchPanel } from "./PeopleSearchPanel";
 import { PanelHeader } from "./DashboardPrimitives";
@@ -24,6 +25,7 @@ export function ToolsPage({
   onRestart: () => Promise<void>;
 }) {
   const [tab, setTab] = useState<ToolTab>("timms");
+  const [feedbackStatus, setFeedbackStatus] = useState<FeedbackStatusResponse | null>(null);
   const links = state.backendUrl
     ? [
       { label: "Backend API docs", url: `${state.backendUrl}/docs`, detail: "OpenAPI reference" },
@@ -41,6 +43,44 @@ export function ToolsPage({
     });
   }
 
+  useEffect(() => {
+    if (!state.backendUrl) {
+      setFeedbackStatus(null);
+      return;
+    }
+
+    let cancelled = false;
+    fetchFeedbackStatus(state.backendUrl).then((status) => {
+      if (!cancelled) setFeedbackStatus(status);
+    }).catch((error) => {
+      if (!cancelled) {
+        setFeedbackStatus({
+          enabled: false,
+          repository: null,
+          detail: error instanceof Error ? error.message : "Feedback configuration status could not be loaded."
+        });
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [state.backendUrl]);
+
+  const feedbackEnabled = feedbackStatus?.enabled === true;
+  const toolTabs = [
+    ["timms", "TIMMS"],
+    ["people", "People"],
+    ...(feedbackEnabled ? [["feedback", "Feedback"] as const] : []),
+    ["settings", "Settings"]
+  ] as const;
+
+  useEffect(() => {
+    if (tab === "feedback" && !feedbackEnabled) {
+      setTab("timms");
+    }
+  }, [feedbackEnabled, tab]);
+
   return (
     <div className="tools-page">
       <section className="panel section-hero">
@@ -50,12 +90,7 @@ export function ToolsPage({
           <p className="muted">TIMMS videos, university people search, and local app controls in one place.</p>
         </div>
         <div className="segmented-control">
-          {([
-            ["timms", "TIMMS"],
-            ["people", "People"],
-            ["feedback", "Feedback"],
-            ["settings", "Settings"]
-          ] as const).map(([id, label]) => (
+          {toolTabs.map(([id, label]) => (
             <button key={id} className={tab === id ? "active" : ""} onClick={() => setTab(id)} type="button">
               {label}
             </button>
@@ -65,9 +100,10 @@ export function ToolsPage({
 
       {tab === "timms" ? <TimmsArchivePanel baseUrl={state.backendUrl ?? null} /> : null}
       {tab === "people" ? <PeopleSearchPanel baseUrl={state.backendUrl ?? null} /> : null}
-      {tab === "feedback" ? <FeedbackPanel baseUrl={state.backendUrl ?? null} /> : null}
+      {tab === "feedback" ? <FeedbackPanel baseUrl={state.backendUrl ?? null} feedbackStatus={feedbackStatus} /> : null}
       {tab === "settings" ? (
         <RuntimeSettings
+          feedbackStatus={feedbackStatus}
           links={links}
           loading={loading}
           onClearCredentials={onClearCredentials}
@@ -84,6 +120,7 @@ export function ToolsPage({
 }
 
 function RuntimeSettings({
+  feedbackStatus,
   links,
   loading,
   onClearCredentials,
@@ -94,6 +131,7 @@ function RuntimeSettings({
   state,
   stateReady
 }: {
+  feedbackStatus: FeedbackStatusResponse | null;
   links: { label: string; url: string; detail: string }[];
   loading: boolean;
   onClearCredentials: () => Promise<void>;
@@ -145,6 +183,12 @@ function RuntimeSettings({
             <div>
               <strong>Local service</strong>
               <span>{runtimeLabel(state.backendState, state.backendUrl, state.backendError)}</span>
+            </div>
+          </div>
+          <div className="stack-row compact-row">
+            <div>
+              <strong>Feedback issue creation</strong>
+              <span>{feedbackStatusLabel(feedbackStatus, Boolean(state.backendUrl))}</span>
             </div>
           </div>
           <div className="stack-row compact-row">
@@ -240,6 +284,19 @@ function RuntimeSettings({
       </article>
     </div>
   );
+}
+
+function feedbackStatusLabel(status: FeedbackStatusResponse | null, backendReady: boolean): string {
+  if (!backendReady) {
+    return "Unavailable without the local backend.";
+  }
+  if (!status) {
+    return "Checking backend configuration...";
+  }
+  if (status.enabled) {
+    return `Enabled${status.repository ? ` for ${status.repository}` : ""}.`;
+  }
+  return status.detail;
 }
 
 function semanticLabel(enabled: boolean, saving: boolean): string {

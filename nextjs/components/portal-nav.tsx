@@ -22,6 +22,7 @@ import {
   LibraryBig,
   Bug,
 } from "lucide-react";
+import { isFeedbackIssueCreationConfigured } from "@/lib/github-feedback";
 import { cn } from "@/lib/utils";
 
 const baseGroups: Array<{
@@ -70,7 +71,12 @@ const baseGroups: Array<{
 export function PortalNav() {
   const pathname = usePathname();
   const groups = baseGroups.map((group) => group.label === "Tools"
-    ? { ...group, items: [...group.items, { href: "/feedback", label: "Feedback", icon: Bug }] }
+    ? {
+      ...group,
+      items: isFeedbackIssueCreationConfigured()
+        ? [...group.items, { href: "/feedback", label: "Feedback", icon: Bug }]
+        : group.items
+    }
     : group);
 
   return (

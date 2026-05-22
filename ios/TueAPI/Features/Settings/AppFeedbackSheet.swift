@@ -2,11 +2,11 @@ import SwiftUI
 
 struct AppFeedbackSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.openURL) private var openURL
     @State private var draft = AppFeedbackDraft()
     @State private var phase: AppFeedbackSubmissionPhase = .idle
 
     private let context = AppFeedbackContext.current
+    private let feedbackClient = AppFeedbackGitHubClient()
 
     var body: some View {
         NavigationStack {
@@ -20,9 +20,18 @@ struct AppFeedbackSheet: View {
                 Section("Privacy") {
                     StatusBanner(
                         title: "Public feedback issue",
-                        message: "Do not include login details, student IDs, grades, or other personal data.",
+                        message: "This creates a GitHub issue from this device. Do not include login details, student IDs, grades, or other personal data.",
                         systemImage: "exclamationmark.shield"
                     )
+                }
+                if !AppFeedbackGitHubClient.isConfigured {
+                    Section {
+                        StatusBanner(
+                            title: "Feedback unavailable",
+                            message: "This build has no GitHub feedback token configured.",
+                            systemImage: "exclamationmark.triangle"
+                        )
+                    }
                 }
 
                 Section("Feedback") {
@@ -74,7 +83,7 @@ struct AppFeedbackSheet: View {
 
                 if !phase.isSubmitted {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("Open GitHub") {
+                        Button(phase.isSubmitting ? "Creating..." : "Create") {
                             submit()
                         }
                         .disabled(!canSubmit)
@@ -89,28 +98,53 @@ struct AppFeedbackSheet: View {
         switch phase {
         case .idle:
             EmptyView()
-        case .opened(let draft):
+        case .submitting:
+            StatusBanner(
+                title: "Creating GitHub issue",
+                message: "Submitting feedback to GitHub...",
+                systemImage: "arrow.triangle.2.circlepath"
+            )
+        case .created(let issue):
             VStack(alignment: .leading, spacing: 12) {
                 StatusBanner(
-                    title: "GitHub draft opened",
-                    message: "Review and submit the issue in GitHub.",
+                    title: "GitHub issue created",
+                    message: issue.title,
                     systemImage: "checkmark.circle"
                 )
 
-                Link("Open GitHub draft", destination: draft.issueURL)
+                Link("Open GitHub issue", destination: issue.issueURL)
             }
+        case .failed(let message):
+            StatusBanner(
+                title: "Feedback failed",
+                message: message,
+                systemImage: "exclamationmark.triangle"
+            )
         }
     }
 
     private var canSubmit: Bool {
-        draft.title.trimmedOrNil != nil
+        AppFeedbackGitHubClient.isConfigured
+            && !phase.isSubmitting
+            && draft.title.trimmedOrNil != nil
             && draft.summary.trimmedOrNil != nil
     }
 
     private func submit() {
-        let issueDraft = draft.asRequest(context: context).githubIssueDraft
-        openURL(issueDraft.issueURL)
-        phase = .opened(issueDraft)
+        phase = .submitting
+        let request = draft.asRequest(context: context)
+        Task {
+            do {
+                let issue = try await feedbackClient.createIssue(request)
+                await MainActor.run {
+                    phase = .created(issue)
+                }
+            } catch {
+                await MainActor.run {
+                    phase = .failed(error.localizedDescription)
+                }
+            }
+        }
     }
 }
 
@@ -140,10 +174,12 @@ private struct AppFeedbackDraft {
 
 private enum AppFeedbackSubmissionPhase: Equatable {
     case idle
-    case opened(AppFeedbackIssueDraft)
+    case submitting
+    case created(AppFeedbackIssue)
+    case failed(String)
 
     var isSubmitted: Bool {
-        if case .opened = self {
+        if case .created = self {
             true
         } else {
             false
@@ -154,8 +190,16 @@ private enum AppFeedbackSubmissionPhase: Equatable {
         switch self {
         case .idle:
             false
-        case .opened:
+        case .submitting, .created, .failed:
             true
+        }
+    }
+
+    var isSubmitting: Bool {
+        if case .submitting = self {
+            true
+        } else {
+            false
         }
     }
 }

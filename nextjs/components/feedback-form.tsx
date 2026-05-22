@@ -4,13 +4,14 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import type { FeedbackIssueDraft } from "@/lib/github-feedback";
-import { buildFeedbackIssueDraft } from "@/lib/github-feedback";
+import type { FeedbackIssue } from "@/lib/github-feedback";
+import { createFeedbackIssue, isFeedbackIssueCreationConfigured } from "@/lib/github-feedback";
 import type { FeedbackIssueCategory, FeedbackIssueRequest } from "@/lib/feedback-types";
 
 type SubmitState =
   | { status: "idle" }
-  | { status: "opened"; draft: FeedbackIssueDraft }
+  | { status: "submitting" }
+  | { status: "created"; issue: FeedbackIssue }
   | { status: "error"; message: string };
 
 export function FeedbackForm({
@@ -29,10 +30,11 @@ export function FeedbackForm({
   const [state, setState] = useState<SubmitState>({ status: "idle" });
 
   const canSubmit = useMemo(() => {
-    return title.trim().length >= 4 && summary.trim().length >= 10;
-  }, [summary, title]);
+    return isFeedbackIssueCreationConfigured() && state.status !== "submitting" && title.trim().length >= 4 && summary.trim().length >= 10;
+  }, [state.status, summary, title]);
 
-  function submit(): void {
+  async function submit(): Promise<void> {
+    setState({ status: "submitting" });
     try {
       const systemVersion = (navigator.userAgent || "unknown").slice(0, 60);
       const deviceModel = (navigator.platform || "unknown").slice(0, 60);
@@ -50,9 +52,8 @@ export function FeedbackForm({
         deviceModel
       };
 
-      const draft = buildFeedbackIssueDraft(payload);
-      window.open(draft.issueURL, "_blank", "noopener,noreferrer");
-      setState({ status: "opened", draft });
+      const issue = await createFeedbackIssue(payload);
+      setState({ status: "created", issue });
       setTitle("");
       setSummary("");
       setArea("");
@@ -67,8 +68,13 @@ export function FeedbackForm({
     <Card>
       <CardContent className="pt-6 flex flex-col gap-4">
         <div className="text-sm text-muted-foreground">
-          Opens a prefilled GitHub issue draft in your browser. GitHub handles login before the issue is created.
+          Creates a public GitHub issue from this browser. Do not include login details, student IDs, grades, or other personal data.
         </div>
+        {!isFeedbackIssueCreationConfigured() ? (
+          <div className="text-sm text-muted-foreground">
+            Feedback issue creation is disabled because this build has no GitHub feedback token.
+          </div>
+        ) : null}
 
         <div className="grid gap-2">
           <label className="text-sm font-medium">Category</label>
@@ -128,22 +134,22 @@ export function FeedbackForm({
           <div className="text-sm text-destructive whitespace-pre-wrap">{state.message}</div>
         ) : null}
 
-        {state.status === "opened" ? (
+        {state.status === "created" ? (
           <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/30 px-4 py-3">
             <div className="min-w-0">
-              <div className="text-sm font-medium truncate">GitHub draft opened</div>
-              <div className="text-xs text-muted-foreground truncate">{state.draft.title}</div>
+              <div className="text-sm font-medium truncate">GitHub issue created</div>
+              <div className="text-xs text-muted-foreground truncate">{state.issue.title}</div>
             </div>
             <Button asChild variant="secondary" size="sm">
-              <a href={state.draft.issueURL} target="_blank" rel="noreferrer">
+              <a href={state.issue.issueURL} target="_blank" rel="noreferrer">
                 Open
               </a>
             </Button>
           </div>
         ) : null}
 
-        <Button disabled={!canSubmit} onClick={submit}>
-          Open GitHub issue
+        <Button disabled={!canSubmit} onClick={() => void submit()}>
+          {state.status === "submitting" ? "Creating..." : "Create GitHub issue"}
         </Button>
       </CardContent>
     </Card>

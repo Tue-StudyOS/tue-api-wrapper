@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import type { DiscoverySettings } from "../../../shared/desktop-types";
 import { refreshCourseDiscoveryIndex } from "../../lib/api";
+import { isFeedbackIssueCreationConfigured } from "../../lib/github-feedback";
 import { FeedbackPanel } from "./FeedbackPanel";
 import { PeopleSearchPanel } from "./PeopleSearchPanel";
 import { PanelHeader } from "./DashboardPrimitives";
@@ -44,7 +45,7 @@ export function ToolsPage({
   const toolTabs = [
     ["timms", "TIMMS"],
     ["people", "People"],
-    ["feedback", "Feedback"],
+    ...(isFeedbackIssueCreationConfigured() ? [["feedback", "Feedback"] as const] : []),
     ["settings", "Settings"]
   ] as const;
 
@@ -152,7 +153,7 @@ function RuntimeSettings({
           <div className="stack-row compact-row">
             <div>
               <strong>Feedback issue creation</strong>
-              <span>Client-side GitHub issue drafts.</span>
+              <span>{isFeedbackIssueCreationConfigured() ? "Client-side GitHub issue creation." : "Unavailable in this build."}</span>
             </div>
           </div>
           <div className="stack-row compact-row">

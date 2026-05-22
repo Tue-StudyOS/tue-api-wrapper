@@ -69,15 +69,17 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Feedback") {
-                Button {
-                    activeSheet = .appFeedback
-                } label: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Send app feedback")
-                        Text("Open a GitHub issue draft without including university login details.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+            if AppFeedbackGitHubClient.isConfigured {
+                Section("Feedback") {
+                    Button {
+                        activeSheet = .appFeedback
+                    } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Send app feedback")
+                            Text("Create a GitHub issue without including university login details.")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }

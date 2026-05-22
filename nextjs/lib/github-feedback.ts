@@ -1,6 +1,7 @@
 import type { FeedbackIssueRequest } from "./feedback-types";
 
 const FEEDBACK_REPOSITORY = "SebastianBoehler/tue-api-wrapper";
+const FEEDBACK_TOKEN = process.env.NEXT_PUBLIC_GITHUB_FEEDBACK_TOKEN?.trim() ?? "";
 
 const sourceMarkers: Record<FeedbackIssueRequest["platform"], string> = {
   web: "tue-api-web-feedback"
@@ -17,21 +18,43 @@ const categoryLabels: Record<FeedbackIssueRequest["category"], string> = {
   other: "Other"
 };
 
-export interface FeedbackIssueDraft {
+export interface FeedbackIssue {
   issueURL: string;
   title: string;
 }
 
-export function buildFeedbackIssueDraft(feedback: FeedbackIssueRequest): FeedbackIssueDraft {
+export function isFeedbackIssueCreationConfigured(): boolean {
+  return FEEDBACK_TOKEN.length > 0;
+}
+
+export async function createFeedbackIssue(feedback: FeedbackIssueRequest): Promise<FeedbackIssue> {
+  if (!isFeedbackIssueCreationConfigured()) {
+    throw new Error("GitHub feedback is not configured for this build.");
+  }
+
   const title = `[${platformLabels[feedback.platform]} Feedback] ${categoryLabels[feedback.category]}: ${feedback.title}`;
-  const params = new URLSearchParams({
-    title,
-    body: buildFeedbackIssueBody(feedback),
-    labels: "feedback"
+  const response = await fetch(`https://api.github.com/repos/${FEEDBACK_REPOSITORY}/issues`, {
+    method: "POST",
+    headers: {
+      Accept: "application/vnd.github+json",
+      Authorization: `Bearer ${FEEDBACK_TOKEN}`,
+      "Content-Type": "application/json",
+      "X-GitHub-Api-Version": "2022-11-28"
+    },
+    body: JSON.stringify({
+      title,
+      body: buildFeedbackIssueBody(feedback),
+      labels: ["feedback"]
+    })
   });
 
+  const body = await response.json().catch(() => null) as { html_url?: string; message?: string } | null;
+  if (!response.ok || !body?.html_url) {
+    throw new Error(body?.message ? `GitHub issue creation failed: ${body.message}` : "GitHub issue creation failed.");
+  }
+
   return {
-    issueURL: `https://github.com/${FEEDBACK_REPOSITORY}/issues/new?${params.toString()}`,
+    issueURL: body.html_url,
     title
   };
 }

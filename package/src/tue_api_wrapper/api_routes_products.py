@@ -3,7 +3,7 @@ from __future__ import annotations
 import requests
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .campus_client import CampusClient
 from .directory_client import UniversityDirectoryClient
@@ -11,7 +11,7 @@ from .directory_models import DirectoryAction, DirectoryForm
 from .event_calendar_client import EventCalendarClient
 from .fitness_client import FitnessClient
 from .hsp_client import HspClient
-from .praxisportal_client import PraxisportalClient
+from .praxisportal_client import PraxisportalClient, build_praxisportal_subscription_query
 from .portal_service import serialize
 from .seatfinder_client import SeatfinderClient
 from .timms_client import TimmsClient
@@ -38,6 +38,23 @@ class DirectoryActionRequest(BaseModel):
     query: str
     form: DirectoryForm
     action: DirectoryAction
+
+
+class PraxisportalSubscriptionQueryRequest(BaseModel):
+    text: list[str] = Field(default_factory=list)
+    project_type_id: list[int] = Field(default_factory=list)
+    project_subtype_id: list[int] = Field(default_factory=list)
+    industry_id: list[int] = Field(default_factory=list)
+    postal_code: list[str] = Field(default_factory=list)
+    in_english: bool = False
+    start_date: str | None = None
+    end_date: str | None = None
+
+
+class PraxisportalSubscriptionCreateRequest(BaseModel):
+    query: PraxisportalSubscriptionQueryRequest
+    subscription_type_id: int = 1
+    access_token: str | None = None
 
 
 @router.get("/api/timms/search")
@@ -148,11 +165,51 @@ def praxisportal_filters() -> dict[str, object]:
         raise _translate_public_error(error) from error
 
 
+@router.get("/api/praxisportal/subscription-types")
+def praxisportal_subscription_types(access_token: str | None = None) -> list[object]:
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Praxisportal subscriptions require an authenticated access token.")
+    try:
+        praxisportal_client.sync_user(access_token)
+        return serialize(praxisportal_client.fetch_subscription_types())
+    except Exception as error:  # pragma: no cover - exercised via FastAPI surface
+        raise _translate_public_error(error) from error
+
+
+@router.post("/api/praxisportal/subscriptions")
+def praxisportal_create_subscription(request: PraxisportalSubscriptionCreateRequest) -> dict[str, object]:
+    if not request.access_token:
+        raise HTTPException(status_code=401, detail="Praxisportal subscriptions require an authenticated access token.")
+    try:
+        query = build_praxisportal_subscription_query(
+            text=tuple(request.query.text),
+            project_type_ids=tuple(request.query.project_type_id),
+            project_subtype_ids=tuple(request.query.project_subtype_id),
+            industry_ids=tuple(request.query.industry_id),
+            postal_codes=tuple(request.query.postal_code),
+            in_english=request.query.in_english,
+            start_date=request.query.start_date,
+            end_date=request.query.end_date,
+        )
+        return serialize(
+            praxisportal_client.create_subscription(
+                query=query,
+                subscription_type_id=request.subscription_type_id,
+                access_token=request.access_token,
+            )
+        )
+    except Exception as error:  # pragma: no cover - exercised via FastAPI surface
+        raise _translate_public_error(error) from error
+
+
 @router.get("/api/praxisportal/search")
 def praxisportal_search(
     query: str = "",
     project_type_id: list[int] = Query(default=[]),
+    project_subtype_id: list[int] = Query(default=[]),
     industry_id: list[int] = Query(default=[]),
+    postal_code: list[str] = Query(default=[]),
+    organization_id: list[int] = Query(default=[]),
     page: int = Query(0, ge=0),
     per_page: int = Query(20, ge=1, le=50),
     sort: str = Query("newest"),
@@ -162,7 +219,10 @@ def praxisportal_search(
             praxisportal_client.search_projects(
                 query=query,
                 project_type_ids=tuple(project_type_id),
+                project_subtype_ids=tuple(project_subtype_id),
                 industry_ids=tuple(industry_id),
+                postal_codes=tuple(postal_code),
+                organization_ids=tuple(organization_id),
                 page=page,
                 per_page=per_page,
                 sort=sort,

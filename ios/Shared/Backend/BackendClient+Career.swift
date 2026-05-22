@@ -10,7 +10,9 @@ extension BackendClient {
     func searchCareerProjects(
         query: String = "",
         projectTypeId: Int? = nil,
+        projectSubtypeId: Int? = nil,
         industryId: Int? = nil,
+        postalCode: String = "",
         page: Int = 0,
         perPage: Int = 20
     ) async throws -> CareerSearchResponse {
@@ -26,8 +28,15 @@ extension BackendClient {
         if let projectTypeId {
             queryItems.append(URLQueryItem(name: "project_type_id", value: "\(projectTypeId)"))
         }
+        if let projectSubtypeId {
+            queryItems.append(URLQueryItem(name: "project_subtype_id", value: "\(projectSubtypeId)"))
+        }
         if let industryId {
             queryItems.append(URLQueryItem(name: "industry_id", value: "\(industryId)"))
+        }
+        let trimmedPostalCode = postalCode.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedPostalCode.isEmpty {
+            queryItems.append(URLQueryItem(name: "postal_code", value: trimmedPostalCode))
         }
 
         let url = try makeURL(path: "api/praxisportal/search", queryItems: queryItems)

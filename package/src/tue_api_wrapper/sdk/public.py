@@ -135,7 +135,10 @@ class PublicPraxisportalApi:
         *,
         query: str = "",
         project_type_ids: tuple[int, ...] = (),
+        project_subtype_ids: tuple[int, ...] = (),
         industry_ids: tuple[int, ...] = (),
+        postal_codes: tuple[str, ...] = (),
+        organization_ids: tuple[int, ...] = (),
         page: int = 0,
         per_page: int = 20,
         sort: str = "newest",
@@ -143,7 +146,10 @@ class PublicPraxisportalApi:
         return self.client.search_projects(
             query=query,
             project_type_ids=project_type_ids,
+            project_subtype_ids=project_subtype_ids,
             industry_ids=industry_ids,
+            postal_codes=postal_codes,
+            organization_ids=organization_ids,
             page=page,
             per_page=per_page,
             sort=sort,
@@ -151,6 +157,16 @@ class PublicPraxisportalApi:
 
     def project(self, project_id: int):
         return self.client.fetch_project(project_id)
+
+    def subscription_types(self):
+        return self.client.fetch_subscription_types()
+
+    def create_subscription(self, *, query, subscription_type_id: int = 1, access_token: str | None = None):
+        return self.client.create_subscription(
+            query=query,
+            subscription_type_id=subscription_type_id,
+            access_token=access_token,
+        )
 
 
 class TuebingenPublicClient:

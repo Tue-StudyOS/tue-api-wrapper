@@ -24,6 +24,7 @@ from ..moodle_client import MoodleClient
 from .credentials import UniversityCredentials
 from .discovery import CourseDiscoveryApi
 from .portal import AuthenticatedPortalApi
+from .praxisportal import AuthenticatedPraxisportalApi
 from .public import TuebingenPublicClient
 
 
@@ -275,6 +276,7 @@ class TuebingenAuthenticatedClient:
         self.ilias = AuthenticatedIliasApi(credentials)
         self.moodle = AuthenticatedMoodleApi(credentials)
         self.mail = AuthenticatedMailApi(credentials)
+        self.praxisportal = AuthenticatedPraxisportalApi(credentials)
         self.portal = AuthenticatedPortalApi(self)
         self.discovery = CourseDiscoveryApi(
             CourseDiscoveryService(

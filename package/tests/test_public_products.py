@@ -20,7 +20,10 @@ from tue_api_wrapper.fitness_client import (
     parse_kuf_training_count_image,
 )
 from tue_api_wrapper.praxisportal_client import (
+    build_praxisportal_filter_expression,
     build_praxisportal_filter_options,
+    build_praxisportal_subscription_query,
+    map_praxisportal_subscription,
     map_praxisportal_detail,
 )
 from tue_api_wrapper.timms_client import parse_timms_item_page, parse_timms_player_page, parse_timms_tree_page
@@ -129,6 +132,76 @@ class PublicProductContractTests(unittest.TestCase):
         self.assertEqual(detail.project_types, ["Internship"])
         self.assertEqual(detail.organizations[0].name, "Bundesamt für Verfassungsschutz")
         self.assertEqual([option.label for option in options], ["Informationsmanagement, -technologie", "Technik, Technologie"])
+
+    def test_build_praxisportal_filter_expression_matches_har_facets(self) -> None:
+        expression = build_praxisportal_filter_expression(
+            project_type_ids=(1, 3),
+            project_subtype_ids=(2,),
+            industry_ids=(29, 31),
+            postal_codes=("70794",),
+            organization_ids=(338,),
+        )
+
+        self.assertIn("(project_type.id:1 OR project_type.id:3 OR subproject_type.id:2)", expression)
+        self.assertIn("(industry.id:29 OR industry.id:31)", expression)
+        self.assertIn("(postal_code:70794)", expression)
+        self.assertIn("(organization.id:338)", expression)
+        self.assertIn("blocked<1", expression)
+
+    def test_build_praxisportal_subscription_query_matches_har_payload(self) -> None:
+        query = build_praxisportal_subscription_query(
+            text=("machine learning",),
+            project_type_ids=(1, 3),
+            project_subtype_ids=(2,),
+            industry_ids=(29, 31),
+            postal_codes=("70794",),
+        )
+
+        self.assertEqual(
+            query.create_payload(),
+            {
+                "in_english": False,
+                "start_date": "",
+                "end_date": "",
+                "text": ["machine learning"],
+                "industries": ["29", "31"],
+                "project_subtypes": ["2"],
+                "postal_code": ["70794"],
+                "project_type_id": ["1", "3"],
+                "version": "2.0",
+            },
+        )
+
+    def test_map_praxisportal_subscription_decodes_keyword_query(self) -> None:
+        subscription = map_praxisportal_subscription(
+            {
+                "id": 13964,
+                "user_id": 52548,
+                "query_id": 13999,
+                "subscription_type_id": 1,
+                "created_at": 1778236180000,
+                "updated_at": 1778236180000,
+                "active": 1,
+                "keyword": {
+                    "id": 13999,
+                    "query": (
+                        '{"in_english":false,"start_date":null,"end_date":null,"text":[],'
+                        '"industries":["29","31"],"project_subtypes":["2"],'
+                        '"postal_code":["70794"],"project_type_id":["1","3"],"version":"2.0"}'
+                    ),
+                },
+                "subscription_type": {
+                    "id": 1,
+                    "title": "Erhalte sofort eine Email wenn ein passendes Projekt veröffentlicht wird.",
+                    "short_name": "1_hour",
+                },
+            }
+        )
+
+        self.assertTrue(subscription.active)
+        self.assertEqual(subscription.query.postal_code, ["70794"])
+        self.assertEqual(subscription.query.project_type_id, ["1", "3"])
+        self.assertEqual(subscription.subscription_type.short_name, "1_hour")
 
     def test_parse_campus_pages_extract_directory_and_detail(self) -> None:
         directory_html = """

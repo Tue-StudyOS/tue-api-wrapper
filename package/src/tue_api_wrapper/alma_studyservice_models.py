@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .alma_profile_models import AlmaProfileSection
 from .models import AlmaDocumentReport
 
 
@@ -31,3 +32,4 @@ class AlmaStudyServicePage:
     active_tab_label: str | None
     tabs: tuple[AlmaStudyServiceTab, ...]
     output_requests: tuple[AlmaStudyServiceOutputRequest, ...]
+    contact_sections: tuple[AlmaProfileSection, ...]

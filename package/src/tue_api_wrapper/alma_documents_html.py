@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
+from .alma_profile_models import AlmaProfileField, AlmaProfileSection
 from .alma_studyservice_models import (
     AlmaStudyServiceOutputRequest,
     AlmaStudyServicePage,
@@ -16,6 +17,16 @@ from .models import AlmaDocumentReport
 
 def _clean_text(value: str) -> str:
     return " ".join(value.split())
+
+
+def _field_text(node) -> str:
+    clone = BeautifulSoup(str(node), "html.parser")
+    for image in clone.find_all("img", alt=re.compile("^At$", re.I)):
+        image.replace_with("@")
+    for br in clone.find_all("br"):
+        br.replace_with("\n")
+    raw = re.sub(r"\s*@\s*", "@", clone.get_text("\n", strip=True))
+    return "\n".join(" ".join(line.split()) for line in raw.splitlines() if line.strip())
 
 
 def _extract_tabs(form) -> tuple[AlmaStudyServiceTab, ...]:
@@ -60,6 +71,70 @@ def _extract_output_requests(form) -> tuple[AlmaStudyServiceOutputRequest, ...]:
     return tuple(requests)
 
 
+def _extract_contact_sections(form) -> tuple[AlmaProfileSection, ...]:
+    sections: list[AlmaProfileSection] = []
+    for container in form.find_all(["fieldset", "section", "div"]):
+        title_node = container.find(["legend", "h2", "h3", "h4"], recursive=False)
+        if title_node is None:
+            title_node = container.find(["legend", "h2", "h3", "h4"])
+        title = _clean_text(title_node.get_text(" ", strip=True)) if title_node is not None else ""
+        if not title or "Personendaten:" in title:
+            continue
+        fields = _extract_contact_fields(container)
+        if fields:
+            sections.append(AlmaProfileSection(title=title, fields=fields))
+
+    if sections:
+        return _dedupe_sections(sections)
+
+    fields = _extract_contact_fields(form)
+    return (AlmaProfileSection(title="Kontaktdaten", fields=fields),) if fields else ()
+
+
+def _extract_contact_fields(node) -> tuple[AlmaProfileField, ...]:
+    fields: list[AlmaProfileField] = []
+    for row in node.find_all("tr"):
+        cells = row.find_all(["td", "th"], recursive=False)
+        if len(cells) < 2:
+            continue
+        label = _clean_text(cells[0].get_text(" ", strip=True)).rstrip(":")
+        value = _field_text(cells[1])
+        if label and value:
+            fields.append(AlmaProfileField(label=label, value=value))
+
+    for item in node.find_all(["dt", "label"]):
+        label = _clean_text(item.get_text(" ", strip=True)).rstrip(":")
+        value_node = item.find_next_sibling(["dd", "span", "div", "p"])
+        value = _field_text(value_node) if value_node is not None else ""
+        if label and value:
+            fields.append(AlmaProfileField(label=label, value=value))
+    return _dedupe_fields(fields)
+
+
+def _dedupe_sections(sections: list[AlmaProfileSection]) -> tuple[AlmaProfileSection, ...]:
+    seen: set[tuple[str, tuple[tuple[str, str], ...]]] = set()
+    unique: list[AlmaProfileSection] = []
+    for section in sections:
+        key = (section.title.casefold(), tuple((field.label.casefold(), field.value) for field in section.fields))
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(section)
+    return tuple(unique)
+
+
+def _dedupe_fields(fields: list[AlmaProfileField]) -> tuple[AlmaProfileField, ...]:
+    seen: set[tuple[str, str]] = set()
+    unique: list[AlmaProfileField] = []
+    for field in fields:
+        key = (field.label.casefold(), field.value.casefold())
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(field)
+    return tuple(unique)
+
+
 def extract_studyservice_page(html: str, page_url: str) -> AlmaStudyServicePage:
     soup = BeautifulSoup(html, "html.parser")
     form = soup.find("form", id="studyserviceForm")
@@ -97,6 +172,7 @@ def extract_studyservice_page(html: str, page_url: str) -> AlmaStudyServicePage:
     tabs = _extract_tabs(form)
     active_tab_label = next((tab.label for tab in tabs if tab.is_active), None)
     output_requests = _extract_output_requests(form)
+    contact_sections = _extract_contact_sections(form)
 
     return AlmaStudyServicePage(
         action_url=urljoin(page_url, form["action"]),
@@ -108,4 +184,5 @@ def extract_studyservice_page(html: str, page_url: str) -> AlmaStudyServicePage:
         active_tab_label=active_tab_label,
         tabs=tabs,
         output_requests=output_requests,
+        contact_sections=contact_sections,
     )

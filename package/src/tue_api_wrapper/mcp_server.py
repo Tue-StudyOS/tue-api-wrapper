@@ -98,6 +98,11 @@ def create_mcp_server(*, env_file: str | Path | None = ".env", host: str = "127.
         return _serialized(_authenticated(env_file).alma.timetable(term))
 
     @server.tool()
+    def authenticated_alma_profile() -> dict[str, Any]:
+        """Load the authenticated Alma student profile values visible on the contact-data tab."""
+        return _serialized(_authenticated(env_file).alma.profile())
+
+    @server.tool()
     def authenticated_ilias_tasks() -> dict[str, Any]:
         """Load authenticated ILIAS task overview data."""
         return _serialized(_authenticated(env_file).ilias.tasks())

@@ -14,7 +14,11 @@ def fetch_studyservice_contract(client, *, tab_label: str | None = None) -> Alma
         raise AlmaLoginError("Session is not authenticated; the study service page redirected back to login.")
 
     page = extract_studyservice_page(response.text, response.url)
-    if tab_label is None or _matches_tab(page.active_tab_label, tab_label) or _has_document_content(page):
+    if (
+        tab_label is None
+        or _matches_tab(page.active_tab_label, tab_label)
+        or (_matches_tab(DOCUMENTS_TAB_LABEL, tab_label) and _has_document_content(page))
+    ):
         return page
     return _post_studyservice_tab(client, page, tab_label=tab_label)
 

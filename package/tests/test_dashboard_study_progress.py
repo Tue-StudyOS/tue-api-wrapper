@@ -59,6 +59,7 @@ class _FakeAlma:
             active_tab_label=None,
             tabs=(),
             output_requests=(),
+            contact_sections=(),
         )
 
     def fetch_study_planner(self) -> AlmaStudyPlannerPage:

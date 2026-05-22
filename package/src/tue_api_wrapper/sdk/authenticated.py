@@ -12,6 +12,7 @@ from ..alma_course_search_client import search_courses
 from ..alma_feature_client import fetch_current_lectures
 from ..alma_official_documents import download_exam_report, download_studyservice_report, list_exam_reports
 from ..alma_portal_messages_client import fetch_portal_messages, fetch_portal_messages_feed, refresh_portal_messages_feed
+from ..alma_profile_client import fetch_student_profile
 from ..alma_planner_client import fetch_study_planner
 from ..alma_timetable_client import fetch_timetable_controls, fetch_timetable_view, refresh_timetable_export_url
 from ..client import AlmaClient
@@ -125,6 +126,9 @@ class AuthenticatedAlmaApi:
 
     def studyservice_summary(self):
         return self.client.fetch_studyservice_contract()
+
+    def profile(self):
+        return fetch_student_profile(self.client)
 
     def download_current_document(self):
         return self.client.download_current_studyservice_document()
@@ -284,12 +288,7 @@ class TuebingenAuthenticatedClient:
         )
 
     @classmethod
-    def login(
-        cls,
-        *,
-        username: str,
-        password: str,
-    ) -> "TuebingenAuthenticatedClient":
+    def login(cls, *, username: str, password: str) -> "TuebingenAuthenticatedClient":
         return cls(UniversityCredentials(username, password))
 
     def close(self) -> None:

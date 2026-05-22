@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import os
-from urllib.parse import quote
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse
 import uvicorn
 
 from .alma_catalog_client import fetch_course_catalog_page
 from .api_errors import alma_error_status_code, translate_alma_error
 from .api_routes_alma_assignments import router as alma_assignments_router
+from .api_routes_alma_documents import router as alma_documents_router
 from .api_routes_alma_registration import router as alma_registration_router
 from .api_routes_discovery import router as discovery_router
 from .api_routes_edit_actions import router as edit_actions_router
@@ -18,6 +18,7 @@ from .api_routes_extended import router as extended_router
 from .api_routes_feedback import router as feedback_router
 from .api_routes_mail import router as mail_router
 from .api_routes_moodle import router as moodle_router
+from .api_routes_profile import router as profile_router
 from .api_routes_products import router as products_router
 from .client import AlmaClient
 from .config import AlmaError
@@ -36,6 +37,7 @@ app.add_middleware(
 )
 for router in (
     alma_assignments_router,
+    alma_documents_router,
     alma_registration_router,
     discovery_router,
     edit_actions_router,
@@ -43,6 +45,7 @@ for router in (
     feedback_router,
     mail_router,
     moodle_router,
+    profile_router,
     products_router,
 ):
     app.include_router(router)
@@ -192,63 +195,6 @@ def alma_module_detail(url: str) -> dict[str, object]:
         return serialize(_public_alma_client().fetch_public_module_detail(url))
     except AlmaError as error:
         raise _translate_error(error) from error
-
-
-@app.get("/api/alma/documents")
-def alma_documents() -> list[object]:
-    try:
-        return serialize(_alma_client().list_studyservice_reports())
-    except AlmaError as error:
-        raise _translate_error(error) from error
-
-
-@app.get("/api/alma/studyservice")
-def alma_studyservice() -> dict[str, object]:
-    try:
-        contract = _alma_client().fetch_studyservice_contract()
-        return {
-            "reports": serialize(contract.reports),
-            "currentDownloadAvailable": contract.latest_download_url is not None,
-            "currentDownloadUrl": "/api/alma/documents/current"
-            if contract.latest_download_url is not None
-            else None,
-            "sourcePageUrl": _alma_client().studyservice_url,
-        }
-    except AlmaError as error:
-        raise _translate_error(error) from error
-
-
-@app.get("/api/alma/documents/current")
-def alma_current_document() -> Response:
-    try:
-        document = _alma_client().download_current_studyservice_document()
-    except AlmaError as error:
-        raise _translate_error(error) from error
-
-    return Response(
-        content=document.data,
-        media_type=document.content_type or "application/pdf",
-        headers={"Content-Disposition": f'inline; filename="{document.filename}"'},
-    )
-
-
-@app.get("/api/alma/documents/{doc_id}")
-def alma_document_by_id(doc_id: str) -> Response:
-    try:
-        document = _alma_client().download_document_by_id(doc_id)
-    except AlmaError as error:
-        raise _translate_error(error) from error
-
-    return Response(
-        content=document.data,
-        media_type=document.content_type or "application/pdf",
-        headers={"Content-Disposition": f'inline; filename="{document.filename}"'},
-    )
-
-
-@app.get("/api/alma/documents/{doc_id}/download-url")
-def alma_document_download_url(doc_id: str) -> dict[str, str]:
-    return {"url": f"/api/alma/documents/{quote(doc_id, safe='')}"}
 
 
 @app.get("/api/ilias/root")

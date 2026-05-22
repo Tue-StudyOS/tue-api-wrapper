@@ -9,28 +9,54 @@ struct KufBarcodeScanResult: Equatable {
 struct KufBarcodeScannerView: UIViewControllerRepresentable {
     var onScan: (KufBarcodeScanResult) -> Void
     var onError: (String) -> Void
+    var preferredMetadataTypes: [AVMetadataObject.ObjectType] = Self.defaultPreferredMetadataTypes
+    var cameraDeniedMessage = "Camera access is needed to scan the KuF barcode."
 
     func makeUIViewController(context: Context) -> KufBarcodeScannerViewController {
-        KufBarcodeScannerViewController(onScan: onScan, onError: onError)
+        KufBarcodeScannerViewController(
+            preferredMetadataTypes: preferredMetadataTypes,
+            cameraDeniedMessage: cameraDeniedMessage,
+            onScan: onScan,
+            onError: onError
+        )
     }
 
     func updateUIViewController(
         _ uiViewController: KufBarcodeScannerViewController,
         context: Context
     ) {}
+
+    static let defaultPreferredMetadataTypes: [AVMetadataObject.ObjectType] = [
+        .ean13,
+        .ean8,
+        .code128,
+        .code39,
+        .code39Mod43,
+        .interleaved2of5,
+        .itf14,
+        .qr,
+        .pdf417,
+        .aztec
+    ]
 }
 
 final class KufBarcodeScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
     private let session = AVCaptureSession()
     private var previewLayer: AVCaptureVideoPreviewLayer?
     private var didScan = false
+    private let preferredMetadataTypes: [AVMetadataObject.ObjectType]
+    private let cameraDeniedMessage: String
     private let onScan: (KufBarcodeScanResult) -> Void
     private let onError: (String) -> Void
 
     init(
+        preferredMetadataTypes: [AVMetadataObject.ObjectType],
+        cameraDeniedMessage: String,
         onScan: @escaping (KufBarcodeScanResult) -> Void,
         onError: @escaping (String) -> Void
     ) {
+        self.preferredMetadataTypes = preferredMetadataTypes
+        self.cameraDeniedMessage = cameraDeniedMessage
         self.onScan = onScan
         self.onError = onError
         super.init(nibName: nil, bundle: nil)
@@ -136,19 +162,7 @@ final class KufBarcodeScannerViewController: UIViewController, AVCaptureMetadata
     private func supportedMetadataTypes(
         from availableTypes: [AVMetadataObject.ObjectType]
     ) -> [AVMetadataObject.ObjectType] {
-        let preferredTypes: [AVMetadataObject.ObjectType] = [
-            .ean13,
-            .ean8,
-            .code128,
-            .code39,
-            .code39Mod43,
-            .interleaved2of5,
-            .itf14,
-            .qr,
-            .pdf417,
-            .aztec
-        ]
-        return preferredTypes.filter(availableTypes.contains)
+        preferredMetadataTypes.filter(availableTypes.contains)
     }
 
     private func stopSession() {
@@ -159,6 +173,6 @@ final class KufBarcodeScannerViewController: UIViewController, AVCaptureMetadata
     }
 
     private func reportCameraDenied() {
-        onError("Camera access is needed to scan the KuF barcode.")
+        onError(cameraDeniedMessage)
     }
 }

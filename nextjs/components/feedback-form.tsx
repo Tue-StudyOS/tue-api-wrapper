@@ -4,12 +4,13 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import type { FeedbackIssueCategory, FeedbackIssueRequest, FeedbackIssueResponse } from "@/lib/feedback-types";
+import type { FeedbackIssueDraft } from "@/lib/github-feedback";
+import { buildFeedbackIssueDraft } from "@/lib/github-feedback";
+import type { FeedbackIssueCategory, FeedbackIssueRequest } from "@/lib/feedback-types";
 
 type SubmitState =
   | { status: "idle" }
-  | { status: "submitting" }
-  | { status: "submitted"; response: FeedbackIssueResponse }
+  | { status: "opened"; draft: FeedbackIssueDraft }
   | { status: "error"; message: string };
 
 export function FeedbackForm({
@@ -28,12 +29,10 @@ export function FeedbackForm({
   const [state, setState] = useState<SubmitState>({ status: "idle" });
 
   const canSubmit = useMemo(() => {
-    if (state.status === "submitting") return false;
     return title.trim().length >= 4 && summary.trim().length >= 10;
-  }, [state.status, summary, title]);
+  }, [summary, title]);
 
-  async function submit(): Promise<void> {
-    setState({ status: "submitting" });
+  function submit(): void {
     try {
       const systemVersion = (navigator.userAgent || "unknown").slice(0, 60);
       const deviceModel = (navigator.platform || "unknown").slice(0, 60);
@@ -51,19 +50,9 @@ export function FeedbackForm({
         deviceModel
       };
 
-      const response = await fetch("/api/feedback/issues", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        const detail = await response.text().catch(() => "");
-        throw new Error(detail || `Backend returned HTTP ${response.status}.`);
-      }
-
-      const json = (await response.json()) as FeedbackIssueResponse;
-      setState({ status: "submitted", response: json });
+      const draft = buildFeedbackIssueDraft(payload);
+      window.open(draft.issueURL, "_blank", "noopener,noreferrer");
+      setState({ status: "opened", draft });
       setTitle("");
       setSummary("");
       setArea("");
@@ -78,7 +67,7 @@ export function FeedbackForm({
     <Card>
       <CardContent className="pt-6 flex flex-col gap-4">
         <div className="text-sm text-muted-foreground">
-          Submits a GitHub issue via the Python backend. The backend needs `GITHUB_FEEDBACK_TOKEN` configured.
+          Opens a prefilled GitHub issue draft in your browser. GitHub handles login before the issue is created.
         </div>
 
         <div className="grid gap-2">
@@ -139,25 +128,24 @@ export function FeedbackForm({
           <div className="text-sm text-destructive whitespace-pre-wrap">{state.message}</div>
         ) : null}
 
-        {state.status === "submitted" ? (
+        {state.status === "opened" ? (
           <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/30 px-4 py-3">
             <div className="min-w-0">
-              <div className="text-sm font-medium truncate">Issue #{state.response.issueNumber}</div>
-              <div className="text-xs text-muted-foreground truncate">{state.response.title}</div>
+              <div className="text-sm font-medium truncate">GitHub draft opened</div>
+              <div className="text-xs text-muted-foreground truncate">{state.draft.title}</div>
             </div>
             <Button asChild variant="secondary" size="sm">
-              <a href={state.response.issueURL} target="_blank" rel="noreferrer">
+              <a href={state.draft.issueURL} target="_blank" rel="noreferrer">
                 Open
               </a>
             </Button>
           </div>
         ) : null}
 
-        <Button disabled={!canSubmit} onClick={() => void submit()}>
-          {state.status === "submitting" ? "Submitting..." : "Submit feedback"}
+        <Button disabled={!canSubmit} onClick={submit}>
+          Open GitHub issue
         </Button>
       </CardContent>
     </Card>
   );
 }
-

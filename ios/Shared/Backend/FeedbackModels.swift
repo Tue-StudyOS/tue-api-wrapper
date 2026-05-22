@@ -36,14 +36,51 @@ struct AppFeedbackIssueRequest: Codable, Equatable {
     var deviceModel: String
 }
 
-struct AppFeedbackIssueResponse: Decodable, Equatable {
-    var issueNumber: Int
-    var issueURL: String
+struct AppFeedbackIssueDraft: Equatable {
+    var issueURL: URL
     var title: String
 }
 
-struct AppFeedbackStatusResponse: Decodable, Equatable {
-    var enabled: Bool
-    var repository: String?
-    var detail: String
+extension AppFeedbackIssueRequest {
+    var githubIssueDraft: AppFeedbackIssueDraft {
+        let title = "[iOS Feedback] \(category.title): \(self.title)"
+        var components = URLComponents(string: "https://github.com/SebastianBoehler/tue-api-wrapper/issues/new")!
+        components.queryItems = [
+            URLQueryItem(name: "title", value: title),
+            URLQueryItem(name: "body", value: githubBody),
+            URLQueryItem(name: "labels", value: "feedback")
+        ]
+        return AppFeedbackIssueDraft(issueURL: components.url!, title: title)
+    }
+
+    private var githubBody: String {
+        var parts = [
+            "<!-- source: tue-api-ios-feedback -->",
+            "<!-- platform: ios -->",
+            "## Summary",
+            summary,
+            "## Context",
+            "- Category: \(category.title)",
+            "- Area: \(area ?? "Not specified")",
+            "- App version: \(appVersion) (\(buildNumber))",
+            "- OS version: \(systemVersion)",
+            "- Device: \(deviceModel)",
+            "- Submitted at: \(ISO8601DateFormatter().string(from: Date()))"
+        ]
+
+        if let reproductionSteps {
+            parts.append(contentsOf: ["## Reproduction Steps", reproductionSteps])
+        }
+        if let expectedBehavior {
+            parts.append(contentsOf: ["## Expected Behavior", expectedBehavior])
+        }
+
+        parts.append(contentsOf: [
+            "## Notes",
+            "- Submitted from the iOS in-app feedback sheet.",
+            "- Avoid posting personal data, credentials, or student records in follow-up comments."
+        ])
+
+        return parts.joined(separator: "\n\n")
+    }
 }

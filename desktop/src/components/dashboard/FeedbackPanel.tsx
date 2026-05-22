@@ -1,23 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 
 import type { DesktopAppInfo } from "../../../shared/desktop-types";
-import { submitFeedbackIssue } from "../../lib/api";
-import type { FeedbackIssueCategory, FeedbackIssueResponse, FeedbackStatusResponse } from "../../lib/feedback-types";
+import type { FeedbackIssueDraft } from "../../lib/github-feedback";
+import { buildFeedbackIssueDraft } from "../../lib/github-feedback";
+import type { FeedbackIssueCategory } from "../../lib/feedback-types";
 import { PanelHeader } from "./DashboardPrimitives";
 
 type SubmitState =
   | { status: "idle" }
-  | { status: "submitting" }
-  | { status: "submitted"; response: FeedbackIssueResponse }
+  | { status: "opened"; draft: FeedbackIssueDraft }
   | { status: "error"; message: string };
 
-export function FeedbackPanel({
-  baseUrl,
-  feedbackStatus
-}: {
-  baseUrl: string | null;
-  feedbackStatus: FeedbackStatusResponse | null;
-}) {
+export function FeedbackPanel() {
   const [appInfo, setAppInfo] = useState<DesktopAppInfo | null>(null);
   const [category, setCategory] = useState<FeedbackIssueCategory>("bug");
   const [title, setTitle] = useState("");
@@ -40,15 +34,10 @@ export function FeedbackPanel({
   }, []);
 
   const canSubmit = useMemo(() => {
-    if (!baseUrl) return false;
-    if (!feedbackStatus?.enabled) return false;
-    if (state.status === "submitting") return false;
     return title.trim().length >= 4 && summary.trim().length >= 10;
-  }, [baseUrl, feedbackStatus?.enabled, state.status, summary, title]);
+  }, [summary, title]);
 
-  async function onSubmit(): Promise<void> {
-    if (!baseUrl || !feedbackStatus?.enabled) return;
-    setState({ status: "submitting" });
+  function onSubmit(): void {
     try {
       const payload = {
         platform: "desktop",
@@ -63,8 +52,9 @@ export function FeedbackPanel({
         systemVersion: appInfo?.systemVersion ?? "unknown",
         deviceModel: appInfo?.deviceModel ?? "unknown"
       } as const;
-      const response = await submitFeedbackIssue(baseUrl, payload);
-      setState({ status: "submitted", response });
+      const draft = buildFeedbackIssueDraft(payload);
+      void window.desktop.openExternal(draft.issueURL);
+      setState({ status: "opened", draft });
       setTitle("");
       setSummary("");
       setArea("");
@@ -77,85 +67,78 @@ export function FeedbackPanel({
 
   return (
     <article className="panel">
-      <PanelHeader title="Feedback" meta={baseUrl && feedbackStatus?.enabled ? "Connected" : "Unavailable"} />
+      <PanelHeader title="Feedback" meta="GitHub draft" />
+      <div className="stack-list">
+        <label className="field">
+          <span>Category</span>
+          <select value={category} onChange={(event) => setCategory(event.target.value as FeedbackIssueCategory)}>
+            <option value="bug">Bug</option>
+            <option value="feature">Feature</option>
+            <option value="improvement">Improvement</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+        <p className="muted">Opens a prefilled GitHub issue draft in your browser.</p>
 
-      {!baseUrl ? (
-        <p className="muted">Connect the local backend to submit feedback.</p>
-      ) : !feedbackStatus?.enabled ? (
-        <p className="muted">{feedbackStatus?.detail ?? "Feedback issue creation is not enabled on this backend."}</p>
-      ) : (
-        <div className="stack-list">
-          <label className="field">
-            <span>Category</span>
-            <select value={category} onChange={(event) => setCategory(event.target.value as FeedbackIssueCategory)}>
-              <option value="bug">Bug</option>
-              <option value="feature">Feature</option>
-              <option value="improvement">Improvement</option>
-              <option value="other">Other</option>
-            </select>
-          </label>
-          <p className="muted">Creates a GitHub issue via the local Python backend.</p>
+        <label className="field">
+          <span>Title</span>
+          <input placeholder="Short summary" value={title} onChange={(event) => setTitle(event.target.value)} type="text" />
+        </label>
 
-          <label className="field">
-            <span>Title</span>
-            <input placeholder="Short summary" value={title} onChange={(event) => setTitle(event.target.value)} type="text" />
-          </label>
+        <label className="field">
+          <span>Summary</span>
+          <textarea
+            placeholder="What happened and what should happen instead?"
+            value={summary}
+            onChange={(event) => setSummary(event.target.value)}
+            rows={5}
+          />
+        </label>
 
-          <label className="field">
-            <span>Summary</span>
-            <textarea
-              placeholder="What happened and what should happen instead?"
-              value={summary}
-              onChange={(event) => setSummary(event.target.value)}
-              rows={5}
-            />
-          </label>
+        <label className="field">
+          <span>Area (optional)</span>
+          <input placeholder="e.g. Mail, Timetable, Discovery" value={area} onChange={(event) => setArea(event.target.value)} type="text" />
+        </label>
 
-          <label className="field">
-            <span>Area (optional)</span>
-            <input placeholder="e.g. Mail, Timetable, Discovery" value={area} onChange={(event) => setArea(event.target.value)} type="text" />
-          </label>
+        <label className="field">
+          <span>Reproduction steps (optional)</span>
+          <textarea
+            placeholder="How can it be reproduced?"
+            value={reproductionSteps}
+            onChange={(event) => setReproductionSteps(event.target.value)}
+            rows={4}
+          />
+        </label>
 
-          <label className="field">
-            <span>Reproduction steps (optional)</span>
-            <textarea
-              placeholder="How can it be reproduced?"
-              value={reproductionSteps}
-              onChange={(event) => setReproductionSteps(event.target.value)}
-              rows={4}
-            />
-          </label>
+        <label className="field">
+          <span>Expected behavior (optional)</span>
+          <textarea
+            placeholder="What should the app do?"
+            value={expectedBehavior}
+            onChange={(event) => setExpectedBehavior(event.target.value)}
+            rows={3}
+          />
+        </label>
 
-          <label className="field">
-            <span>Expected behavior (optional)</span>
-            <textarea
-              placeholder="What should the app do?"
-              value={expectedBehavior}
-              onChange={(event) => setExpectedBehavior(event.target.value)}
-              rows={3}
-            />
-          </label>
-
-          {state.status === "error" ? <p className="muted">Error: {state.message}</p> : null}
-          {state.status === "submitted" ? (
-            <div className="stack-row compact-row">
-              <div>
-                <strong>Submitted</strong>
-                <span>Issue #{state.response.issueNumber}: {state.response.title}</span>
-              </div>
-              <button className="secondary-button compact-button" onClick={() => void window.desktop.openExternal(state.response.issueURL)} type="button">
-                Open
-              </button>
+        {state.status === "error" ? <p className="muted">Error: {state.message}</p> : null}
+        {state.status === "opened" ? (
+          <div className="stack-row compact-row">
+            <div>
+              <strong>GitHub draft opened</strong>
+              <span>{state.draft.title}</span>
             </div>
-          ) : null}
-
-          <div className="settings-actions">
-            <button className="secondary-button" disabled={!canSubmit} onClick={() => void onSubmit()} type="button">
-              {state.status === "submitting" ? "Submitting..." : "Submit feedback"}
+            <button className="secondary-button compact-button" onClick={() => void window.desktop.openExternal(state.draft.issueURL)} type="button">
+              Open
             </button>
           </div>
+        ) : null}
+
+        <div className="settings-actions">
+          <button className="secondary-button" disabled={!canSubmit} onClick={onSubmit} type="button">
+            Open GitHub issue
+          </button>
         </div>
-      )}
+      </div>
     </article>
   );
 }

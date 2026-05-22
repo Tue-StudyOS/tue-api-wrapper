@@ -10,7 +10,6 @@ import type { CourseDiscoverySearchResponse, CourseDiscoveryStatus } from "./cou
 import type { UnifiedCourseDetail } from "./course-types";
 import type { MailboxSummary, MailInboxSummary, MailMessageDetail } from "./mail-types";
 import type { DirectoryAction, DirectoryForm, DirectorySearchResponse } from "./people-types";
-import type { FeedbackIssueRequest, FeedbackIssueResponse, FeedbackStatusResponse } from "./feedback-types";
 import type { TimmsItemDetail, TimmsSearchPage, TimmsStreamVariant, TimmsTreePage } from "./timms-types";
 
 export async function fetchDashboard(
@@ -241,18 +240,6 @@ export async function submitPeopleAction(
     method: "POST",
     body: JSON.stringify(input)
   });
-}
-
-export async function submitFeedbackIssue(baseUrl: string, payload: FeedbackIssueRequest): Promise<FeedbackIssueResponse> {
-  return fetchJson<FeedbackIssueResponse>(baseUrl, "/api/feedback/issues", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify(payload)
-  });
-}
-
-export async function fetchFeedbackStatus(baseUrl: string): Promise<FeedbackStatusResponse> {
-  return fetchJson<FeedbackStatusResponse>(baseUrl, "/api/feedback/status");
 }
 
 export async function fetchJson<T>(baseUrl: string, path: string, init?: RequestInit): Promise<T> {

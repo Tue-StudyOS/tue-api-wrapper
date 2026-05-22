@@ -39,7 +39,6 @@ import type {
   IliasWaitlistResult,
   IliasWaitlistSupport
 } from "./discovery-types";
-import type { FeedbackStatusResponse } from "./feedback-types";
 
 const apiBaseUrl = process.env.PORTAL_API_BASE_URL ?? "http://127.0.0.1:8000";
 
@@ -82,10 +81,6 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function getDashboard(): Promise<DashboardData> {
   return fetchJson("/api/dashboard");
-}
-
-export function getFeedbackStatus(): Promise<FeedbackStatusResponse> {
-  return fetchJson("/api/feedback/status");
 }
 
 export function getDocuments(): Promise<DocumentsPanel> {

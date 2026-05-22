@@ -1,9 +1,8 @@
 import SwiftUI
 
 struct AppFeedbackSheet: View {
-    let portalAPIBaseURLString: String
-
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @State private var draft = AppFeedbackDraft()
     @State private var phase: AppFeedbackSubmissionPhase = .idle
 
@@ -75,14 +74,8 @@ struct AppFeedbackSheet: View {
 
                 if !phase.isSubmitted {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            Task { await submit() }
-                        } label: {
-                            if phase.isSubmitting {
-                                ProgressView()
-                            } else {
-                                Text("Submit")
-                            }
+                        Button("Open GitHub") {
+                            submit()
                         }
                         .disabled(!canSubmit)
                     }
@@ -94,25 +87,17 @@ struct AppFeedbackSheet: View {
     @ViewBuilder
     private var statusSectionContent: some View {
         switch phase {
-        case .idle, .submitting:
+        case .idle:
             EmptyView()
-        case .failed(let message):
-            StatusBanner(
-                title: "Submission failed",
-                message: message,
-                systemImage: "exclamationmark.triangle"
-            )
-        case .submitted(let response):
+        case .opened(let draft):
             VStack(alignment: .leading, spacing: 12) {
                 StatusBanner(
-                    title: "Feedback sent",
-                    message: "Feedback issue #\(response.issueNumber) was created.",
+                    title: "GitHub draft opened",
+                    message: "Review and submit the issue in GitHub.",
                     systemImage: "checkmark.circle"
                 )
 
-                if let issueURL = URL(string: response.issueURL) {
-                    Link("Open issue on GitHub", destination: issueURL)
-                }
+                Link("Open GitHub draft", destination: draft.issueURL)
             }
         }
     }
@@ -120,25 +105,12 @@ struct AppFeedbackSheet: View {
     private var canSubmit: Bool {
         draft.title.trimmedOrNil != nil
             && draft.summary.trimmedOrNil != nil
-            && !phase.isSubmitting
     }
 
-    private func submit() async {
-        phase = .submitting
-
-        guard let client = BackendClient(baseURLString: portalAPIBaseURLString) else {
-            phase = .failed("The configured portal API URL is invalid in this build.")
-            return
-        }
-
-        do {
-            let response = try await client.submitAppFeedback(
-                draft.asRequest(context: context)
-            )
-            phase = .submitted(response)
-        } catch {
-            phase = .failed(error.localizedDescription)
-        }
+    private func submit() {
+        let issueDraft = draft.asRequest(context: context).githubIssueDraft
+        openURL(issueDraft.issueURL)
+        phase = .opened(issueDraft)
     }
 }
 
@@ -168,20 +140,10 @@ private struct AppFeedbackDraft {
 
 private enum AppFeedbackSubmissionPhase: Equatable {
     case idle
-    case submitting
-    case failed(String)
-    case submitted(AppFeedbackIssueResponse)
-
-    var isSubmitting: Bool {
-        if case .submitting = self {
-            true
-        } else {
-            false
-        }
-    }
+    case opened(AppFeedbackIssueDraft)
 
     var isSubmitted: Bool {
-        if case .submitted = self {
+        if case .opened = self {
             true
         } else {
             false
@@ -190,9 +152,9 @@ private enum AppFeedbackSubmissionPhase: Equatable {
 
     var showsStatusSection: Bool {
         switch self {
-        case .idle, .submitting:
+        case .idle:
             false
-        case .failed, .submitted:
+        case .opened:
             true
         }
     }

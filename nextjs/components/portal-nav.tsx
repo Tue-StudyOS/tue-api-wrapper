@@ -67,13 +67,11 @@ const baseGroups: Array<{
   },
 ] as const;
 
-export function PortalNav({ feedbackEnabled }: { feedbackEnabled: boolean }) {
+export function PortalNav() {
   const pathname = usePathname();
-  const groups = feedbackEnabled
-    ? baseGroups.map((group) => group.label === "Tools"
-      ? { ...group, items: [...group.items, { href: "/feedback", label: "Feedback", icon: Bug }] }
-      : group)
-    : baseGroups;
+  const groups = baseGroups.map((group) => group.label === "Tools"
+    ? { ...group, items: [...group.items, { href: "/feedback", label: "Feedback", icon: Bug }] }
+    : group);
 
   return (
     <nav className="flex flex-col gap-3" aria-label="Primary">

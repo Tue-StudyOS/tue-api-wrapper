@@ -15,10 +15,3 @@ export interface FeedbackIssueRequest {
   systemVersion: string;
   deviceModel: string;
 }
-
-export interface FeedbackIssueResponse {
-  issueNumber: number;
-  issueURL: string;
-  title: string;
-}
-

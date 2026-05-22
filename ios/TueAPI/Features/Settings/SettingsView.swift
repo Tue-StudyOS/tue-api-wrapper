@@ -69,15 +69,17 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Feedback") {
-                Button {
-                    activeSheet = .appFeedback
-                } label: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Send app feedback")
-                        Text("Report an issue or suggest a feature without including university login details.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+            if AppFeedbackGitHubClient.isConfigured {
+                Section("Feedback") {
+                    Button {
+                        activeSheet = .appFeedback
+                    } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Send app feedback")
+                            Text("Create a GitHub issue without including university login details.")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }
@@ -108,7 +110,7 @@ struct SettingsView: View {
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .appFeedback:
-                AppFeedbackSheet(portalAPIBaseURLString: model.portalAPIBaseURLString)
+                AppFeedbackSheet()
             }
         }
     }
@@ -136,6 +138,7 @@ struct SettingsView: View {
             }
         }
     }
+
 }
 
 private enum SettingsSheet: String, Identifiable {

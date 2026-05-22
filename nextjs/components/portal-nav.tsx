@@ -22,9 +22,10 @@ import {
   LibraryBig,
   Bug,
 } from "lucide-react";
+import { isFeedbackIssueCreationConfigured } from "@/lib/github-feedback";
 import { cn } from "@/lib/utils";
 
-const groups: Array<{
+const baseGroups: Array<{
   label?: string;
   items: ReadonlyArray<{ href: `/${string}`; label: string; icon: React.ComponentType<{ className?: string }> }>;
 }> = [
@@ -63,13 +64,20 @@ const groups: Array<{
     label: "Tools",
     items: [
       { href: "/assistant", label: "Assistant", icon: MessageSquare },
-      { href: "/feedback", label: "Feedback", icon: Bug },
     ],
   },
 ] as const;
 
 export function PortalNav() {
   const pathname = usePathname();
+  const groups = baseGroups.map((group) => group.label === "Tools"
+    ? {
+      ...group,
+      items: isFeedbackIssueCreationConfigured()
+        ? [...group.items, { href: "/feedback", label: "Feedback", icon: Bug }]
+        : group.items
+    }
+    : group);
 
   return (
     <nav className="flex flex-col gap-3" aria-label="Primary">

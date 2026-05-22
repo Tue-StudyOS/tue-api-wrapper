@@ -15,7 +15,6 @@ from .api_routes_alma_registration import router as alma_registration_router
 from .api_routes_discovery import router as discovery_router
 from .api_routes_edit_actions import router as edit_actions_router
 from .api_routes_extended import router as extended_router
-from .api_routes_feedback import router as feedback_router
 from .api_routes_mail import router as mail_router
 from .api_routes_moodle import router as moodle_router
 from .api_routes_products import router as products_router
@@ -40,7 +39,6 @@ for router in (
     discovery_router,
     edit_actions_router,
     extended_router,
-    feedback_router,
     mail_router,
     moodle_router,
     products_router,

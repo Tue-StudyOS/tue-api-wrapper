@@ -28,7 +28,7 @@ function SidebarContents() {
   );
 }
 
-export function AppShell({
+export async function AppShell({
   title,
   children,
 }: {

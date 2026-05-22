@@ -1,13 +1,12 @@
 import SwiftUI
 
 struct AppFeedbackSheet: View {
-    let portalAPIBaseURLString: String
-
     @Environment(\.dismiss) private var dismiss
     @State private var draft = AppFeedbackDraft()
     @State private var phase: AppFeedbackSubmissionPhase = .idle
 
     private let context = AppFeedbackContext.current
+    private let feedbackClient = AppFeedbackGitHubClient()
 
     var body: some View {
         NavigationStack {
@@ -21,9 +20,18 @@ struct AppFeedbackSheet: View {
                 Section("Privacy") {
                     StatusBanner(
                         title: "Public feedback issue",
-                        message: "Do not include login details, student IDs, grades, or other personal data.",
+                        message: "This creates a GitHub issue from this device. Do not include login details, student IDs, grades, or other personal data.",
                         systemImage: "exclamationmark.shield"
                     )
+                }
+                if !AppFeedbackGitHubClient.isConfigured {
+                    Section {
+                        StatusBanner(
+                            title: "Feedback unavailable",
+                            message: "This build has no GitHub feedback token configured.",
+                            systemImage: "exclamationmark.triangle"
+                        )
+                    }
                 }
 
                 Section("Feedback") {
@@ -75,14 +83,8 @@ struct AppFeedbackSheet: View {
 
                 if !phase.isSubmitted {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            Task { await submit() }
-                        } label: {
-                            if phase.isSubmitting {
-                                ProgressView()
-                            } else {
-                                Text("Submit")
-                            }
+                        Button(phase.isSubmitting ? "Creating..." : "Create") {
+                            submit()
                         }
                         .disabled(!canSubmit)
                     }
@@ -94,50 +96,54 @@ struct AppFeedbackSheet: View {
     @ViewBuilder
     private var statusSectionContent: some View {
         switch phase {
-        case .idle, .submitting:
+        case .idle:
             EmptyView()
-        case .failed(let message):
+        case .submitting:
             StatusBanner(
-                title: "Submission failed",
-                message: message,
-                systemImage: "exclamationmark.triangle"
+                title: "Creating GitHub issue",
+                message: "Submitting feedback to GitHub...",
+                systemImage: "arrow.triangle.2.circlepath"
             )
-        case .submitted(let response):
+        case .created(let issue):
             VStack(alignment: .leading, spacing: 12) {
                 StatusBanner(
-                    title: "Feedback sent",
-                    message: "Feedback issue #\(response.issueNumber) was created.",
+                    title: "GitHub issue created",
+                    message: issue.title,
                     systemImage: "checkmark.circle"
                 )
 
-                if let issueURL = URL(string: response.issueURL) {
-                    Link("Open issue on GitHub", destination: issueURL)
-                }
+                Link("Open GitHub issue", destination: issue.issueURL)
             }
+        case .failed(let message):
+            StatusBanner(
+                title: "Feedback failed",
+                message: message,
+                systemImage: "exclamationmark.triangle"
+            )
         }
     }
 
     private var canSubmit: Bool {
-        draft.title.trimmedOrNil != nil
-            && draft.summary.trimmedOrNil != nil
+        AppFeedbackGitHubClient.isConfigured
             && !phase.isSubmitting
+            && draft.title.trimmedOrNil != nil
+            && draft.summary.trimmedOrNil != nil
     }
 
-    private func submit() async {
+    private func submit() {
         phase = .submitting
-
-        guard let client = BackendClient(baseURLString: portalAPIBaseURLString) else {
-            phase = .failed("The configured portal API URL is invalid in this build.")
-            return
-        }
-
-        do {
-            let response = try await client.submitAppFeedback(
-                draft.asRequest(context: context)
-            )
-            phase = .submitted(response)
-        } catch {
-            phase = .failed(error.localizedDescription)
+        let request = draft.asRequest(context: context)
+        Task {
+            do {
+                let issue = try await feedbackClient.createIssue(request)
+                await MainActor.run {
+                    phase = .created(issue)
+                }
+            } catch {
+                await MainActor.run {
+                    phase = .failed(error.localizedDescription)
+                }
+            }
         }
     }
 }
@@ -169,19 +175,11 @@ private struct AppFeedbackDraft {
 private enum AppFeedbackSubmissionPhase: Equatable {
     case idle
     case submitting
+    case created(AppFeedbackIssue)
     case failed(String)
-    case submitted(AppFeedbackIssueResponse)
-
-    var isSubmitting: Bool {
-        if case .submitting = self {
-            true
-        } else {
-            false
-        }
-    }
 
     var isSubmitted: Bool {
-        if case .submitted = self {
+        if case .created = self {
             true
         } else {
             false
@@ -190,10 +188,18 @@ private enum AppFeedbackSubmissionPhase: Equatable {
 
     var showsStatusSection: Bool {
         switch self {
-        case .idle, .submitting:
+        case .idle:
             false
-        case .failed, .submitted:
+        case .submitting, .created, .failed:
             true
+        }
+    }
+
+    var isSubmitting: Bool {
+        if case .submitting = self {
+            true
+        } else {
+            false
         }
     }
 }

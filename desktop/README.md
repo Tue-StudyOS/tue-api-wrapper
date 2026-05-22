@@ -31,6 +31,8 @@ npm run dev
 
 The Electron main process will prefer `package/.venv` automatically when it exists.
 
+Feedback issue creation is client-side. Set `VITE_GITHUB_FEEDBACK_TOKEN` before building or running the renderer if the Feedback tool should create GitHub issues directly.
+
 ## Packaging
 
 Build the renderer and Electron main process:

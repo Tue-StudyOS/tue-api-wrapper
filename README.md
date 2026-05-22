@@ -212,6 +212,16 @@ Useful URLs:
 
 Public routes work without credentials. Authenticated routes read local credentials from environment variables such as `UNI_USERNAME` and `UNI_PASSWORD`.
 
+## Feedback Issue Creation
+
+The desktop, web, and iOS clients can create public GitHub feedback issues directly from the client without the local API server. Configure a fine-grained GitHub token with access to create issues in this repository:
+
+- Desktop renderer builds read `VITE_GITHUB_FEEDBACK_TOKEN`.
+- Next.js browser builds read `NEXT_PUBLIC_GITHUB_FEEDBACK_TOKEN`.
+- iOS reads the `GITHUB_FEEDBACK_TOKEN` build setting into `GitHubFeedbackToken` in `Info.plist`.
+
+If the token is missing, the feedback UI shows that issue creation is unavailable.
+
 ## Local MCP Server
 
 Install the MCP extra and start the server:

@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import type { DiscoverySettings } from "../../../shared/desktop-types";
 import { refreshCourseDiscoveryIndex } from "../../lib/api";
+import { isFeedbackIssueCreationConfigured } from "../../lib/github-feedback";
 import { FeedbackPanel } from "./FeedbackPanel";
 import { PeopleSearchPanel } from "./PeopleSearchPanel";
 import { PanelHeader } from "./DashboardPrimitives";
@@ -41,6 +42,13 @@ export function ToolsPage({
     });
   }
 
+  const toolTabs = [
+    ["timms", "TIMMS"],
+    ["people", "People"],
+    ...(isFeedbackIssueCreationConfigured() ? [["feedback", "Feedback"] as const] : []),
+    ["settings", "Settings"]
+  ] as const;
+
   return (
     <div className="tools-page">
       <section className="panel section-hero">
@@ -50,12 +58,7 @@ export function ToolsPage({
           <p className="muted">TIMMS videos, university people search, and local app controls in one place.</p>
         </div>
         <div className="segmented-control">
-          {([
-            ["timms", "TIMMS"],
-            ["people", "People"],
-            ["feedback", "Feedback"],
-            ["settings", "Settings"]
-          ] as const).map(([id, label]) => (
+          {toolTabs.map(([id, label]) => (
             <button key={id} className={tab === id ? "active" : ""} onClick={() => setTab(id)} type="button">
               {label}
             </button>
@@ -65,7 +68,7 @@ export function ToolsPage({
 
       {tab === "timms" ? <TimmsArchivePanel baseUrl={state.backendUrl ?? null} /> : null}
       {tab === "people" ? <PeopleSearchPanel baseUrl={state.backendUrl ?? null} /> : null}
-      {tab === "feedback" ? <FeedbackPanel baseUrl={state.backendUrl ?? null} /> : null}
+      {tab === "feedback" ? <FeedbackPanel /> : null}
       {tab === "settings" ? (
         <RuntimeSettings
           links={links}
@@ -145,6 +148,12 @@ function RuntimeSettings({
             <div>
               <strong>Local service</strong>
               <span>{runtimeLabel(state.backendState, state.backendUrl, state.backendError)}</span>
+            </div>
+          </div>
+          <div className="stack-row compact-row">
+            <div>
+              <strong>Feedback issue creation</strong>
+              <span>{isFeedbackIssueCreationConfigured() ? "Client-side GitHub issue creation." : "Unavailable in this build."}</span>
             </div>
           </div>
           <div className="stack-row compact-row">
@@ -241,6 +250,7 @@ function RuntimeSettings({
     </div>
   );
 }
+
 
 function semanticLabel(enabled: boolean, saving: boolean): string {
   if (saving) {

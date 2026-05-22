@@ -25,6 +25,10 @@ struct CampusDiscoverView: View {
                 CampusFoodView(model: model)
             case .seats:
                 CampusSeatView()
+            case .deutschlandTicket:
+                DeutschlandTicketView(model: model)
+            case .kufCard:
+                KufTicketView(model: model)
             }
         }
     }
@@ -34,6 +38,8 @@ private enum CampusDiscoverSection: String, CaseIterable, Identifiable {
     case map
     case food
     case seats
+    case deutschlandTicket
+    case kufCard
 
     var id: Self { self }
 
@@ -45,6 +51,10 @@ private enum CampusDiscoverSection: String, CaseIterable, Identifiable {
             "Food"
         case .seats:
             "Seats"
+        case .deutschlandTicket:
+            "D-Ticket"
+        case .kufCard:
+            "KuF"
         }
     }
 }

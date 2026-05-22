@@ -14,6 +14,13 @@ export interface DesktopRuntimeState {
   discoverySettings: DiscoverySettings;
 }
 
+export interface DesktopAppInfo {
+  appVersion: string;
+  buildNumber: string;
+  systemVersion: string;
+  deviceModel: string;
+}
+
 export interface DiscoverySettings {
   semanticSearchEnabled: boolean;
   vectorStore: "memory" | "lancedb";

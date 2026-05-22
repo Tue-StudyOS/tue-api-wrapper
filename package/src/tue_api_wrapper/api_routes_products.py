@@ -5,11 +5,12 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
+from .campus_client import CampusClient
 from .directory_client import UniversityDirectoryClient
 from .directory_models import DirectoryAction, DirectoryForm
 from .event_calendar_client import EventCalendarClient
 from .fitness_client import FitnessClient
-from .campus_client import CampusClient
+from .hsp_client import HspClient
 from .praxisportal_client import PraxisportalClient, build_praxisportal_subscription_query
 from .portal_service import serialize
 from .seatfinder_client import SeatfinderClient
@@ -24,6 +25,7 @@ campus_client = CampusClient()
 talks_client = TalksClient()
 event_calendar_client = EventCalendarClient()
 fitness_client = FitnessClient()
+hsp_client = HspClient()
 seatfinder_client = SeatfinderClient()
 
 
@@ -285,6 +287,34 @@ def campus_events(query: str = Query("", max_length=120), limit: int = Query(24,
 def campus_kuf_training_occupancy() -> dict[str, object]:
     try:
         return serialize(fitness_client.fetch_kuf_training_occupancy())
+    except Exception as error:  # pragma: no cover - exercised via FastAPI surface
+        raise _translate_public_error(error) from error
+
+
+@router.get("/api/campus/fitness/courses")
+def campus_fitness_courses(
+    query: str = Query("", max_length=120),
+    area: str | None = Query(None, max_length=80),
+    include_unavailable: bool = False,
+    limit: int = Query(50, ge=1, le=100),
+) -> dict[str, object]:
+    try:
+        return serialize(
+            hsp_client.search_courses(
+                query=query,
+                area=area,
+                include_unavailable=include_unavailable,
+                limit=limit,
+            )
+        )
+    except Exception as error:  # pragma: no cover - exercised via FastAPI surface
+        raise _translate_public_error(error) from error
+
+
+@router.get("/api/campus/fitness/offers/{title}")
+def campus_fitness_offer(title: str) -> dict[str, object]:
+    try:
+        return serialize(hsp_client.fetch_offer(title))
     except Exception as error:  # pragma: no cover - exercised via FastAPI surface
         raise _translate_public_error(error) from error
 

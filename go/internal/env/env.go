@@ -32,13 +32,6 @@ func IliasCredentials() (string, string) {
 	return sharedCredentials()
 }
 
-func PortalAPIBaseURL() string {
-	return firstNonEmpty(
-		os.Getenv("PORTAL_API_BASE_URL"),
-		"http://127.0.0.1:8000",
-	)
-}
-
 func sharedCredentials() (string, string) {
 	return firstNonEmpty(
 			os.Getenv("UNI_USERNAME"),

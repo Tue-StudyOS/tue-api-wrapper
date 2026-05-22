@@ -3,6 +3,8 @@ package cli
 import (
 	"flag"
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/SebastianBoehler/tue-api-wrapper/go/internal/alma"
 	"github.com/SebastianBoehler/tue-api-wrapper/go/internal/config"
@@ -21,55 +23,21 @@ func runAlma(args []string) int {
 		return runAlmaCurrentLectures(args[1:])
 	case "exams":
 		return runAlmaExams(args[1:])
+	case "timetable":
+		return runAlmaTimetable(args[1:])
 	case "-h", "--help", "help":
 		printAlmaUsage()
 		return 0
 	default:
-		if _, ok := almaRoutes[args[0]]; ok {
-			return runBackendRoute("alma "+args[0], almaRoutes[args[0]], args[1:])
-		}
 		return output.PrintError(fmt.Errorf("unknown alma command %q", args[0]))
 	}
-}
-
-var almaRoutes = map[string]backendRoute{
-	"timetable":               {Path: "/api/alma/timetable", Description: "Term timetable. Use --query term=...."},
-	"enrollments":             {Path: "/api/alma/enrollments", Description: "Enrollment page payload."},
-	"catalog":                 {Path: "/api/alma/catalog", Description: "Authenticated Alma catalog nodes. Optional queries: term, limit."},
-	"module-search":           {Path: "/api/alma/module-search", Description: "Public module search. Pass filters through repeated --query flags."},
-	"module-search-filters":   {Path: "/api/alma/module-search/filters", Description: "Valid public module-search filter values."},
-	"module-detail":           {Path: "/api/alma/module-detail", Description: "Public module detail. Use --query url=...."},
-	"documents":               {Path: "/api/alma/documents", Description: "Study-service report list."},
-	"studyservice":            {Path: "/api/alma/studyservice", Description: "Legacy study-service summary contract."},
-	"current-document":        {Path: "/api/alma/documents/current", Description: "Current study-service PDF. Use --output file.pdf."},
-	"document":                {Path: "/api/alma/documents/{doc_id}", PathArgs: []string{"doc_id"}, Description: "Study-service PDF by document id. Use --output file.pdf."},
-	"document-download-url":   {Path: "/api/alma/documents/{doc_id}/download-url", PathArgs: []string{"doc_id"}, Description: "Relative download URL for a study-service PDF."},
-	"exam-report":             {Method: "POST", Path: "/api/alma/exams/report", Description: "Generate an official Alma exam report PDF. Use --output file.pdf and optional --query trigger_name=...."},
-	"exam-reports":            {Path: "/api/alma/exams/reports", Description: "Available official Alma exam report actions."},
-	"current-lectures-api":    {Path: "/api/alma/current-lectures", Description: "Backend current-lectures view. Optional queries: date, limit."},
-	"course-register":         {Method: "POST", Path: "/api/alma/course-registration", Description: "Register for an Alma course when the detail page supports it. Use --query url=... and optional planelement_id=...."},
-	"course-register-options": {Method: "POST", Path: "/api/alma/course-registration/options", Description: "Open Alma's registration chooser and list available registration paths. Use --query url=...."},
-	"course-register-support": {Path: "/api/alma/course-registration/support", Description: "Check whether an Alma detail page exposes a registration action. Use --query url=...."},
-	"timetable-controls":      {Path: "/api/alma/timetable/controls", Description: "Timetable controls and term options."},
-	"timetable-view":          {Path: "/api/alma/timetable/view", Description: "Rendered timetable view. Optional queries: term, week, from_date, to_date, single_day, limit."},
-	"timetable-assignments":   {Path: "/api/alma/timetable/course-assignments", Description: "Current timetable courses with Alma module and degree assignments."},
-	"timetable-pdf":           {Path: "/api/alma/timetable/pdf", Description: "Timetable PDF. Use --output timetable.pdf and optional term/week/date queries."},
-	"portal-messages-feed":    {Path: "/api/alma/portal-messages/feed", Description: "Portal messages feed."},
-	"study-planner":           {Path: "/api/alma/study-planner", Description: "Study planner grid and modules."},
-	"course-search":           {Path: "/api/alma/course-search", Description: "Authenticated course search. Optional queries: query, term, limit."},
-	"catalog-page":            {Path: "/api/alma/catalog/page", Description: "Authenticated catalog page with section structure. Optional queries: term, limit."},
-	"studyservice-report":     {Method: "POST", Path: "/api/alma/studyservice/report", Description: "Generate an official Alma study-service PDF. Use --output file.pdf and optional trigger_name/term_id queries."},
-	"studyservice-summary":    {Path: "/api/alma/studyservice/summary", Description: "Expanded study-service summary with tabs and output requests."},
 }
 
 func printAlmaUsage() {
 	fmt.Println("Usage:")
 	fmt.Println("  tue alma current-lectures [--date DD.MM.YYYY] [--limit N] [--json]")
 	fmt.Println("  tue alma exams [--limit N|--query limit=N]")
-	fmt.Println("  tue alma <backend-command> [--query key=value ...] [--output PATH] [--raw]")
-	fmt.Println()
-	fmt.Println("Backend-backed commands:")
-	printBackendGroupUsage("alma", almaRoutes)
+	fmt.Println("  tue alma timetable [--term TERM] [--query term=TERM] [--ics] [--output PATH] [--raw]")
 }
 
 func runAlmaExams(args []string) int {
@@ -138,6 +106,55 @@ func runAlmaCurrentLectures(args []string) int {
 		fmt.Printf("%02d. %s - %s | %s | %s\n", index+1, start, end, item.Title, room)
 	}
 	return 0
+}
+
+func runAlmaTimetable(args []string) int {
+	fs := flag.NewFlagSet("alma timetable", flag.ContinueOnError)
+	term := fs.String("term", "", "Timetable term label, e.g. \"Sommersemester 2026\"")
+	icsOutput := fs.Bool("ics", false, "Print the raw iCalendar payload instead of JSON")
+	outputPath := fs.String("output", "", "Write the iCalendar payload to a file (use with --ics)")
+	fs.Bool("raw", false, "Accepted for backend CLI compatibility; has no effect for native commands")
+	query := multiValueFlag{}
+	fs.Var(&query, "query", "key=value query value")
+	if err := fs.Parse(args); err != nil {
+		return 1
+	}
+	if fs.NArg() != 0 {
+		return output.PrintError(fmt.Errorf("unexpected argument %q", fs.Arg(0)))
+	}
+
+	resolvedTerm := strings.TrimSpace(*term)
+	if queryTerm := strings.TrimSpace(query.first("term")); queryTerm != "" {
+		resolvedTerm = queryTerm
+	}
+	if resolvedTerm == "" {
+		resolvedTerm = "Sommer 2026"
+	}
+
+	client, ok := authenticatedAlmaClient()
+	if !ok {
+		return 1
+	}
+
+	result, err := client.FetchTimetableForTerm(resolvedTerm)
+	if err != nil {
+		return output.PrintError(err)
+	}
+
+	if *icsOutput || *outputPath != "" {
+		if *outputPath != "" {
+			if err := os.WriteFile(*outputPath, []byte(result.RawICS), 0o644); err != nil {
+				return output.PrintError(err)
+			}
+			return 0
+		}
+		if _, err := os.Stdout.Write(append([]byte(result.RawICS), '\n')); err != nil {
+			return output.PrintError(err)
+		}
+		return 0
+	}
+
+	return printNativeJSON(result, nil)
 }
 
 func authenticatedAlmaClient() (*alma.Client, bool) {

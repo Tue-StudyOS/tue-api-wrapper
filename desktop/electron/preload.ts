@@ -5,12 +5,14 @@ import type {
   AssistantChatResponse,
   AssistantConfig,
   CredentialInput,
+  DesktopAppInfo,
   DesktopRuntimeState,
   DiscoverySettings
 } from "../shared/desktop-types";
 
 contextBridge.exposeInMainWorld("desktop", {
   getState: (): Promise<DesktopRuntimeState> => ipcRenderer.invoke("desktop:get-state"),
+  getAppInfo: (): Promise<DesktopAppInfo> => ipcRenderer.invoke("desktop:get-app-info"),
   saveCredentials: (input: CredentialInput): Promise<void> => ipcRenderer.invoke("desktop:save-credentials", input),
   clearCredentials: (): Promise<void> => ipcRenderer.invoke("desktop:clear-credentials"),
   restartBackend: (): Promise<void> => ipcRenderer.invoke("desktop:restart-backend"),

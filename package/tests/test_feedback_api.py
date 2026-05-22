@@ -53,6 +53,33 @@ class FeedbackAPITests(unittest.TestCase):
         self.assertEqual(submitted.category_label, "Bug")
         self.assertIn("<!-- source: tue-api-ios-feedback -->", submitted.github_body())
 
+    def test_creates_desktop_feedback_issue(self) -> None:
+        with patch.object(
+            feedback_issue_client,
+            "create_issue",
+            return_value=GitHubCreatedIssue(
+                number=9,
+                url="https://github.com/SebastianBoehler/tue-api-wrapper/issues/9",
+                title="[Desktop Feedback] Bug: Feedback form is missing a field",
+            ),
+        ) as create_issue:
+            response = create_feedback_issue(
+                AppFeedbackIssueRequest(**_payload(platform="desktop", title="Feedback form is missing a field")),
+                _request("203.0.113.15"),
+            )
+
+        self.assertEqual(
+            response.model_dump(),
+            {"issueNumber": 9, "issueURL": "https://github.com/SebastianBoehler/tue-api-wrapper/issues/9", "title": "[Desktop Feedback] Bug: Feedback form is missing a field"},
+        )
+
+        submitted = create_issue.call_args.args[0]
+        self.assertIsInstance(submitted, NormalizedAppFeedbackIssue)
+        self.assertEqual(submitted.platform, "desktop")
+        self.assertTrue(submitted.github_title.startswith("[Desktop Feedback]"))
+        self.assertIn("<!-- source: tue-api-desktop-feedback -->", submitted.github_body())
+        self.assertIn("Submitted from the Desktop feedback form.", submitted.github_body())
+
     def test_rejects_blank_trimmed_title(self) -> None:
         with self.assertRaises(HTTPException) as context:
             create_feedback_issue(
@@ -106,9 +133,9 @@ class FeedbackAPITests(unittest.TestCase):
         self.assertIn("Retry-After", context.exception.headers)
 
 
-def _payload(*, title: str = "Add a darker timetable theme") -> dict[str, str]:
+def _payload(*, platform: str = "ios", title: str = "Add a darker timetable theme") -> dict[str, str]:
     return {
-        "platform": "ios",
+        "platform": platform,
         "category": "bug",
         "title": title,
         "summary": "The action button in Settings overlaps the keyboard when VoiceOver is enabled.",

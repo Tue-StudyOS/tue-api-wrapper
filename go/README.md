@@ -1,28 +1,27 @@
 # Go CLI
 
-This subtree contains a Unix-native Go CLI for the stable authenticated Alma and ILIAS flows already implemented in the Python package.
+This subtree contains a Unix-native Go CLI that runs without relying on the local Python FastAPI backend.
 
 Current commands:
 
 ```bash
 tue alma current-lectures --date 14.03.2026 --json
 tue alma exams --query limit=5
+tue alma timetable --query term="Sommer 2026"
+tue alma timetable --query term="Sommer 2026" --ics
 tue ilias search --term graphics --page 1 --json
 tue ilias info --target 5289871 --json
-tue api get /api/dashboard --query term="Sommer 2026"
-tue alma study-planner
-tue mail inbox --query unread_only=true
 tue moodle dashboard
-tue timms search --query query=machine+learning
+tue talks list --query scope=upcoming --query query=ai
+tue talks get 123
+tue praxisportal filters
+tue praxisportal search --query query=data --query project_type_id=1 --query industry_id=2
+tue praxisportal project 456
+tue seatfinder availability
 tue discovery status --raw
 ```
 
-The Go CLI uses native implementations where the board needs standalone behavior, with backend routes kept for endpoints that have not been ported yet:
-
-- native Go flows for `alma current-lectures`, `alma exams`, `ilias search`, `ilias info`, Moodle read/enrolment commands, and `discovery status`
-- backend-backed read commands for the remaining FastAPI surface, plus the generic `tue api get ...` escape hatch for any new read endpoint
-
-The backend-backed commands use `PORTAL_API_BASE_URL` and default to `http://127.0.0.1:8000`.
+The Go CLI uses native implementations for Alma/ILIAS/Moodle flows and aims to keep logic on the client side (no Python backend as a middle layer).
 
 The CLI automatically loads `.env.local` and `.env` from the current directory or any parent directory. Canonical credentials:
 

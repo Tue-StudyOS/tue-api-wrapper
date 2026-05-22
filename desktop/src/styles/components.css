@@ -94,7 +94,30 @@
   transition: border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
+.field textarea,
+.field select {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--panel-border);
+  background: #ffffff;
+  color: inherit;
+  font: inherit;
+  padding: 12px 13px;
+  outline: none;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
 .field input:focus {
+  border-color: rgba(161, 30, 59, 0.58);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+.field textarea:focus,
+.field select:focus {
   border-color: rgba(161, 30, 59, 0.58);
   box-shadow: 0 0 0 4px var(--focus-ring);
 }

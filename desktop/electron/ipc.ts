@@ -1,6 +1,7 @@
-import { ipcMain, shell } from "electron";
+import { app, ipcMain, shell } from "electron";
+import os from "node:os";
 
-import type { AssistantChatRequest, AssistantConfig, CredentialInput, DiscoverySettings } from "../shared/desktop-types";
+import type { AssistantChatRequest, AssistantConfig, CredentialInput, DesktopAppInfo, DiscoverySettings } from "../shared/desktop-types";
 import { AssistantService } from "./assistant-service";
 import { AssistantStore } from "./assistant-store";
 import { BackendManager } from "./backend-manager";
@@ -8,6 +9,12 @@ import { BackendManager } from "./backend-manager";
 export function registerIpc(manager: BackendManager, assistantStore: AssistantStore): void {
   const assistant = new AssistantService(manager);
   ipcMain.handle("desktop:get-state", () => manager.getState());
+  ipcMain.handle("desktop:get-app-info", (): DesktopAppInfo => ({
+    appVersion: app.getVersion(),
+    buildNumber: app.getVersion(),
+    systemVersion: `${os.type()} ${os.release()}`.slice(0, 60),
+    deviceModel: `${os.platform()}-${os.arch()}`.slice(0, 60)
+  }));
   ipcMain.handle("desktop:save-credentials", (_event, input: CredentialInput) => manager.saveCredentials(input));
   ipcMain.handle("desktop:clear-credentials", () => manager.clearCredentials());
   ipcMain.handle("desktop:restart-backend", () => manager.restart());

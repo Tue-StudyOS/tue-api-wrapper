@@ -5,6 +5,7 @@ import type {
   AssistantChatResponse,
   AssistantConfig,
   CredentialInput,
+  DesktopAppInfo,
   DesktopRuntimeState,
   DiscoverySettings
 } from "../shared/desktop-types";
@@ -13,6 +14,7 @@ declare global {
   interface Window {
     desktop: {
       getState(): Promise<DesktopRuntimeState>;
+      getAppInfo(): Promise<DesktopAppInfo>;
       saveCredentials(input: CredentialInput): Promise<void>;
       clearCredentials(): Promise<void>;
       restartBackend(): Promise<void>;

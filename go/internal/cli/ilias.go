@@ -41,36 +41,17 @@ func runIlias(args []string) int {
 		printIliasUsage()
 		return 0
 	default:
-		if _, ok := iliasRoutes[args[0]]; ok {
-			return runBackendRoute("ilias "+args[0], iliasRoutes[args[0]], args[1:])
-		}
 		return output.PrintError(fmt.Errorf("unknown ilias command %q", args[0]))
 	}
-}
-
-var iliasRoutes = map[string]backendRoute{
-	"root":           {Path: "/api/ilias/root", Description: "Authenticated root page payload."},
-	"memberships":    {Path: "/api/ilias/memberships", Description: "Membership overview. Optional query: limit."},
-	"tasks":          {Path: "/api/ilias/tasks", Description: "Derived task overview. Optional query: limit."},
-	"content":        {Path: "/api/ilias/content", Description: "Content page. Use --query target=grp/...."},
-	"forum":          {Path: "/api/ilias/forum", Description: "Forum topics. Use --query target=frm/...."},
-	"exercise":       {Path: "/api/ilias/exercise", Description: "Exercise assignments. Use --query target=exc/...."},
-	"favorite-add":   {Method: "POST", Path: "/api/ilias/favorites", Description: "Add an ILIAS item to favorites. Use --query url=... from search results."},
-	"search-api":     {Path: "/api/ilias/search", Description: "Backend ILIAS search. Use --query term=... and optional page/search_mode/content_type/created_* queries."},
-	"search-options": {Path: "/api/ilias/search/options", Description: "Available ILIAS search filters."},
-	"info-api":       {Path: "/api/ilias/info", Description: "Backend info screen. Use --query target=...."},
-	"waitlist-join":  {Method: "POST", Path: "/api/ilias/waitlist/join", Description: "Join an ILIAS waitlist. Use --query url=... and --query accept_agreement=true when required."},
-	"waitlist-check": {Path: "/api/ilias/waitlist/support", Description: "Check whether an ILIAS page exposes a waitlist join flow. Use --query url=...."},
 }
 
 func printIliasUsage() {
 	fmt.Println("Usage:")
 	fmt.Println("  tue ilias search --term QUERY [--page N] [--json]")
 	fmt.Println("  tue ilias info --target REF_ID_OR_URL [--json]")
-	fmt.Println("  tue ilias <root|memberships|tasks|content|forum|exercise> [--query key=value ...]")
-	fmt.Println()
-	fmt.Println("Backend-backed write/support commands:")
-	printBackendGroupUsage("ilias", iliasRoutes)
+	fmt.Println("  tue ilias <root|memberships|tasks|content|forum|exercise> [--query key=value ...] [--raw]")
+	fmt.Println("  tue ilias search-api --query term=QUERY [--query page=N]")
+	fmt.Println("  tue ilias info-api --query target=REF_ID_OR_URL")
 }
 
 func runIliasRoot(args []string) int {
@@ -85,8 +66,12 @@ func runIliasRoot(args []string) int {
 }
 
 func runIliasMemberships(args []string) int {
-	options, err := parseBackendRequestOptions(args)
+	options, err := parseQueryOptions(args)
 	if err != nil {
+		if err == errUsageRequested {
+			printIliasUsage()
+			return 0
+		}
 		return output.PrintError(err)
 	}
 	limit := 20
@@ -104,8 +89,12 @@ func runIliasMemberships(args []string) int {
 }
 
 func runIliasTasks(args []string) int {
-	options, err := parseBackendRequestOptions(args)
+	options, err := parseQueryOptions(args)
 	if err != nil {
+		if err == errUsageRequested {
+			printIliasUsage()
+			return 0
+		}
 		return output.PrintError(err)
 	}
 	limit := 20
@@ -141,8 +130,12 @@ func runIliasExercise(args []string) int {
 }
 
 func runIliasTargetJSON(args []string, command string, fetch func(*ilias.Client, string) (any, error)) int {
-	options, err := parseBackendRequestOptions(args)
+	options, err := parseQueryOptions(args)
 	if err != nil {
+		if err == errUsageRequested {
+			printIliasUsage()
+			return 0
+		}
 		return output.PrintError(err)
 	}
 	target := options.Query.Get("target")
@@ -157,8 +150,12 @@ func runIliasTargetJSON(args []string, command string, fetch func(*ilias.Client,
 }
 
 func runIliasSearchAPI(args []string) int {
-	options, err := parseBackendRequestOptions(args)
+	options, err := parseQueryOptions(args)
 	if err != nil {
+		if err == errUsageRequested {
+			printIliasUsage()
+			return 0
+		}
 		return output.PrintError(err)
 	}
 	term := options.Query.Get("term")
@@ -180,8 +177,12 @@ func runIliasSearchAPI(args []string) int {
 }
 
 func runIliasInfoAPI(args []string) int {
-	options, err := parseBackendRequestOptions(args)
+	options, err := parseQueryOptions(args)
 	if err != nil {
+		if err == errUsageRequested {
+			printIliasUsage()
+			return 0
+		}
 		return output.PrintError(err)
 	}
 	target := options.Query.Get("target")

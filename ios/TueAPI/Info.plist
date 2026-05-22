@@ -24,6 +24,8 @@
 	<false/>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>The camera is used to scan your Hochschulsport KuF and Deutschlandticket barcodes and save them locally on this device.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Your location is used to show your position on the campus map and help you navigate around Tübingen.</string>
 	<key>NSSupportsLiveActivities</key>

@@ -17,11 +17,15 @@ router = APIRouter()
 DEFAULT_GITHUB_FEEDBACK_REPOSITORY = "SebastianBoehler/tue-api-wrapper"
 GITHUB_API_BASE_URL = "https://api.github.com"
 GITHUB_API_VERSION = "2022-11-28"
-FEEDBACK_SOURCE_MARKER = "tue-api-ios-feedback"
+FEEDBACK_SOURCE_MARKERS: dict[str, str] = {
+    "ios": "tue-api-ios-feedback",
+    "desktop": "tue-api-desktop-feedback",
+    "web": "tue-api-web-feedback",
+}
 
 
 class AppFeedbackIssueRequest(BaseModel):
-    platform: Literal["ios"] = "ios"
+    platform: Literal["ios", "desktop", "web"] = "ios"
     category: Literal["bug", "feature", "improvement", "other"]
     title: str = Field(min_length=4, max_length=120)
     summary: str = Field(min_length=10, max_length=2000)
@@ -88,8 +92,20 @@ class NormalizedAppFeedbackIssue:
         )
 
     @property
+    def platform_label(self) -> str:
+        return {
+            "ios": "iOS",
+            "desktop": "Desktop",
+            "web": "Web",
+        }.get(self.platform, self.platform)
+
+    @property
+    def source_marker(self) -> str:
+        return FEEDBACK_SOURCE_MARKERS.get(self.platform, FEEDBACK_SOURCE_MARKERS["ios"])
+
+    @property
     def github_title(self) -> str:
-        return f"[iOS Feedback] {self.category_label}: {self.title}"
+        return f"[{self.platform_label} Feedback] {self.category_label}: {self.title}"
 
     @property
     def category_label(self) -> str:
@@ -102,8 +118,13 @@ class NormalizedAppFeedbackIssue:
 
     def github_body(self) -> str:
         submitted_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        submitted_from = (
+            "the iOS in-app feedback sheet"
+            if self.platform == "ios"
+            else f"the {self.platform_label} feedback form"
+        )
         parts = [
-            f"<!-- source: {FEEDBACK_SOURCE_MARKER} -->",
+            f"<!-- source: {self.source_marker} -->",
             f"<!-- platform: {self.platform} -->",
             "## Summary",
             self.summary,
@@ -124,7 +145,7 @@ class NormalizedAppFeedbackIssue:
         parts.extend(
             [
                 "## Notes",
-                "- Submitted from the iOS in-app feedback sheet.",
+                f"- Submitted from {submitted_from}.",
                 "- Avoid posting personal data, credentials, or student records in follow-up comments.",
             ]
         )

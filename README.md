@@ -16,22 +16,6 @@ Install the published Python package:
 pip install tue-api-wrapper
 ```
 
-Install directly from GitHub:
-
-```bash
-pip install "tue-api-wrapper @ git+https://github.com/SebastianBoehler/tue-api-wrapper.git#subdirectory=package"
-```
-
-Install from a local checkout for development:
-
-```bash
-git clone https://github.com/SebastianBoehler/tue-api-wrapper.git
-cd tue-api-wrapper/package
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e .
-```
-
 Optional extras:
 
 ```bash

@@ -20,6 +20,7 @@ import {
   GraduationCap,
   Mail,
   LibraryBig,
+  Bug,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -60,7 +61,10 @@ const groups: Array<{
   },
   {
     label: "Tools",
-    items: [{ href: "/assistant", label: "Assistant", icon: MessageSquare }],
+    items: [
+      { href: "/assistant", label: "Assistant", icon: MessageSquare },
+      { href: "/feedback", label: "Feedback", icon: Bug },
+    ],
   },
 ] as const;
 

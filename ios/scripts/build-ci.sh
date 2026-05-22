@@ -6,6 +6,12 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 "$ROOT_DIR/ios/scripts/generate-project.sh"
 
 xcodebuild \
+  -resolvePackageDependencies \
+  -project "$ROOT_DIR/ios/TueAPI.xcodeproj" \
+  -scheme TueAPI \
+  -clonedSourcePackagesDirPath "$ROOT_DIR/ios/build/SourcePackages"
+
+xcodebuild \
   -project "$ROOT_DIR/ios/TueAPI.xcodeproj" \
   -scheme TueAPI \
   -destination "generic/platform=iOS Simulator" \

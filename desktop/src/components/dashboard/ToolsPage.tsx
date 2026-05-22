@@ -2,12 +2,13 @@ import { useState } from "react";
 
 import type { DiscoverySettings } from "../../../shared/desktop-types";
 import { refreshCourseDiscoveryIndex } from "../../lib/api";
+import { FeedbackPanel } from "./FeedbackPanel";
 import { PeopleSearchPanel } from "./PeopleSearchPanel";
 import { PanelHeader } from "./DashboardPrimitives";
 import { TimmsArchivePanel } from "./TimmsArchivePanel";
 import type { DashboardPageProps } from "./types";
 
-type ToolTab = "timms" | "people" | "settings";
+type ToolTab = "timms" | "people" | "feedback" | "settings";
 
 export function ToolsPage({
   data,
@@ -52,6 +53,7 @@ export function ToolsPage({
           {([
             ["timms", "TIMMS"],
             ["people", "People"],
+            ["feedback", "Feedback"],
             ["settings", "Settings"]
           ] as const).map(([id, label]) => (
             <button key={id} className={tab === id ? "active" : ""} onClick={() => setTab(id)} type="button">
@@ -63,6 +65,7 @@ export function ToolsPage({
 
       {tab === "timms" ? <TimmsArchivePanel baseUrl={state.backendUrl ?? null} /> : null}
       {tab === "people" ? <PeopleSearchPanel baseUrl={state.backendUrl ?? null} /> : null}
+      {tab === "feedback" ? <FeedbackPanel baseUrl={state.backendUrl ?? null} /> : null}
       {tab === "settings" ? (
         <RuntimeSettings
           links={links}

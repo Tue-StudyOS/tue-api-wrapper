@@ -83,7 +83,13 @@ def should_capture(url: str, allowed_hosts: set[str]) -> bool:
 
 def collect_script_routes(soup: BeautifulSoup, page_url: str) -> list[str]:
     matches: list[str] = []
-    pattern = re.compile(r"['\"]((?:https?://[^'\"]+)|(?:/(?:alma|ilias3)/[^'\"]+)|(?:goto\.php/[^'\"]+))['\"]")
+    pattern = re.compile(
+        r"['\"]("
+        r"(?:https?://[^'\"]+)"
+        r"|(?:/(?:alma/|goto\.php/|ilias\.php|login\.php|shib_login\.php)[^'\"]*)"
+        r"|(?:goto\.php/[^'\"]+)"
+        r")['\"]"
+    )
     for script in soup.find_all("script"):
         script_text = script.get_text(" ", strip=False)
         if not script_text:

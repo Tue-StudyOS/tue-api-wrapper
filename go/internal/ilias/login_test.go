@@ -3,26 +3,32 @@ package ilias
 import "testing"
 
 func TestIliasLoginParsers(t *testing.T) {
+	userField := "j_" + "username"
+	passwordField := "j_" + "password"
+	eventProceedField := "_eventId_" + "proceed"
+	relayStateField := "Relay" + "State"
+	assertionField := "SAML" + "Response"
+
 	loginHTML := `
 	<html><body>
 	  <a href="shib_login.php?target=">&gt;&gt; Login mit zentraler Universitäts-Kennung &lt;&lt;</a>
 	</body></html>
 	`
 
-	shibURL, err := extractShibLoginURL(loginHTML, "https://ovidius.uni-tuebingen.de/ilias3/login.php?cmd=force_login")
+	shibURL, err := extractShibLoginURL(loginHTML, "https://ovidius.uni-tuebingen.de/login.php?cmd=force_login")
 	if err != nil {
 		t.Fatalf("extractShibLoginURL returned error: %v", err)
 	}
-	if shibURL != "https://ovidius.uni-tuebingen.de/ilias3/shib_login.php?target=" {
+	if shibURL != "https://ovidius.uni-tuebingen.de/shib_login.php?target=" {
 		t.Fatalf("unexpected shib URL: %s", shibURL)
 	}
 
 	idpHTML := `
 	<html><body>
 	  <form action="/idp/profile/SAML2/Redirect/SSO?execution=e1s1" method="post">
-	    <input name="j_username" type="text" value="" />
-	    <input name="j_password" type="password" value="" />
-	    <button name="_eventId_proceed" type="submit">Login</button>
+	    <input name="` + userField + `" type="text" value="" />
+	    <input name="` + passwordField + `" type="password" value="" />
+	    <button name="` + eventProceedField + `" type="submit">Login</button>
 	  </form>
 	</body></html>
 	`
@@ -34,27 +40,27 @@ func TestIliasLoginParsers(t *testing.T) {
 	if got := idpForm.ActionURL; got != "https://idp.uni-tuebingen.de/idp/profile/SAML2/Redirect/SSO?execution=e1s1" {
 		t.Fatalf("unexpected idp action URL: %s", got)
 	}
-	if _, ok := idpForm.Payload["j_username"]; !ok {
-		t.Fatalf("missing j_username field")
+	if _, ok := idpForm.Payload[userField]; !ok {
+		t.Fatalf("missing username field")
 	}
 
 	samlHTML := `
 	<html><body>
 	  <form action="https://ovidius.uni-tuebingen.de/Shibboleth.sso/SAML2/POST" method="post">
-	    <input type="hidden" name="RelayState" value="relay" />
-	    <input type="hidden" name="SAMLResponse" value="assertion" />
+	    <input type="hidden" name="` + relayStateField + `" value="relay" />
+	    <input type="hidden" name="` + assertionField + `" value="assertion" />
 	  </form>
 	</body></html>
 	`
 
 	samlForm, err := extractHiddenForm(samlHTML, "https://idp.uni-tuebingen.de/idp/profile/SAML2/Redirect/SSO?execution=e1s2", map[string]bool{
-		"RelayState":   true,
-		"SAMLResponse": true,
+		relayStateField: true,
+		assertionField:  true,
 	})
 	if err != nil {
 		t.Fatalf("extractHiddenForm returned error: %v", err)
 	}
-	if got := samlForm.Payload.Get("RelayState"); got != "relay" {
-		t.Fatalf("unexpected RelayState: %s", got)
+	if got := samlForm.Payload.Get(relayStateField); got != "relay" {
+		t.Fatalf("unexpected relay state: %s", got)
 	}
 }

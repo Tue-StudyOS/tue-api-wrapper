@@ -64,7 +64,7 @@ private struct SuccessfulIliasTaskLoader: UniversityIliasTaskLoading {
         [
             IliasTask(
                 title: "Assignment",
-                url: "https://ovidius.uni-tuebingen.de/ilias3/goto.php/exc_1",
+                url: "https://ovidius.uni-tuebingen.de/goto.php/exc_1",
                 itemType: "Exercise",
                 start: nil,
                 end: "Tomorrow"

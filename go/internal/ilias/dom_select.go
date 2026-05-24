@@ -109,7 +109,7 @@ func firstButtonAction(node *html.Node) *string {
 		return nil
 	}
 	value, _ := dom.Attr(button, "data-action")
-	return stringPtr(resolveURL("https://ovidius.uni-tuebingen.de/ilias3/", value))
+	return stringPtr(resolveURL(iliasBaseURL, value))
 }
 
 func hrefOrAction(node *html.Node, pageURL string) string {

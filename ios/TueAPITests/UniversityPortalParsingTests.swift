@@ -3,7 +3,7 @@ import XCTest
 
 final class UniversityPortalParsingTests: XCTestCase {
     func testIliasTaskParserExtractsDerivedTaskRows() throws {
-        let pageURL = URL(string: "https://ovidius.uni-tuebingen.de/ilias3/ilias.php?baseClass=ilderivedtasksgui")!
+        let pageURL = URL(string: "https://ovidius.uni-tuebingen.de/ilias.php?baseClass=ilderivedtasksgui")!
         let html = """
         <html>
           <head><title>ILIAS Universität Tübingen</title></head>
@@ -27,14 +27,14 @@ final class UniversityPortalParsingTests: XCTestCase {
 
         XCTAssertEqual(tasks.count, 1)
         XCTAssertEqual(tasks[0].title, "Assignment 4 & Review")
-        XCTAssertEqual(tasks[0].url, "https://ovidius.uni-tuebingen.de/ilias3/goto.php/exc_123")
+        XCTAssertEqual(tasks[0].url, "https://ovidius.uni-tuebingen.de/goto.php/exc_123")
         XCTAssertEqual(tasks[0].itemType, "Practical Machine Learning")
         XCTAssertEqual(tasks[0].start, "17. Apr 2026")
         XCTAssertEqual(tasks[0].end, "24. Apr 2026, 23:59")
     }
 
     func testIliasTaskParserAcceptsAuthenticatedEmptyOverviewWithoutLegacyTitle() throws {
-        let pageURL = URL(string: "https://ovidius.uni-tuebingen.de/ilias3/ilias.php?baseClass=ilderivedtasksgui")!
+        let pageURL = URL(string: "https://ovidius.uni-tuebingen.de/ilias.php?baseClass=ilderivedtasksgui")!
         let html = """
         <html>
           <body>
@@ -52,7 +52,7 @@ final class UniversityPortalParsingTests: XCTestCase {
     }
 
     func testIliasTaskParserRejectsLoginPage() throws {
-        let pageURL = URL(string: "https://ovidius.uni-tuebingen.de/ilias3/login.php")!
+        let pageURL = URL(string: "https://ovidius.uni-tuebingen.de/login.php")!
         let passwordField = "j_" + "password"
         let html = """
         <html>

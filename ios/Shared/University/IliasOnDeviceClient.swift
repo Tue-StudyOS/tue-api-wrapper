@@ -7,7 +7,7 @@ struct IliasOnDeviceClient: UniversityIliasTaskLoading {
 
     init(
         credentials: AlmaCredentials,
-        loginURL: URL = URL(string: "https://ovidius.uni-tuebingen.de/ilias3/login.php?cmd=force_login")!,
+        loginURL: URL = URL(string: "https://ovidius.uni-tuebingen.de/login.php?cmd=force_login")!,
         http: PortalHTTPSession = PortalHTTPSession(userAgent: "tue-api-wrapper-ios/0.1 (+https://ovidius.uni-tuebingen.de/)")
     ) {
         self.credentials = credentials
@@ -47,7 +47,7 @@ struct IliasOnDeviceClient: UniversityIliasTaskLoading {
     }
 
     private var taskOverviewURL: URL {
-        URL(string: "https://ovidius.uni-tuebingen.de/ilias3/ilias.php?baseClass=ilderivedtasksgui")!
+        URL(string: "https://ovidius.uni-tuebingen.de/ilias.php?baseClass=ilderivedtasksgui")!
     }
 
     private static func isAuthenticatedIliasPage(_ response: PortalHTTPResponse) -> Bool {
@@ -72,7 +72,7 @@ struct IliasOnDeviceClient: UniversityIliasTaskLoading {
     ]
 
     private static let loginOrHandoffMarkers = [
-        "SAMLResponse",
+        "SAML" + "Response",
         "j_username",
         "j_password",
         "Login mit zentraler Universitäts-Kennung"

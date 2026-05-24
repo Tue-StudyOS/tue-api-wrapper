@@ -39,7 +39,7 @@ class IliasAuthTests(unittest.TestCase):
         """
 
         self.assertTrue(
-            is_authenticated_ilias_page(html, "https://ovidius.uni-tuebingen.de/ilias3/goto.php/root/1")
+            is_authenticated_ilias_page(html, "https://ovidius.uni-tuebingen.de/goto.php/root/1")
         )
 
 

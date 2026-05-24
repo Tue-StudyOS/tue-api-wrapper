@@ -5,7 +5,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 public final class IliasApi {
-    private static final String BASE = "https://ovidius.uni-tuebingen.de/ilias3/";
+    private static final String BASE = "https://ovidius.uni-tuebingen.de/";
     private static final String LOGIN = BASE + "login.php?cmd=force_login";
     private static final String SAML_RESPONSE = "SAML" + "Response";
     private static final String RELAY_STATE = "Relay" + "State";

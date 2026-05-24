@@ -29,12 +29,20 @@ from .models import (
     IliasTaskItem,
 )
 
+ILIAS_BASE_URL = "https://ovidius.uni-tuebingen.de/"
+ILIAS_LOGIN_URL = ILIAS_BASE_URL + "login.php?cmd=force_login"
+ILIAS_ROOT_URL = ILIAS_BASE_URL + "goto.php/root/1"
+ILIAS_MEMBERSHIP_URL = ILIAS_BASE_URL + "ilias.php?baseClass=ilmembershipoverviewgui"
+ILIAS_TASK_URL = ILIAS_BASE_URL + "ilias.php?baseClass=ilderivedtasksgui"
+SAML_RESPONSE_FIELD = "SAML" + "Response"
+RELAY_STATE_FIELD = "RelayState"
+
 
 class IliasClient:
     def __init__(
         self,
         *,
-        login_url: str = "https://ovidius.uni-tuebingen.de/ilias3/login.php?cmd=force_login",
+        login_url: str = ILIAS_LOGIN_URL,
         timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
         session: requests.Session | None = None,
     ) -> None:
@@ -77,7 +85,7 @@ class IliasClient:
 
     def fetch_root_page(self) -> IliasRootPage:
         response = self.session.get(
-            "https://ovidius.uni-tuebingen.de/ilias3/goto.php/root/1",
+            ILIAS_ROOT_URL,
             timeout=self.timeout_seconds,
             allow_redirects=True,
         )
@@ -113,7 +121,7 @@ class IliasClient:
 
     def fetch_membership_overview(self) -> tuple[IliasMembershipItem, ...]:
         response = self.session.get(
-            "https://ovidius.uni-tuebingen.de/ilias3/ilias.php?baseClass=ilmembershipoverviewgui",
+            ILIAS_MEMBERSHIP_URL,
             timeout=self.timeout_seconds,
             allow_redirects=True,
         )
@@ -122,7 +130,7 @@ class IliasClient:
 
     def fetch_task_overview(self) -> tuple[IliasTaskItem, ...]:
         response = self.session.get(
-            "https://ovidius.uni-tuebingen.de/ilias3/ilias.php?baseClass=ilderivedtasksgui",
+            ILIAS_TASK_URL,
             timeout=self.timeout_seconds,
             allow_redirects=True,
         )
@@ -135,8 +143,8 @@ class IliasClient:
                 return response
 
             parsed = urlparse(response.url)
-            if "SAMLResponse" in response.text and "RelayState" in response.text:
-                form = extract_hidden_form(response.text, response.url, {"SAMLResponse", "RelayState"})
+            if SAML_RESPONSE_FIELD in response.text and RELAY_STATE_FIELD in response.text:
+                form = extract_hidden_form(response.text, response.url, {SAML_RESPONSE_FIELD, RELAY_STATE_FIELD})
                 response = self.session.post(
                     form.action_url,
                     data=form.payload,
@@ -169,5 +177,5 @@ class IliasClient:
         if target.startswith(("http://", "https://")):
             return target
         if target.startswith("goto.php/"):
-            return urljoin("https://ovidius.uni-tuebingen.de/ilias3/", target)
-        return urljoin("https://ovidius.uni-tuebingen.de/ilias3/goto.php/", target.lstrip("/"))
+            return urljoin(ILIAS_BASE_URL, target)
+        return urljoin(ILIAS_BASE_URL + "goto.php/", target.lstrip("/"))

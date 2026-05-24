@@ -10,7 +10,7 @@ import requests
 from .client import AlmaClient
 from .config import AlmaError, AlmaParseError
 from .credentials import read_uni_credentials
-from .ilias_client import IliasClient
+from .ilias_client import ILIAS_LOGIN_URL, ILIAS_ROOT_URL, IliasClient
 from .route_discovery import discover_routes, discover_routes_from_har
 from .route_discovery_audit import audit_har_response_formats, render_format_audit_markdown
 
@@ -20,8 +20,8 @@ DEFAULT_ALMA_START_URLS = (
     "https://alma.uni-tuebingen.de/alma/pages/cm/exa/curricula/moduleDescriptionSearch.xhtml?_flowId=searchElementsInModuleDescription-flow&navigationPosition=studiesOffered%2CmoduleDescriptions%2CsearchElementsInModuleDescription&recordRequest=true",
 )
 DEFAULT_ILIAS_START_URLS = (
-    "https://ovidius.uni-tuebingen.de/ilias3/login.php?cmd=force_login",
-    "https://ovidius.uni-tuebingen.de/ilias3/goto.php/root/1",
+    ILIAS_LOGIN_URL,
+    ILIAS_ROOT_URL,
 )
 
 
@@ -53,7 +53,7 @@ def _build_session(site: str, authenticated: bool) -> tuple[requests.Session, tu
                 "Legacy ALMA_* and ILIAS_* env vars are still supported as fallbacks."
             )
         client.login(username=username, password=password)
-        return client.session, ("https://ovidius.uni-tuebingen.de/ilias3/goto.php/root/1",)
+        return client.session, (ILIAS_ROOT_URL,)
     return client.session, DEFAULT_ILIAS_START_URLS
 
 

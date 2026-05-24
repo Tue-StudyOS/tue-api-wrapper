@@ -9,9 +9,10 @@ import (
 )
 
 const (
-	iliasRootURL        = "https://ovidius.uni-tuebingen.de/ilias3/goto.php/root/1"
-	iliasMembershipURL  = "https://ovidius.uni-tuebingen.de/ilias3/ilias.php?baseClass=ilmembershipoverviewgui"
-	iliasDerivedTaskURL = "https://ovidius.uni-tuebingen.de/ilias3/ilias.php?baseClass=ilderivedtasksgui"
+	iliasBaseURL        = "https://ovidius.uni-tuebingen.de/"
+	iliasRootURL        = iliasBaseURL + "goto.php/root/1"
+	iliasMembershipURL  = iliasBaseURL + "ilias.php?baseClass=ilmembershipoverviewgui"
+	iliasDerivedTaskURL = iliasBaseURL + "ilias.php?baseClass=ilderivedtasksgui"
 )
 
 func (c *Client) FetchRootPage() (*RootPage, error) {
@@ -112,9 +113,9 @@ func normalizeTargetURL(target string) (string, error) {
 		return value, nil
 	}
 	if strings.HasPrefix(value, "goto.php/") {
-		return resolveURL("https://ovidius.uni-tuebingen.de/ilias3/", value), nil
+		return resolveURL(iliasBaseURL, value), nil
 	}
-	return resolveURL("https://ovidius.uni-tuebingen.de/ilias3/goto.php/", strings.TrimLeft(value, "/")), nil
+	return resolveURL(iliasBaseURL+"goto.php/", strings.TrimLeft(value, "/")), nil
 }
 
 func parseRootPage(htmlInput, pageURL string) (*RootPage, error) {

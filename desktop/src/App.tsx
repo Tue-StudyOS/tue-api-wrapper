@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 
-import type { DesktopRuntimeState } from "../shared/desktop-types";
+import type { DesktopRuntimeState, DesktopUpdateState } from "../shared/desktop-types";
 import { DashboardScreen } from "./components/DashboardScreen";
 import { OnboardingScreen } from "./components/OnboardingScreen";
+import { UpdateBanner } from "./components/UpdateBanner";
 import { useDashboard } from "./lib/use-dashboard";
 
 export function App() {
   const [state, setState] = useState<DesktopRuntimeState | null>(null);
+  const [updateState, setUpdateState] = useState<DesktopUpdateState | null>(null);
   const desktop = window.desktop;
 
   useEffect(() => {
@@ -20,14 +22,23 @@ export function App() {
         setState(nextState);
       }
     });
+    void desktop.getUpdateState().then((nextState) => {
+      if (mounted) {
+        setUpdateState(nextState);
+      }
+    });
 
     const unsubscribe = desktop.onStateChanged((nextState) => {
       setState(nextState);
+    });
+    const unsubscribeUpdates = desktop.onUpdateStateChanged((nextState) => {
+      setUpdateState(nextState);
     });
 
     return () => {
       mounted = false;
       unsubscribe();
+      unsubscribeUpdates();
     };
   }, [desktop]);
 
@@ -47,6 +58,12 @@ export function App() {
 
   return (
     <div className="app-shell">
+      <UpdateBanner
+        state={updateState}
+        onCheck={() => desktop.checkForUpdates().then(setUpdateState)}
+        onInstall={() => desktop.installUpdate().then(setUpdateState)}
+        onOpenReleases={() => desktop.openExternal(updateState?.releaseUrl ?? "https://github.com/SebastianBoehler/tue-api-wrapper/releases")}
+      />
       {!state.hasCredentials ? (
         <OnboardingScreen
           onSubmit={(username, password) => desktop.saveCredentials({ username, password })}

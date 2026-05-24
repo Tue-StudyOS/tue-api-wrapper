@@ -1,0 +1,44 @@
+.desktop-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.nav-item-list {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+}
+
+.nav-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  padding: 11px 12px 10px;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.nav-item small {
+  min-width: 20px;
+  border-radius: 999px;
+  background: var(--panel-muted);
+  color: var(--muted-strong);
+  padding: 2px 6px;
+  font-size: 0.72rem;
+}
+
+.nav-item.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.nav-refresh {
+  flex: 0 0 auto;
+}

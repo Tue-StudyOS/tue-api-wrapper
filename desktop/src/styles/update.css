@@ -1,0 +1,42 @@
+.update-banner {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 18px;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: var(--panel);
+  padding: 14px 18px;
+  box-shadow: 0 10px 28px rgba(31, 28, 24, 0.05);
+}
+
+.update-banner h2,
+.update-banner p {
+  margin: 0;
+}
+
+.update-banner .muted {
+  margin-top: 4px;
+}
+
+.update-downloaded {
+  border-color: rgba(25, 135, 84, 0.24);
+}
+
+.update-error {
+  border-color: rgba(201, 71, 71, 0.26);
+}
+
+.update-checking,
+.update-available,
+.update-downloading {
+  border-color: rgba(161, 30, 59, 0.2);
+}
+
+@media (max-width: 780px) {
+  .update-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

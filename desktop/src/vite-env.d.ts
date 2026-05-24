@@ -7,6 +7,7 @@ import type {
   CredentialInput,
   DesktopAppInfo,
   DesktopRuntimeState,
+  DesktopUpdateState,
   DiscoverySettings
 } from "../shared/desktop-types";
 
@@ -20,10 +21,14 @@ declare global {
       restartBackend(): Promise<void>;
       saveDiscoverySettings(input: DiscoverySettings): Promise<DiscoverySettings>;
       openExternal(url: string): Promise<void>;
+      getUpdateState(): Promise<DesktopUpdateState>;
+      checkForUpdates(): Promise<DesktopUpdateState>;
+      installUpdate(): Promise<DesktopUpdateState>;
       getAssistantConfig(): Promise<AssistantConfig>;
       saveAssistantConfig(input: AssistantConfig): Promise<AssistantConfig>;
       sendAssistantMessage(input: AssistantChatRequest): Promise<AssistantChatResponse>;
       onStateChanged(listener: (state: DesktopRuntimeState) => void): () => void;
+      onUpdateStateChanged(listener: (state: DesktopUpdateState) => void): () => void;
     };
   }
 }

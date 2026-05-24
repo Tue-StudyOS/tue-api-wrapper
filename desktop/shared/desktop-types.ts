@@ -21,6 +21,28 @@ export interface DesktopAppInfo {
   deviceModel: string;
 }
 
+export type DesktopUpdateStatus =
+  | "unsupported"
+  | "idle"
+  | "checking"
+  | "available"
+  | "downloading"
+  | "downloaded"
+  | "not_available"
+  | "error";
+
+export interface DesktopUpdateState {
+  status: DesktopUpdateStatus;
+  currentVersion: string;
+  availableVersion: string | null;
+  progressPercent: number | null;
+  checkedAt: string | null;
+  error: string | null;
+  isUpdateSupported: boolean;
+  canInstall: boolean;
+  releaseUrl: string;
+}
+
 export interface DiscoverySettings {
   semanticSearchEnabled: boolean;
   vectorStore: "memory" | "lancedb";

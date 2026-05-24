@@ -1,6 +1,8 @@
 @import "./styles/base.css";
 @import "./styles/layout.css";
 @import "./styles/components.css";
+@import "./styles/dashboard-nav.css";
+@import "./styles/update.css";
 @import "./styles/today.css";
 @import "./styles/rows.css";
 @import "./styles/onboarding.css";

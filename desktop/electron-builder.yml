@@ -14,6 +14,10 @@ extraResources:
       - '**/*'
 asar: true
 artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+publish:
+  provider: github
+  owner: SebastianBoehler
+  repo: tue-api-wrapper
 mac:
   category: public.app-category.education
   hardenedRuntime: true

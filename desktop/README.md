@@ -99,6 +99,12 @@ Two GitHub workflows are included:
 
 `desktop-release.yml` requires signed and notarized macOS artifacts. The macOS job fails instead of publishing an unsigned or signed-only DMG when required secrets are missing.
 
+### Auto updates
+
+Packaged desktop builds check GitHub Releases for newer versions after launch and then every four hours. When a newer release is available, the app downloads it in the background and shows an in-app banner once the update is ready to install. The user still chooses when to restart into the new version.
+
+The updater is wired to `SebastianBoehler/tue-api-wrapper` through `desktop/electron-builder.yml`. Keep uploading the full `desktop/release/*` output in `desktop-release.yml` so release metadata files such as `latest-mac.yml`, `latest.yml`, blockmaps, and installer artifacts stay available to `electron-updater`.
+
 `desktop-release.yml` supports:
 
 - macOS signing when `APPLE_SIGNING_CERTIFICATE_P12_BASE64` and `APPLE_SIGNING_CERTIFICATE_PASSWORD` are set

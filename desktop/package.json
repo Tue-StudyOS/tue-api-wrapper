@@ -1,7 +1,7 @@
 {
   "name": "tue-study-hub-desktop",
   "private": true,
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "Electron desktop shell for TUE Study Hub.",
   "main": "dist-electron/electron/main.js",
   "scripts": {

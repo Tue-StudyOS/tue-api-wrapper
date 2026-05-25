@@ -97,7 +97,7 @@ Two GitHub workflows are included:
 
 `desktop-build.yml` disables signing on CI intentionally so pull request and branch builds stay deterministic.
 
-`desktop-release.yml` requires signed and notarized macOS artifacts. The macOS job fails instead of publishing an unsigned or signed-only DMG when required secrets are missing.
+`desktop-release.yml` creates signed and notarized macOS artifacts when the Apple signing and notarization secrets are configured. If those secrets are missing, the macOS job falls back to ad-hoc signing so cross-platform release artifacts can still be published.
 
 ### Auto updates
 

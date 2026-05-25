@@ -52,7 +52,9 @@ jobs:
         run: npm ci --prefix desktop
 
       - name: Build desktop distributables
-        run: npm run dist --prefix desktop
+        run: |
+          npm run build:backend --prefix desktop
+          npm run package --prefix desktop -- --publish=never
         env:
           PYTHON: python
           CSC_IDENTITY_AUTO_DISCOVERY: "false"

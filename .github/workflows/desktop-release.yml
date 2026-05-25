@@ -60,8 +60,12 @@ jobs:
           set -euo pipefail
 
           if [[ -z "${APPLE_SIGNING_CERTIFICATE_P12_BASE64:-}" || -z "${APPLE_SIGNING_CERTIFICATE_PASSWORD:-}" ]]; then
-            echo "::error::Missing APPLE_SIGNING_CERTIFICATE_P12_BASE64 or APPLE_SIGNING_CERTIFICATE_PASSWORD. Refusing to publish an unsigned macOS release."
-            exit 1
+            echo "::warning::Missing APPLE_SIGNING_CERTIFICATE_P12_BASE64 or APPLE_SIGNING_CERTIFICATE_PASSWORD. Building macOS artifacts with ad-hoc signing."
+            {
+              echo "CSC_IDENTITY_AUTO_DISCOVERY=false"
+              echo "MAC_SIGNING_MODE=ad-hoc"
+            } >> "$GITHUB_ENV"
+            exit 0
           fi
 
           CERT_PATH="$RUNNER_TEMP/apple-signing-cert.p12"
@@ -128,7 +132,9 @@ jobs:
           fi
 
       - name: Build desktop distributables
-        run: npm run dist --prefix desktop
+        run: |
+          npm run build:backend --prefix desktop
+          npm run package --prefix desktop -- --publish=never
         env:
           PYTHON: python
 

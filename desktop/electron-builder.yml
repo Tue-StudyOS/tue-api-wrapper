@@ -20,6 +20,7 @@ publish:
   repo: tue-api-wrapper
 mac:
   category: public.app-category.education
+  icon: build/icon.icns
   hardenedRuntime: true
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist
@@ -27,8 +28,10 @@ mac:
   target:
     - dmg
 win:
+  icon: build/icon.ico
   target:
     - nsis
 linux:
+  icon: build/icon.png
   target:
     - AppImage

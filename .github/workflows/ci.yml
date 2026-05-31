@@ -30,6 +30,11 @@ jobs:
       - name: Run tests
         run: python -m unittest discover -s tests -v
 
+      - name: Run public endpoint smoke tests
+        env:
+          TUE_API_LIVE_PUBLIC_TESTS: "1"
+        run: python -m unittest discover -s tests -p test_public_endpoints_live.py -v
+
   go-cli:
     name: Go CLI
     runs-on: ubuntu-latest

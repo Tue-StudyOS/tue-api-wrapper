@@ -488,9 +488,9 @@ class AlmaContractTests(unittest.TestCase):
         html = _har_response_text(
             _require_fixture(self, "ovidius.uni-tuebingen.de.har"),
             lambda request: request.get("method") == "GET"
-            and request.get("url") == "https://ovidius.uni-tuebingen.de/ilias.php?baseClass=ilrepositorygui&ref_id=1",
+            and request.get("url") == "https://ovidius.uni-tuebingen.de/ilias3/ilias.php?baseClass=ilrepositorygui&ref_id=1",
         )
-        root_page = parse_ilias_root_page(html, "https://ovidius.uni-tuebingen.de/ilias.php?baseClass=ilrepositorygui&ref_id=1")
+        root_page = parse_ilias_root_page(html, "https://ovidius.uni-tuebingen.de/ilias3/ilias.php?baseClass=ilrepositorygui&ref_id=1")
 
         self.assertIn("ILIAS", root_page.title)
         self.assertTrue(any(link.label == "Dashboard" for link in root_page.mainbar_links))
@@ -500,11 +500,11 @@ class AlmaContractTests(unittest.TestCase):
         html = _har_response_text(
             _require_fixture(self, "ovidius2.uni-tuebingen.de.har"),
             lambda request: request.get("method") == "GET"
-            and request.get("url") == "https://ovidius.uni-tuebingen.de/ilias.php?baseClass=ilrepositorygui&ref_id=5289871",
+            and request.get("url") == "https://ovidius.uni-tuebingen.de/ilias3/ilias.php?baseClass=ilrepositorygui&ref_id=5289871",
         )
         page = parse_ilias_content_page(
             html,
-            "https://ovidius.uni-tuebingen.de/ilias.php?baseClass=ilrepositorygui&ref_id=5289871",
+            "https://ovidius.uni-tuebingen.de/ilias3/ilias.php?baseClass=ilrepositorygui&ref_id=5289871",
         )
 
         self.assertIn("MPC Materials", page.title)

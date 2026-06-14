@@ -45,6 +45,8 @@ def alma_course_registration(
     planelement_id: str = "",
 ) -> dict[str, object]:
     try:
-        return serialize(register_for_course(_alma_client(), url, planelement_id=planelement_id or None))
+        result = serialize(register_for_course(_alma_client(), url, planelement_id=planelement_id or None))
+        portal_service.invalidate_portal_cache()
+        return result
     except AlmaError as error:
         raise _translate_error(error) from error

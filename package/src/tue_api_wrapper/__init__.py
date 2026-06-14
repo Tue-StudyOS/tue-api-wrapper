@@ -19,7 +19,8 @@ from .models import (
     IliasRootPage,
     TimetableResult,
 )
-from .portal_service import PortalService
+from .portal_cache import CacheConfig, PortalCache
+from .portal_service import PortalService, clear_portal_cache, configure_portal_cache
 from .sdk import TuebingenAuthenticatedClient, TuebingenPublicClient, UniversityCredentials
 
 __all__ = [
@@ -42,9 +43,13 @@ __all__ = [
     "IliasForumTopic",
     "IliasRootPage",
     "MoodleClient",
+    "CacheConfig",
     "PortalService",
+    "PortalCache",
     "TimetableResult",
     "TuebingenAuthenticatedClient",
     "TuebingenPublicClient",
     "UniversityCredentials",
+    "clear_portal_cache",
+    "configure_portal_cache",
 ]

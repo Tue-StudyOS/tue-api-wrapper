@@ -79,8 +79,10 @@ def mail_move_message(uid: str, request: MoveMessageRequest) -> dict[str, object
     try:
         client = _mail_client()
         try:
-            return serialize(client.move_message(uid, mailbox=request.mailbox, destination=request.destination))
+            result = serialize(client.move_message(uid, mailbox=request.mailbox, destination=request.destination))
         finally:
             client.close()
+        portal_service.invalidate_portal_cache()
+        return result
     except AlmaError as error:
         raise _translate_error(error) from error

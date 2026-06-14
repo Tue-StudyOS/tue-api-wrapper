@@ -5,8 +5,6 @@ import sys
 import unittest
 from unittest.mock import patch
 
-from fastapi.testclient import TestClient
-
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
@@ -90,7 +88,6 @@ class PortalCacheTests(unittest.TestCase):
     def test_mutation_route_invalidates_cached_dashboard(self) -> None:
         calls = {"count": 0}
         configure_portal_cache(enabled=True, ttl_seconds=60.0)
-        client = TestClient(api_server.app)
 
         with patch("tue_api_wrapper.portal_service.read_uni_credentials", return_value=("student", "secret")), patch(
             "tue_api_wrapper.portal_service.read_mail_credentials",
@@ -106,18 +103,17 @@ class PortalCacheTests(unittest.TestCase):
             "tue_api_wrapper.api_routes_edit_actions.add_to_favorites",
             return_value={"status": "submitted"},
         ):
-            first = client.get("/api/dashboard", params={"term": "Sommer 2026"})
-            second = client.get("/api/dashboard", params={"term": "Sommer 2026"})
-            mutation = client.post(
-                "/api/ilias/favorites",
-                params={"url": "https://ovidius.uni-tuebingen.de/ilias.php?cmd=addToDesk"},
+            first = api_server.portal_service.build_dashboard(term_label="Sommer 2026")
+            second = api_server.portal_service.build_dashboard(term_label="Sommer 2026")
+            mutation = api_routes_edit_actions.ilias_add_favorite(
+                url="https://ovidius.uni-tuebingen.de/ilias.php?cmd=addToDesk",
             )
-            third = client.get("/api/dashboard", params={"term": "Sommer 2026"})
+            third = api_server.portal_service.build_dashboard(term_label="Sommer 2026")
 
-        self.assertEqual(first.status_code, 200)
-        self.assertEqual(second.status_code, 200)
-        self.assertEqual(mutation.status_code, 200)
-        self.assertEqual(third.status_code, 200)
+        self.assertEqual(first["call"], 1)
+        self.assertEqual(second["call"], 1)
+        self.assertEqual(mutation["status"], "submitted")
+        self.assertEqual(third["call"], 2)
         self.assertEqual(calls["count"], 2)
 
     @staticmethod

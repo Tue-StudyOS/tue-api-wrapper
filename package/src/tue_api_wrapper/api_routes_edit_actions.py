@@ -74,7 +74,9 @@ def alma_studyservice_report(trigger_name: str = "", term_id: str = "") -> Respo
 @router.post("/api/ilias/favorites")
 def ilias_add_favorite(url: str = Query(..., min_length=1)) -> dict[str, object]:
     try:
-        return serialize(add_to_favorites(portal_service._ilias_client(), url=url))
+        result = serialize(add_to_favorites(portal_service._ilias_client(), url=url))
+        portal_service.invalidate_portal_cache()
+        return result
     except AlmaError as error:
         raise _translate_error(error) from error
 
@@ -93,12 +95,14 @@ def ilias_waitlist_join(
     accept_agreement: bool = False,
 ) -> dict[str, object]:
     try:
-        return serialize(
+        result = serialize(
             join_waitlist(
                 portal_service._ilias_client(),
                 url=url,
                 accept_agreement=accept_agreement,
             )
         )
+        portal_service.invalidate_portal_cache()
+        return result
     except AlmaError as error:
         raise _translate_error(error) from error

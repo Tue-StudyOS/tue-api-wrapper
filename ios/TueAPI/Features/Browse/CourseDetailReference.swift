@@ -6,6 +6,7 @@ struct CourseDetailReference: Hashable {
     var title: String
     var number: String?
     var detailURL: URL?
+    var iliasURL: URL?
     var timeRange: String?
     var eventType: String?
     var lecturer: String?
@@ -22,6 +23,7 @@ struct CourseDetailReference: Hashable {
             lecture.remark
         ])
         self.detailURL = lecture.detailURL.flatMap(CourseDetailURLFinder.supportedAlmaURL)
+        self.iliasURL = CourseDetailURLFinder.firstIliasURL(in: lecture.remark ?? "")
         self.timeRange = lecture.timeRange
         self.eventType = lecture.eventType
         self.lecturer = lecture.lecturer ?? lecture.responsibleLecturer
@@ -39,6 +41,7 @@ struct CourseDetailReference: Hashable {
             event.detail
         ])
         self.detailURL = event.detailURL
+        self.iliasURL = event.detail.flatMap(CourseDetailURLFinder.firstIliasURL)
         self.timeRange = event.timeRangeText
         self.eventType = nil
         self.lecturer = nil
@@ -111,6 +114,24 @@ private enum CourseDetailURLFinder {
             return nil
         }
         return url
+    }
+
+    static func firstIliasURL(in text: String) -> URL? {
+        let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        return detector?
+            .matches(in: text, options: [], range: range)
+            .compactMap(\.url)
+            .compactMap(supportedIliasURL)
+            .first
+    }
+
+    private static func supportedIliasURL(_ url: URL) -> URL? {
+        guard ["http", "https"].contains(url.scheme?.lowercased() ?? ""),
+              url.host == "ovidius.uni-tuebingen.de" else {
+            return nil
+        }
+        return url.path.contains("goto.php") || url.path.hasSuffix("/ilias.php") ? url : nil
     }
 }
 

@@ -53,6 +53,11 @@ struct CourseDetailView: View {
                         Label("Open Alma detail", systemImage: "rectangle.portrait.and.arrow.right")
                     }
                 }
+                if let iliasURL = course.iliasURL {
+                    Link(destination: iliasURL) {
+                        Label("Open ILIAS space", systemImage: "book.pages")
+                    }
+                }
                 if let searchURL = iliasSearchURL {
                     Link(destination: searchURL) {
                         Label(iliasSearchLabel, systemImage: "magnifyingglass")
@@ -61,6 +66,10 @@ struct CourseDetailView: View {
                 if let iliasQuery {
                     LabeledContent("ILIAS query", value: iliasQuery)
                 }
+            }
+
+            if let iliasURL = course.iliasURL {
+                CourseIliasAssignmentsSection(target: iliasURL, credentialsLoader: model.keychain)
             }
 
             if let timeRange = course.timeRange {

@@ -21,6 +21,27 @@ struct IliasOnDeviceClient: UniversityIliasTaskLoading {
         return Array(try IliasTaskHTMLParser.parse(page.text, pageURL: page.url).prefix(max(1, limit)))
     }
 
+    func fetchContent(target: String) async throws -> IliasContentPage {
+        try await login()
+        return try await fetchContentAfterLogin(target: target)
+    }
+
+    func fetchExerciseAssignments(target: String) async throws -> [IliasExerciseAssignment] {
+        try await login()
+        return try await fetchExerciseAssignmentsAfterLogin(target: target)
+    }
+
+    func fetchCourseAssignments(target: String) async throws -> IliasCourseAssignmentsPage {
+        try await login()
+        let course = try await fetchContentAfterLogin(target: target)
+        var groups: [IliasCourseExerciseAssignments] = []
+        for exercise in IliasCourseAssignmentsBuilder.exerciseItems(in: course) {
+            let assignments = try await fetchExerciseAssignmentsAfterLogin(target: exercise.url)
+            groups.append(IliasCourseExerciseAssignments(exercise: exercise, assignments: assignments))
+        }
+        return IliasCourseAssignmentsPage(course: course, exercises: groups)
+    }
+
     private func login() async throws {
         let loginPage = try await http.get(loginURL)
         let shibbolethURL = try UniversityHTMLFormParser.linkURL(
@@ -50,6 +71,35 @@ struct IliasOnDeviceClient: UniversityIliasTaskLoading {
         URL(string: "https://ovidius.uni-tuebingen.de/ilias.php?baseClass=ilderivedtasksgui")!
     }
 
+    private func fetchContentAfterLogin(target: String) async throws -> IliasContentPage {
+        let page = try await http.get(try targetURL(target))
+        return try IliasContentHTMLParser.parse(page.text, pageURL: page.url)
+    }
+
+    private func fetchExerciseAssignmentsAfterLogin(target: String) async throws -> [IliasExerciseAssignment] {
+        let page = try await http.get(try targetURL(target))
+        return try IliasExerciseAssignmentHTMLParser.parse(page.text, pageURL: page.url)
+    }
+
+    private func targetURL(_ target: String) throws -> URL {
+        let trimmed = target.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            throw UniversityPortalError.invalidURL("A non-empty ILIAS target is required.")
+        }
+        if let url = URL(string: trimmed), url.scheme?.hasPrefix("http") == true {
+            return url
+        }
+        if trimmed.hasPrefix("goto.php/"),
+           let url = URL(string: trimmed, relativeTo: iliasBaseURL)?.absoluteURL {
+            return url
+        }
+        let relative = trimmed.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        guard let url = URL(string: relative, relativeTo: iliasGotoBaseURL)?.absoluteURL else {
+            throw UniversityPortalError.invalidURL("The ILIAS target could not be converted to a URL.")
+        }
+        return url
+    }
+
     private static func isAuthenticatedIliasPage(_ response: PortalHTTPResponse) -> Bool {
         guard response.url.host == "ovidius.uni-tuebingen.de" else {
             return false
@@ -77,4 +127,7 @@ struct IliasOnDeviceClient: UniversityIliasTaskLoading {
         "j_password",
         "Login mit zentraler Universitäts-Kennung"
     ]
+
+    private let iliasBaseURL = URL(string: "https://ovidius.uni-tuebingen.de/")!
+    private let iliasGotoBaseURL = URL(string: "https://ovidius.uni-tuebingen.de/goto.php/")!
 }

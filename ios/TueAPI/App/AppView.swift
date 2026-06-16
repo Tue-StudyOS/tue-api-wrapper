@@ -49,17 +49,32 @@ struct AppView: View {
             }
         }
         .task {
+            StudyBackgroundRefreshService.schedule()
             await model.refreshReminderStatus()
+            await model.refreshSubmissionReminderStatus()
             await mailBadgeStore.refreshIfNeeded(hasCredentials: model.hasCredentials, force: true)
         }
         .onChange(of: scenePhase) {
-            guard scenePhase == .active else { return }
+            if scenePhase == .background {
+                StudyBackgroundRefreshService.schedule()
+                return
+            }
+            guard scenePhase == .active else {
+                return
+            }
             Task {
+                if model.shouldRefreshUpcomingLectures() {
+                    await model.refreshUpcomingLectures()
+                }
+                if model.shouldRefreshTasks() {
+                    await model.refreshTasks()
+                }
                 await mailBadgeStore.refreshIfNeeded(hasCredentials: model.hasCredentials)
             }
         }
         .onChange(of: model.hasCredentials) {
             Task {
+                await model.refreshSubmissionReminderStatus()
                 await mailBadgeStore.refreshIfNeeded(hasCredentials: model.hasCredentials, force: true)
             }
         }

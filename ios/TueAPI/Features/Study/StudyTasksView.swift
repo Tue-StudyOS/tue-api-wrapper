@@ -128,7 +128,7 @@ struct StudyTasksView: View {
             }
         }
         .task {
-            if model.tasksPhase == .idle {
+            if model.shouldRefreshTasks() {
                 await model.refreshTasks()
             }
         }

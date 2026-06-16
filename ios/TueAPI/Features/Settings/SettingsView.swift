@@ -105,6 +105,20 @@ struct SettingsView: View {
             } footer: {
                 Text("Reminders are scheduled on this device from cached Alma timetable entries.")
             }
+
+            Section {
+                Toggle("Notify near submission deadlines", isOn: submissionReminderToggle)
+
+                if let message = model.submissionReminderMessage {
+                    Text(message)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Submission reminders")
+            } footer: {
+                Text("Reminds once when an open ILIAS submission has no recorded upload and is due within three days.")
+            }
         }
         .navigationTitle("Settings")
         .sheet(item: $activeSheet) { sheet in
@@ -139,6 +153,19 @@ struct SettingsView: View {
         }
     }
 
+    private var submissionReminderToggle: Binding<Bool> {
+        Binding {
+            model.submissionRemindersEnabled
+        } set: { isEnabled in
+            Task {
+                if isEnabled {
+                    await model.enableSubmissionReminders()
+                } else {
+                    await model.disableSubmissionReminders()
+                }
+            }
+        }
+    }
 }
 
 private enum SettingsSheet: String, Identifiable {

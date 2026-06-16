@@ -165,10 +165,10 @@ private extension TodayView {
     }
 
     func loadAmbientDataIfNeeded() async {
-        if model.hasCredentials, model.phase == .idle, model.timetableRefreshedAt == nil {
+        if model.phase != .loading, model.shouldRefreshUpcomingLectures() {
             await model.refreshUpcomingLectures()
         }
-        if model.tasksPhase == .idle {
+        if model.shouldRefreshTasks() {
             await model.refreshTasks()
         }
         if kufOccupancy == nil && kufError == nil {

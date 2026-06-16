@@ -2,11 +2,11 @@ import Foundation
 
 // MARK: - ILIAS Tasks
 
-struct IliasTasksPage: Decodable {
+struct IliasTasksPage: Codable {
     var tasks: [IliasTask]
 }
 
-struct IliasTask: Decodable, Identifiable {
+struct IliasTask: Codable, Identifiable {
     var title: String
     var url: String
     var itemType: String?
@@ -23,7 +23,7 @@ struct IliasTask: Decodable, Identifiable {
 
 // MARK: - Moodle Calendar
 
-struct MoodleCalendarResponse: Decodable {
+struct MoodleCalendarResponse: Codable {
     var items: [MoodleDeadline]
     var fromTimestamp: Int
     var toTimestamp: Int
@@ -35,7 +35,7 @@ struct MoodleCalendarResponse: Decodable {
     }
 }
 
-struct MoodleDeadline: Decodable, Identifiable {
+struct MoodleDeadline: Codable, Identifiable {
     var rawId: Int?
     var title: String
     var dueAt: String?

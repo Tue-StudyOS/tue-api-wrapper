@@ -1,3 +1,4 @@
+import BackgroundTasks
 import SwiftUI
 
 @main
@@ -7,6 +8,9 @@ struct TueAPIApp: App {
     var body: some Scene {
         WindowGroup {
             AppRootView(model: model)
+        }
+        .backgroundTask(.appRefresh(StudyBackgroundRefreshService.taskIdentifier)) {
+            await StudyBackgroundRefreshService.handleAppRefresh()
         }
     }
 }

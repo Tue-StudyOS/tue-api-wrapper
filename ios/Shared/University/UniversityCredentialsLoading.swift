@@ -13,7 +13,7 @@ protocol UniversityMoodleDeadlineLoading {
     func fetchDeadlines(days: Int, limit: Int) async throws -> [MoodleDeadline]
 }
 
-struct UniversityTaskSnapshot {
+struct UniversityTaskSnapshot: Codable {
     var tasks: [IliasTask]
     var iliasAssignments: [IliasAssignmentDeadline]
     var deadlines: [MoodleDeadline]

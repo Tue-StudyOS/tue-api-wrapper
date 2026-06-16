@@ -52,6 +52,8 @@ targets:
         CFBundleDisplayName: TUE API
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        BGTaskSchedulerPermittedIdentifiers:
+          - dev.sebastianboehler.tueapi.study-refresh
         GitHubFeedbackToken: "$(GITHUB_FEEDBACK_TOKEN)"
         ITSAppUsesNonExemptEncryption: false
         LSRequiresIPhoneOS: true
@@ -59,6 +61,8 @@ targets:
         NSLocationWhenInUseUsageDescription: "Your location is used to show your position on the campus map and help you navigate around Tübingen."
         NSSupportsLiveActivities: true
         UIApplicationSupportsIndirectInputEvents: true
+        UIBackgroundModes:
+          - fetch
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait

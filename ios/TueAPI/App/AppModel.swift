@@ -29,9 +29,15 @@ final class AppModel {
         }
     }
     var reminderMessage: String?
+    var submissionRemindersEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(submissionRemindersEnabled, forKey: AppConfig.submissionRemindersEnabledKey)
+        }
+    }
+    var submissionReminderMessage: String?
     var baseURLString: String {
         didSet {
-            UserDefaults.standard.set(baseURLString, forKey: Self.baseURLKey)
+            UserDefaults.standard.set(baseURLString, forKey: AppConfig.almaBaseURLDefaultsKey)
         }
     }
 
@@ -51,7 +57,6 @@ final class AppModel {
     var tasksWarning: String?
 
     let keychain = KeychainCredentialsStore()
-    private static let baseURLKey = "almaBaseURL"
     private static let remindersEnabledKey = "lectureRemindersEnabled"
     private static let reminderLeadTimeKey = "lectureReminderLeadTimeMinutes"
 
@@ -65,15 +70,24 @@ final class AppModel {
     }()
 
     init() {
-        self.baseURLString = UserDefaults.standard.string(forKey: Self.baseURLKey) ?? "https://alma.uni-tuebingen.de"
+        self.baseURLString = UserDefaults.standard.string(forKey: AppConfig.almaBaseURLDefaultsKey) ?? "https://alma.uni-tuebingen.de"
         let cachedSnapshot = UpcomingLectureCache.load()
         self.events = Self.upcomingOnly(cachedSnapshot?.events ?? [])
         self.semesterCredits = cachedSnapshot?.semesterCredits
         self.timetableRefreshedAt = cachedSnapshot?.refreshedAt
         self.profileName = cachedSnapshot?.personName
         self.almaSourceTerm = cachedSnapshot?.sourceTerm
-        self.hasCredentials = ((try? keychain.load()) ?? nil) != nil
+        let hasSavedCredentials = ((try? keychain.load()) ?? nil) != nil
+        self.hasCredentials = hasSavedCredentials
+        if hasSavedCredentials, let cachedTasks = StudyTaskCache.load() {
+            self.tasks = cachedTasks.tasks
+            self.iliasAssignments = cachedTasks.iliasAssignments
+            self.deadlines = cachedTasks.deadlines
+            self.tasksWarning = cachedTasks.warningMessage
+            self.tasksPhase = .loaded(cachedTasks.refreshedAt)
+        }
         self.remindersEnabled = UserDefaults.standard.bool(forKey: Self.remindersEnabledKey)
+        self.submissionRemindersEnabled = UserDefaults.standard.bool(forKey: AppConfig.submissionRemindersEnabledKey)
 
         let savedLeadTime = UserDefaults.standard.integer(forKey: Self.reminderLeadTimeKey)
         if Self.reminderLeadTimeOptions.contains(savedLeadTime) {
@@ -159,33 +173,19 @@ final class AppModel {
             hasCredentials = false
             profileName = nil
             almaSourceTerm = nil
+            tasks = []
+            iliasAssignments = []
+            deadlines = []
+            tasksWarning = nil
+            tasksPhase = .unavailable
+            StudyTaskCache.clear()
+            submissionRemindersEnabled = false
+            submissionReminderMessage = nil
+            SubmissionReminderScheduler.clearReminderHistory()
+            Task {
+                await SubmissionReminderScheduler.cancelScheduledReminders()
+            }
             phase = .idle
-        } catch {
-            phase = .failed(error.localizedDescription)
-        }
-    }
-
-    func refreshUpcomingLectures() async {
-        phase = .loading
-
-        do {
-            guard let baseURL = URL(string: baseURLString), baseURL.scheme?.hasPrefix("http") == true else {
-                throw AlmaClientError.invalidURL
-            }
-            guard let credentials = try keychain.load() else {
-                throw AlmaClientError.loginFailed("Connect your university account before refreshing Alma.")
-            }
-
-            let snapshot = try await AlmaClient(baseURL: baseURL).fetchUpcomingLectures(credentials: credentials)
-            try UpcomingLectureCache.save(snapshot)
-            events = Self.upcomingOnly(snapshot.events)
-            semesterCredits = snapshot.semesterCredits
-            timetableRefreshedAt = snapshot.refreshedAt
-            profileName = snapshot.personName
-            almaSourceTerm = snapshot.sourceTerm
-            phase = .loaded(snapshot.refreshedAt, snapshot.sourceTerm)
-            WidgetCenter.shared.reloadAllTimelines()
-            await rescheduleRemindersIfEnabled()
         } catch {
             phase = .failed(error.localizedDescription)
         }
@@ -205,87 +205,9 @@ final class AppModel {
         liveActivityMessage = "Live Activities ended."
     }
 
-    func refreshReminderStatus() async {
-        guard remindersEnabled else {
-            let pendingCount = await LectureReminderScheduler.pendingReminderCount()
-            if pendingCount > 0 {
-                await disableLectureReminders()
-            }
-            return
-        }
-
-        await rescheduleRemindersIfEnabled()
-    }
-
-    func enableLectureReminders() async {
-        do {
-            let granted = try await LectureReminderScheduler.requestAuthorization()
-            guard granted else {
-                remindersEnabled = false
-                reminderMessage = LectureReminderSchedulerError.notificationsDisabled.localizedDescription
-                return
-            }
-
-            remindersEnabled = true
-            await rescheduleRemindersIfEnabled()
-        } catch {
-            remindersEnabled = false
-            reminderMessage = error.localizedDescription
-        }
-    }
-
-    func disableLectureReminders() async {
-        remindersEnabled = false
-        let removedCount = await LectureReminderScheduler.cancelScheduledReminders()
-        reminderMessage = removedCount == 1 ? "Removed 1 scheduled lecture reminder." : "Removed \(removedCount) scheduled lecture reminders."
-    }
-
-    func setReminderLeadTime(minutes: Int) async {
-        guard Self.reminderLeadTimeOptions.contains(minutes) else {
-            reminderMessage = "Choose a supported reminder lead time."
-            return
-        }
-
-        reminderLeadTimeMinutes = minutes
-        if remindersEnabled {
-            await rescheduleRemindersIfEnabled()
-        } else {
-            reminderMessage = "Reminders will use \(minutes) minutes once enabled."
-        }
-    }
-
-    private static func upcomingOnly(_ events: [LectureEvent]) -> [LectureEvent] {
+    static func upcomingOnly(_ events: [LectureEvent]) -> [LectureEvent] {
         let now = Date()
         return events.filter { ($0.endDate ?? $0.startDate) >= now }
-    }
-
-    private func rescheduleRemindersIfEnabled() async {
-        guard remindersEnabled else {
-            return
-        }
-
-        do {
-            let summary = try await LectureReminderScheduler.scheduleReminders(
-                for: events,
-                leadTimeMinutes: reminderLeadTimeMinutes
-            )
-            reminderMessage = Self.reminderMessage(for: summary, leadTime: reminderLeadTimeMinutes)
-        } catch LectureReminderSchedulerError.notificationsDisabled {
-            remindersEnabled = false
-            reminderMessage = LectureReminderSchedulerError.notificationsDisabled.localizedDescription
-        } catch {
-            reminderMessage = error.localizedDescription
-        }
-    }
-
-    private static func reminderMessage(for summary: LectureReminderScheduleSummary, leadTime: Int) -> String {
-        guard summary.scheduledCount > 0 else {
-            return "No lecture reminders were scheduled. Refresh Alma after upcoming lectures are available, or choose a shorter reminder time."
-        }
-
-        let scheduled = summary.scheduledCount == 1 ? "1 lecture reminder" : "\(summary.scheduledCount) lecture reminders"
-        let skipped = summary.skippedCount == 0 ? "" : " \(summary.skippedCount) later entries were skipped because iOS limits pending app notifications."
-        return "Scheduled \(scheduled) \(leadTime) minutes before class.\(skipped)"
     }
 
     private static func almaDateString(from date: Date) -> String {

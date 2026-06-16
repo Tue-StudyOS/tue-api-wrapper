@@ -7,20 +7,41 @@ extension AppModel {
         do {
             let snapshot = try await UniversityPortalClient(credentialsLoader: keychain)
                 .fetchTasksAndDeadlines()
-            tasks = snapshot.tasks
-            iliasAssignments = snapshot.iliasAssignments
-            deadlines = snapshot.deadlines.filter { $0.isActionable }
-            tasksWarning = snapshot.warningMessage
+            let visibleSnapshot = StudyTaskCache.visibleSnapshot(from: snapshot)
+            tasks = visibleSnapshot.tasks
+            iliasAssignments = visibleSnapshot.iliasAssignments
+            deadlines = visibleSnapshot.deadlines
+            tasksWarning = visibleSnapshot.warningMessage
             tasksPhase = .loaded(snapshot.refreshedAt)
+            try? StudyTaskCache.save(visibleSnapshot)
+            await rescheduleSubmissionRemindersIfEnabled()
         } catch UniversityPortalError.missingCredentials {
             tasks = []
             iliasAssignments = []
             deadlines = []
             tasksWarning = nil
             tasksPhase = .unavailable
+            StudyTaskCache.clear()
+            SubmissionReminderScheduler.clearReminderHistory()
+            await SubmissionReminderScheduler.cancelScheduledReminders()
         } catch {
             tasksWarning = nil
             tasksPhase = .failed(error.localizedDescription)
+        }
+    }
+
+    func shouldRefreshTasks(maxAge: TimeInterval = AppConfig.ambientRefreshMaxAge) -> Bool {
+        guard hasCredentials else {
+            return false
+        }
+
+        switch tasksPhase {
+        case .idle, .unavailable, .failed:
+            return true
+        case .loading:
+            return false
+        case .loaded(let refreshedAt):
+            return Date().timeIntervalSince(refreshedAt) >= maxAge
         }
     }
 }

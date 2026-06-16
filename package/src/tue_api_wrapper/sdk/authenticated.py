@@ -27,7 +27,6 @@ from .portal import AuthenticatedPortalApi
 from .praxisportal import AuthenticatedPraxisportalApi
 from .public import TuebingenPublicClient
 
-
 @dataclass(slots=True)
 class AuthenticatedAlmaApi:
     credentials: UniversityCredentials
@@ -168,6 +167,9 @@ class AuthenticatedIliasApi:
     def exercise_assignments(self, target: str):
         return self.client.fetch_exercise_assignments(target)
 
+    def course_assignments(self, target: str):
+        return self.client.fetch_course_assignments(target)
+
     def search_filters(self):
         return fetch_ilias_search_filters(self.client)
 
@@ -185,7 +187,6 @@ class AuthenticatedIliasApi:
 
     def join_waitlist(self, url: str, *, accept_agreement: bool = False):
         return join_waitlist(self.client, url=url, accept_agreement=accept_agreement)
-
 
 @dataclass(slots=True)
 class AuthenticatedMoodleApi:

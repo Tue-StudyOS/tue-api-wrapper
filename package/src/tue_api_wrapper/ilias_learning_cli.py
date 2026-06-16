@@ -21,6 +21,10 @@ def build_parser() -> argparse.ArgumentParser:
     exercise = subparsers.add_parser("exercise", help="Print exercise assignments.")
     exercise.add_argument("--target", default="exc/5509760", help="ILIAS exercise target or full URL.")
     exercise.add_argument("--limit", type=int, default=25, help="Maximum number of assignments to print.")
+
+    course = subparsers.add_parser("course-assignments", help="Print assignments grouped by exercise in a course.")
+    course.add_argument("--target", default="crs/5551408", help="ILIAS course target or full URL.")
+    course.add_argument("--limit", type=int, default=25, help="Maximum number of assignments to print.")
     return parser
 
 
@@ -54,6 +58,24 @@ def main(argv: list[str] | None = None) -> int:
                     f"- {assignment.title} | due={assignment.due_at or assignment.due_hint or '-'} | "
                     f"status={assignment.status or '-'} | type={assignment.submission_type or '-'} | {assignment.url}"
                 )
+            return 0
+
+        if args.command == "course-assignments":
+            page = client.fetch_course_assignments(args.target)
+            printed = 0
+            print(page.course.title)
+            for group in page.exercises:
+                print(f"{group.exercise.kind or 'Exercise'}: {group.exercise.label}")
+                for assignment in group.assignments:
+                    if printed >= args.limit:
+                        return 0
+                    print(
+                        f"- {assignment.title} | due={assignment.due_at or assignment.due_hint or '-'} | "
+                        f"status={assignment.status or '-'} | type={assignment.submission_type or '-'} | {assignment.url}"
+                    )
+                    printed += 1
+            if printed == 0:
+                print("No exercise assignments were found for this course.")
             return 0
     except AlmaError as exc:
         print(f"ilias error: {exc}", file=sys.stderr)

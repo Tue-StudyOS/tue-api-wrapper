@@ -1,6 +1,7 @@
 from .client import AlmaClient
 from .config import AlmaError, AlmaLoginError
 from .ilias_client import IliasClient
+from .ilias_course_models import IliasCourseAssignmentsPage, IliasCourseExerciseAssignments
 from .moodle_client import MoodleClient
 from .alma_studyservice_models import AlmaStudyServicePage
 from .models import (
@@ -39,6 +40,8 @@ __all__ = [
     "IliasContentPage",
     "IliasContentSection",
     "IliasClient",
+    "IliasCourseAssignmentsPage",
+    "IliasCourseExerciseAssignments",
     "IliasExerciseAssignment",
     "IliasForumTopic",
     "IliasRootPage",

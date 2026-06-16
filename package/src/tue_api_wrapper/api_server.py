@@ -15,6 +15,7 @@ from .api_routes_alma_registration import router as alma_registration_router
 from .api_routes_discovery import router as discovery_router
 from .api_routes_edit_actions import router as edit_actions_router
 from .api_routes_extended import router as extended_router
+from .api_routes_ilias import router as ilias_router
 from .api_routes_mail import router as mail_router
 from .api_routes_moodle import router as moodle_router
 from .api_routes_products import router as products_router
@@ -24,7 +25,7 @@ from .portal_service import DEFAULT_DASHBOARD_TERM, PortalService, normalize_das
 
 app = FastAPI(
     title="tue-api-wrapper",
-    version="0.2.1",
+    version="0.2.2",
     description="Unified Alma and ILIAS backend for CLI, web, and ChatGPT surfaces.",
 )
 app.add_middleware(
@@ -39,6 +40,7 @@ for router in (
     discovery_router,
     edit_actions_router,
     extended_router,
+    ilias_router,
     mail_router,
     moodle_router,
     products_router,
@@ -247,54 +249,6 @@ def alma_document_by_id(doc_id: str) -> Response:
 @app.get("/api/alma/documents/{doc_id}/download-url")
 def alma_document_download_url(doc_id: str) -> dict[str, str]:
     return {"url": f"/api/alma/documents/{quote(doc_id, safe='')}"}
-
-
-@app.get("/api/ilias/root")
-def ilias_root() -> dict[str, object]:
-    try:
-        return serialize(portal_service._ilias_client().fetch_root_page())
-    except AlmaError as error:
-        raise _translate_error(error) from error
-
-
-@app.get("/api/ilias/memberships")
-def ilias_memberships(limit: int = Query(20, ge=1, le=100)) -> list[object]:
-    try:
-        return serialize(portal_service._ilias_client().fetch_membership_overview()[:limit])
-    except AlmaError as error:
-        raise _translate_error(error) from error
-
-
-@app.get("/api/ilias/tasks")
-def ilias_tasks(limit: int = Query(20, ge=1, le=100)) -> list[object]:
-    try:
-        return serialize(portal_service._ilias_client().fetch_task_overview()[:limit])
-    except AlmaError as error:
-        raise _translate_error(error) from error
-
-
-@app.get("/api/ilias/content")
-def ilias_content(target: str) -> dict[str, object]:
-    try:
-        return serialize(portal_service._ilias_client().fetch_content_page(target))
-    except AlmaError as error:
-        raise _translate_error(error) from error
-
-
-@app.get("/api/ilias/forum")
-def ilias_forum(target: str) -> list[object]:
-    try:
-        return serialize(portal_service._ilias_client().fetch_forum_topics(target))
-    except AlmaError as error:
-        raise _translate_error(error) from error
-
-
-@app.get("/api/ilias/exercise")
-def ilias_exercise(target: str) -> list[object]:
-    try:
-        return serialize(portal_service._ilias_client().fetch_exercise_assignments(target))
-    except AlmaError as error:
-        raise _translate_error(error) from error
 
 
 @app.exception_handler(AlmaError)

@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from tue_api_wrapper.sdk import TuebingenPublicClient, UniversityCredentials
+from tue_api_wrapper.sdk.authenticated import AuthenticatedIliasApi
 from tue_api_wrapper.sdk.public import PublicAlmaApi
 
 
@@ -51,6 +52,11 @@ class SdkFacadeTests(unittest.TestCase):
 
         self.assertEqual(client.campus.gym_occupancy(), {"count": 42})
 
+    def test_authenticated_ilias_exposes_course_assignments(self) -> None:
+        api = AuthenticatedIliasApi(UniversityCredentials("student", "secret"), _client=_FakeIliasClient())
+
+        self.assertEqual(api.course_assignments("crs/5551408"), {"target": "crs/5551408"})
+
 
 class _FakePublicAlmaClient:
     def search_public_module_descriptions(self, *, query: str, max_results: int):
@@ -60,6 +66,11 @@ class _FakePublicAlmaClient:
 class _FakeFitnessClient:
     def fetch_kuf_training_occupancy(self):
         return {"count": 42}
+
+
+class _FakeIliasClient:
+    def fetch_course_assignments(self, target: str):
+        return {"target": target}
 
 
 if __name__ == "__main__":

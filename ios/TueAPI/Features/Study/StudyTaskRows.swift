@@ -57,35 +57,52 @@ struct StudyIliasAssignmentRow: View {
     var deadline: IliasAssignmentDeadline
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Image(systemName: "tray.and.arrow.up")
-                    .foregroundStyle(Color.accentColor)
-                    .font(.caption)
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 7) {
                 Text(deadline.assignment.title)
-                    .font(.subheadline.weight(.medium))
-                    .lineLimit(2)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text(deadline.courseTitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
             }
 
-            VStack(alignment: .leading, spacing: 3) {
-                Label(deadline.courseTitle, systemImage: "book.closed")
+            HStack(alignment: .center, spacing: 8) {
                 if let due = deadline.assignment.dueAt ?? deadline.assignment.dueHint {
-                    Label(due, systemImage: "clock")
+                    Text(due)
+                        .font(.caption.weight(.semibold))
                         .foregroundStyle(.orange)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(.orange.opacity(0.12), in: Capsule())
                 }
+
                 if let status = deadline.assignment.status {
-                    Label(status, systemImage: "checklist")
+                    Text(status)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color(uiColor: .tertiarySystemBackground), in: Capsule())
                 }
             }
-            .font(.caption)
-            .foregroundStyle(.secondary)
 
             if let url = URL(string: deadline.assignment.url) {
-                Link("Open submission", destination: url)
-                    .font(.caption.weight(.semibold))
+                Link(destination: url) {
+                    Label("Open submission", systemImage: "arrow.up.forward")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.regular)
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 4)
     }
 }
 

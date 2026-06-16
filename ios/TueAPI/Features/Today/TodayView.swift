@@ -21,7 +21,17 @@ struct TodayView: View {
                 tint: .orange
             )
         }
-        let tasks = model.tasks.prefix(max(0, 3 - deadlines.count)).map {
+        let assignments = model.iliasAssignments.prefix(max(0, 3 - deadlines.count)).map {
+            TodayUrgencyItem(
+                title: $0.assignment.title,
+                subtitle: $0.courseTitle,
+                detail: iliasAssignmentDetailText(for: $0),
+                systemImage: "tray.and.arrow.up",
+                tint: .accentColor
+            )
+        }
+        let remaining = max(0, 3 - deadlines.count - assignments.count)
+        let tasks = model.tasks.prefix(remaining).map {
             TodayUrgencyItem(
                 title: $0.title,
                 subtitle: $0.itemType ?? "ILIAS task",
@@ -30,7 +40,7 @@ struct TodayView: View {
                 tint: .accentColor
             )
         }
-        return Array(deadlines + tasks)
+        return Array(deadlines + assignments + tasks)
     }
 
     private var topStatusLine: TodayStatusLine? {
@@ -208,6 +218,18 @@ private extension TodayView {
         }
 
         return "Due date unavailable"
+    }
+
+    func iliasAssignmentDetailText(for deadline: IliasAssignmentDeadline) -> String {
+        if let dueAt = deadline.assignment.dueAt?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !dueAt.isEmpty {
+            return dueAt
+        }
+        if let dueHint = deadline.assignment.dueHint?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !dueHint.isEmpty {
+            return dueHint
+        }
+        return deadline.exerciseTitle
     }
 }
 

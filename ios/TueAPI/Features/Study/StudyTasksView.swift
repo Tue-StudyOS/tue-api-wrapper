@@ -4,13 +4,18 @@ struct StudyTasksView: View {
     var model: AppModel
 
     private var isRefreshing: Bool {
-        model.tasksPhase == .loading || (model.tasksPhase == .idle && model.deadlines.isEmpty && model.tasks.isEmpty)
+        model.tasksPhase == .loading || (
+            model.tasksPhase == .idle &&
+            model.deadlines.isEmpty &&
+            model.iliasAssignments.isEmpty &&
+            model.tasks.isEmpty
+        )
     }
 
     private var topStatusLine: StudyTasksStatusLine? {
         if isRefreshing {
             return StudyTasksStatusLine(
-                text: "Refreshing ILIAS tasks and Moodle deadlines.",
+                text: "Refreshing Moodle deadlines, ILIAS submissions, and ILIAS tasks.",
                 tint: .accentColor,
                 isLoading: true
             )
@@ -45,7 +50,7 @@ struct StudyTasksView: View {
     }
 
     private var primaryEmptyState: StudyEmptyState? {
-        guard model.deadlines.isEmpty, model.tasks.isEmpty else { return nil }
+        guard model.deadlines.isEmpty, model.iliasAssignments.isEmpty, model.tasks.isEmpty else { return nil }
         guard !isRefreshing else { return nil }
         switch model.tasksPhase {
         case .unavailable:
@@ -95,6 +100,7 @@ struct StudyTasksView: View {
                     }
                 } else {
                     deadlinesCard
+                    iliasAssignmentsCard
                     iliasTasksCard
                 }
 
@@ -185,6 +191,37 @@ struct StudyTasksView: View {
                     ForEach(Array(model.tasks.enumerated()), id: \.element.id) { index, task in
                         StudyIliasTaskRow(task: task)
                         if index < model.tasks.count - 1 {
+                            Divider()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var iliasAssignmentsCard: some View {
+        AppSurfaceCard {
+            sectionHeader("ILIAS submissions", systemImage: "tray.and.arrow.up", count: model.iliasAssignments.count)
+
+            if isRefreshing && model.iliasAssignments.isEmpty {
+                VStack(spacing: 14) {
+                    ForEach(0..<3, id: \.self) { _ in
+                        StudyIliasAssignmentSkeletonRow()
+                    }
+                }
+            } else if model.iliasAssignments.isEmpty {
+                ContentUnavailableView(
+                    "No ILIAS submissions",
+                    systemImage: "tray.and.arrow.up",
+                    description: Text("No visible exercise submissions were found in your joined ILIAS courses.")
+                )
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 18)
+            } else {
+                VStack(spacing: 14) {
+                    ForEach(Array(model.iliasAssignments.enumerated()), id: \.element.id) { index, deadline in
+                        StudyIliasAssignmentRow(deadline: deadline)
+                        if index < model.iliasAssignments.count - 1 {
                             Divider()
                         }
                     }

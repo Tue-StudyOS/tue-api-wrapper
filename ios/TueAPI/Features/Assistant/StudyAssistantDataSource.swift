@@ -83,6 +83,17 @@ struct StudyAssistantDataSource: Sendable {
         }
 
         lines.append("")
+        lines.append("ILIAS submissions:")
+        if tasks.iliasAssignments.isEmpty {
+            lines.append("- No visible ILIAS submissions were returned.")
+        } else {
+            for deadline in tasks.iliasAssignments.prefix(cappedLimit) {
+                let due = deadline.assignment.dueAt ?? deadline.assignment.dueHint ?? "No deadline exposed"
+                lines.append("- \(deadline.assignment.title) | \(deadline.courseTitle) | \(due)")
+            }
+        }
+
+        lines.append("")
         lines.append("Moodle deadlines:")
         if tasks.deadlines.isEmpty {
             lines.append("- No actionable Moodle deadlines were returned.")

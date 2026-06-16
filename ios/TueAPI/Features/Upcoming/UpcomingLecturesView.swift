@@ -127,11 +127,14 @@ struct UpcomingLecturesView: View {
             }
 
         case .loaded:
-            let allItems = model.deadlines.count + model.tasks.count
+            let allItems = model.deadlines.count + model.iliasAssignments.count + model.tasks.count
             if allItems > 0 {
                 Section("Upcoming Deadlines") {
                     ForEach(model.deadlines) { deadline in
                         StudyDeadlineRow(deadline: deadline)
+                    }
+                    ForEach(model.iliasAssignments) { deadline in
+                        StudyIliasAssignmentRow(deadline: deadline)
                     }
                     ForEach(model.tasks) { task in
                         StudyIliasTaskRow(task: task)

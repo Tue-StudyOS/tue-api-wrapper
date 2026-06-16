@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from dataclasses import dataclass
 from ..alma_catalog_client import fetch_course_catalog_page
 from ..alma_course_assignments_client import fetch_timetable_course_assignments
@@ -135,7 +134,6 @@ class AuthenticatedAlmaApi:
     def download_studyservice_report(self, *, trigger_name: str | None = None, term_id: str | None = None):
         return download_studyservice_report(self.client, trigger_name=trigger_name, term_id=term_id)
 
-
 @dataclass(slots=True)
 class AuthenticatedIliasApi:
     credentials: UniversityCredentials
@@ -170,6 +168,8 @@ class AuthenticatedIliasApi:
     def course_assignments(self, target: str):
         return self.client.fetch_course_assignments(target)
 
+    def assignment_deadlines(self, *, course_limit: int = 20, assignment_limit: int = 50):
+        return self.client.fetch_assignment_deadlines(course_limit=course_limit, assignment_limit=assignment_limit)
     def search_filters(self):
         return fetch_ilias_search_filters(self.client)
 

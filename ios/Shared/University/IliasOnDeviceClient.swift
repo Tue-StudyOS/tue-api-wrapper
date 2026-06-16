@@ -21,6 +21,26 @@ struct IliasOnDeviceClient: UniversityIliasTaskLoading {
         return Array(try IliasTaskHTMLParser.parse(page.text, pageURL: page.url).prefix(max(1, limit)))
     }
 
+    func fetchAssignmentDeadlines(
+        courseLimit: Int = 20,
+        assignmentLimit: Int = 50
+    ) async throws -> [IliasAssignmentDeadline] {
+        try await login()
+        let memberships = try await fetchMembershipsAfterLogin()
+        let courses = IliasCourseAssignmentsBuilder
+            .courseMemberships(in: memberships)
+            .prefix(max(1, courseLimit))
+        var deadlines: [IliasAssignmentDeadline] = []
+        for course in courses {
+            let page = try await fetchCourseAssignmentsAfterLogin(target: course.url)
+            deadlines.append(contentsOf: IliasCourseAssignmentsBuilder.deadlines(course: course, groups: page.exercises))
+            if deadlines.count >= max(1, assignmentLimit) {
+                return Array(deadlines.prefix(max(1, assignmentLimit)))
+            }
+        }
+        return deadlines
+    }
+
     func fetchContent(target: String) async throws -> IliasContentPage {
         try await login()
         return try await fetchContentAfterLogin(target: target)
@@ -33,6 +53,10 @@ struct IliasOnDeviceClient: UniversityIliasTaskLoading {
 
     func fetchCourseAssignments(target: String) async throws -> IliasCourseAssignmentsPage {
         try await login()
+        return try await fetchCourseAssignmentsAfterLogin(target: target)
+    }
+
+    private func fetchCourseAssignmentsAfterLogin(target: String) async throws -> IliasCourseAssignmentsPage {
         let course = try await fetchContentAfterLogin(target: target)
         var groups: [IliasCourseExerciseAssignments] = []
         for exercise in IliasCourseAssignmentsBuilder.exerciseItems(in: course) {
@@ -69,6 +93,15 @@ struct IliasOnDeviceClient: UniversityIliasTaskLoading {
 
     private var taskOverviewURL: URL {
         URL(string: "https://ovidius.uni-tuebingen.de/ilias.php?baseClass=ilderivedtasksgui")!
+    }
+
+    private var membershipOverviewURL: URL {
+        URL(string: "https://ovidius.uni-tuebingen.de/ilias.php?baseClass=ilmembershipoverviewgui")!
+    }
+
+    private func fetchMembershipsAfterLogin() async throws -> [IliasMembershipItem] {
+        let page = try await http.get(membershipOverviewURL)
+        return try IliasMembershipHTMLParser.parse(page.text, pageURL: page.url)
     }
 
     private func fetchContentAfterLogin(target: String) async throws -> IliasContentPage {

@@ -68,3 +68,19 @@ def ilias_course_assignments(target: str) -> dict[str, object]:
         return serialize(portal_service._ilias_client().fetch_course_assignments(target))
     except AlmaError as error:
         raise _translate_error(error) from error
+
+
+@router.get("/api/ilias/assignment-deadlines")
+def ilias_assignment_deadlines(
+    course_limit: int = Query(20, ge=1, le=100),
+    assignment_limit: int = Query(50, ge=1, le=200),
+) -> list[object]:
+    try:
+        return serialize(
+            portal_service._ilias_client().fetch_assignment_deadlines(
+                course_limit=course_limit,
+                assignment_limit=assignment_limit,
+            )
+        )
+    except AlmaError as error:
+        raise _translate_error(error) from error

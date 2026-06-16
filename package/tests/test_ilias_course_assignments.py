@@ -7,19 +7,40 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from tue_api_wrapper.ilias_course_client import fetch_course_assignments
+from tue_api_wrapper.ilias_course_client import fetch_assignment_deadlines, fetch_course_assignments
 from tue_api_wrapper.ilias_learning_html import parse_exercise_assignments
 from tue_api_wrapper.models import (
     IliasContentItem,
     IliasContentPage,
     IliasContentSection,
     IliasExerciseAssignment,
+    IliasMembershipItem,
 )
 
 
 class _FakeIliasCourseClient:
     def __init__(self) -> None:
         self.assignment_targets: list[str] = []
+
+    def fetch_membership_overview(self) -> tuple[IliasMembershipItem, ...]:
+        return (
+            IliasMembershipItem(
+                title="Practical Machine Learning",
+                url="https://ovidius.uni-tuebingen.de/goto.php/crs/5551408",
+                kind="Kurs",
+                description=None,
+                info_url=None,
+                properties=(),
+            ),
+            IliasMembershipItem(
+                title="Reading Group",
+                url="https://ovidius.uni-tuebingen.de/goto.php/grp/555",
+                kind="Gruppe",
+                description=None,
+                info_url=None,
+                properties=(),
+            ),
+        )
 
     def fetch_content_page(self, target: str) -> IliasContentPage:
         self.content_target = target
@@ -80,6 +101,17 @@ class IliasCourseAssignmentTests(unittest.TestCase):
         self.assertEqual(page.course.title, "Practical Machine Learning")
         self.assertEqual(page.exercises[0].exercise.label, "Assignments")
         self.assertEqual(page.exercises[0].assignments[0].title, "Assignment_5_submission")
+
+    def test_fetch_assignment_deadlines_scans_course_memberships(self) -> None:
+        client = _FakeIliasCourseClient()
+
+        deadlines = fetch_assignment_deadlines(client, course_limit=10, assignment_limit=10)
+
+        self.assertEqual(client.content_target, "https://ovidius.uni-tuebingen.de/goto.php/crs/5551408")
+        self.assertEqual(len(deadlines), 1)
+        self.assertEqual(deadlines[0].course_title, "Practical Machine Learning")
+        self.assertEqual(deadlines[0].exercise_title, "Assignments")
+        self.assertEqual(deadlines[0].assignment.due_at, "19. Jun 2026, 00:00")
 
     def test_parse_practice_exam_assignment_page_shape(self) -> None:
         html = """

@@ -8,11 +8,13 @@ extension AppModel {
             let snapshot = try await UniversityPortalClient(credentialsLoader: keychain)
                 .fetchTasksAndDeadlines()
             tasks = snapshot.tasks
+            iliasAssignments = snapshot.iliasAssignments
             deadlines = snapshot.deadlines.filter { $0.isActionable }
             tasksWarning = snapshot.warningMessage
             tasksPhase = .loaded(snapshot.refreshedAt)
         } catch UniversityPortalError.missingCredentials {
             tasks = []
+            iliasAssignments = []
             deadlines = []
             tasksWarning = nil
             tasksPhase = .unavailable

@@ -17,6 +17,8 @@ struct UniversityPortalClient {
 
     func fetchTasksAndDeadlines(
         taskLimit: Int = 20,
+        iliasCourseLimit: Int = 20,
+        iliasAssignmentLimit: Int = 50,
         deadlineDays: Int = 14,
         deadlineLimit: Int = 30
     ) async throws -> UniversityTaskSnapshot {
@@ -27,15 +29,26 @@ struct UniversityPortalClient {
         async let tasksFetch = portalResult("ILIAS tasks") {
             try await iliasClientFactory(credentials).fetchTasks(limit: taskLimit)
         }
+        async let iliasAssignmentsFetch = portalResult("ILIAS submissions") {
+            try await iliasClientFactory(credentials).fetchAssignmentDeadlines(
+                courseLimit: iliasCourseLimit,
+                assignmentLimit: iliasAssignmentLimit
+            )
+        }
         async let deadlinesFetch = portalResult("Moodle deadlines") {
             try await moodleClientFactory(credentials).fetchDeadlines(days: deadlineDays, limit: deadlineLimit)
         }
-        let (taskResult, deadlineResult) = await (tasksFetch, deadlinesFetch)
+        let (taskResult, iliasAssignmentResult, deadlineResult) = await (
+            tasksFetch,
+            iliasAssignmentsFetch,
+            deadlinesFetch
+        )
         return UniversityTaskSnapshot(
             tasks: taskResult.value ?? [],
+            iliasAssignments: iliasAssignmentResult.value ?? [],
             deadlines: deadlineResult.value ?? [],
             refreshedAt: Date(),
-            warnings: [taskResult.warning, deadlineResult.warning].compactMap(\.self)
+            warnings: [taskResult.warning, iliasAssignmentResult.warning, deadlineResult.warning].compactMap(\.self)
         )
     }
 

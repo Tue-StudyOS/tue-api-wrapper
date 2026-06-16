@@ -6,6 +6,7 @@ protocol UniversityCredentialsLoading {
 
 protocol UniversityIliasTaskLoading {
     func fetchTasks(limit: Int) async throws -> [IliasTask]
+    func fetchAssignmentDeadlines(courseLimit: Int, assignmentLimit: Int) async throws -> [IliasAssignmentDeadline]
 }
 
 protocol UniversityMoodleDeadlineLoading {
@@ -14,6 +15,7 @@ protocol UniversityMoodleDeadlineLoading {
 
 struct UniversityTaskSnapshot {
     var tasks: [IliasTask]
+    var iliasAssignments: [IliasAssignmentDeadline]
     var deadlines: [MoodleDeadline]
     var refreshedAt: Date
     var warnings: [String] = []

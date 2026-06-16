@@ -30,8 +30,8 @@ struct TodayUrgencyCard: View {
             if isLoading {
                 VStack(spacing: 12) {
                     StudyDeadlineSkeletonRow()
+                    StudyIliasAssignmentSkeletonRow()
                     StudyDeadlineSkeletonRow()
-                    StudyIliasTaskSkeletonRow()
                 }
             } else if items.isEmpty {
                 ContentUnavailableView(
@@ -39,7 +39,7 @@ struct TodayUrgencyCard: View {
                     systemImage: "checkmark.circle",
                     description: Text(
                         hasCredentials
-                            ? "No actionable Moodle deadlines or ILIAS tasks are visible."
+                            ? "No actionable Moodle deadlines, ILIAS submissions, or ILIAS tasks are visible."
                             : "Connect university services to load deadlines and tasks."
                     )
                 )

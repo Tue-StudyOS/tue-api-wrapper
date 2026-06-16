@@ -45,6 +45,7 @@ final class AppModel {
 
     // Tasks and deadlines are fetched on-device with Keychain credentials.
     var tasks: [IliasTask] = []
+    var iliasAssignments: [IliasAssignmentDeadline] = []
     var deadlines: [MoodleDeadline] = []
     var tasksPhase: TasksLoadPhase = .idle
     var tasksWarning: String?

@@ -14,8 +14,8 @@ from .ilias_html import (
     parse_ilias_content_page,
     parse_ilias_root_page,
 )
-from .ilias_course_client import fetch_course_assignments
-from .ilias_course_models import IliasCourseAssignmentsPage
+from .ilias_course_client import fetch_assignment_deadlines, fetch_course_assignments
+from .ilias_course_models import IliasAssignmentDeadline, IliasCourseAssignmentsPage
 from .ilias_learning_html import (
     parse_exercise_assignments,
     parse_forum_topics,
@@ -123,6 +123,14 @@ class IliasClient:
 
     def fetch_course_assignments(self, target: str) -> IliasCourseAssignmentsPage:
         return fetch_course_assignments(self, target)
+
+    def fetch_assignment_deadlines(
+        self,
+        *,
+        course_limit: int = 20,
+        assignment_limit: int = 50,
+    ) -> tuple[IliasAssignmentDeadline, ...]:
+        return fetch_assignment_deadlines(self, course_limit=course_limit, assignment_limit=assignment_limit)
 
     def fetch_membership_overview(self) -> tuple[IliasMembershipItem, ...]:
         response = self.session.get(

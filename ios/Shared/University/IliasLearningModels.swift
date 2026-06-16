@@ -27,6 +27,22 @@ struct IliasContentPage: Codable, Equatable {
     }
 }
 
+struct IliasMembershipItem: Codable, Equatable, Identifiable {
+    var title: String
+    var url: String
+    var kind: String?
+    var description: String?
+    var infoURL: String?
+    var properties: [String]
+
+    var id: String { url }
+
+    enum CodingKeys: String, CodingKey {
+        case title, url, kind, description, properties
+        case infoURL = "info_url"
+    }
+}
+
 struct IliasExerciseAssignment: Codable, Equatable, Identifiable {
     var title: String
     var url: String
@@ -60,4 +76,22 @@ struct IliasCourseExerciseAssignments: Codable, Equatable, Identifiable {
 struct IliasCourseAssignmentsPage: Codable, Equatable {
     var course: IliasContentPage
     var exercises: [IliasCourseExerciseAssignments]
+}
+
+struct IliasAssignmentDeadline: Codable, Equatable, Identifiable {
+    var courseTitle: String
+    var courseURL: String
+    var exerciseTitle: String
+    var exerciseURL: String
+    var assignment: IliasExerciseAssignment
+
+    var id: String { assignment.id }
+
+    enum CodingKeys: String, CodingKey {
+        case assignment
+        case courseTitle = "course_title"
+        case courseURL = "course_url"
+        case exerciseTitle = "exercise_title"
+        case exerciseURL = "exercise_url"
+    }
 }

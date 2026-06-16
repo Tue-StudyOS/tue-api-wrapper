@@ -102,6 +102,37 @@ final class UniversityPortalParsingTests: XCTestCase {
         XCTAssertTrue(IliasCourseAssignmentsBuilder.isExerciseItem(page.sections[0].items[0]))
     }
 
+    func testIliasMembershipParserFindsCourseMemberships() throws {
+        let pageURL = URL(string: "https://ovidius.uni-tuebingen.de/ilias.php?baseClass=ilmembershipoverviewgui")!
+        let html = """
+        <div class="il-item il-std-item">
+          <div class="media-left"><img alt="Kurs" /></div>
+          <h4 class="il-item-title">
+            <a href="goto.php/crs/5551408">Practical Machine Learning</a>
+          </h4>
+          <div class="il-item-description">Exercises and lecture material.</div>
+          <button data-action="ilias.php?baseClass=ilrepositorygui&amp;cmd=infoScreen&amp;ref_id=5551408">Info</button>
+          <span class="il-item-property-name">Veranstaltungszeitraum</span>
+          <span class="il-item-property-value">14. Okt 2025 - 10. Feb 2026</span>
+        </div>
+        <div class="il-item il-std-item">
+          <div class="media-left"><img alt="Gruppe" /></div>
+          <h4 class="il-item-title"><a href="goto.php/grp/42">Reading Group</a></h4>
+        </div>
+        """
+
+        let memberships = try IliasMembershipHTMLParser.parse(html, pageURL: pageURL)
+        let courses = IliasCourseAssignmentsBuilder.courseMemberships(in: memberships)
+
+        XCTAssertEqual(memberships.count, 2)
+        XCTAssertEqual(courses.count, 1)
+        XCTAssertEqual(courses[0].title, "Practical Machine Learning")
+        XCTAssertEqual(courses[0].kind, "Kurs")
+        XCTAssertEqual(courses[0].url, "https://ovidius.uni-tuebingen.de/goto.php/crs/5551408")
+        XCTAssertEqual(courses[0].description, "Exercises and lecture material.")
+        XCTAssertTrue(courses[0].infoURL?.contains("infoScreen") == true)
+    }
+
     func testIliasExerciseAssignmentParserExtractsPracticeExamShape() throws {
         let pageURL = URL(string: "https://ovidius.uni-tuebingen.de/ilias.php?baseClass=ilexercisehandlergui&ref_id=5653468")!
         let html = """

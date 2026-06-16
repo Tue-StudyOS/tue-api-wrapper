@@ -56,6 +56,10 @@ class SdkFacadeTests(unittest.TestCase):
         api = AuthenticatedIliasApi(UniversityCredentials("student", "secret"), _client=_FakeIliasClient())
 
         self.assertEqual(api.course_assignments("crs/5551408"), {"target": "crs/5551408"})
+        self.assertEqual(
+            api.assignment_deadlines(course_limit=3, assignment_limit=7),
+            {"course_limit": 3, "assignment_limit": 7},
+        )
 
 
 class _FakePublicAlmaClient:
@@ -71,6 +75,9 @@ class _FakeFitnessClient:
 class _FakeIliasClient:
     def fetch_course_assignments(self, target: str):
         return {"target": target}
+
+    def fetch_assignment_deadlines(self, *, course_limit: int = 20, assignment_limit: int = 50):
+        return {"course_limit": course_limit, "assignment_limit": assignment_limit}
 
 
 if __name__ == "__main__":

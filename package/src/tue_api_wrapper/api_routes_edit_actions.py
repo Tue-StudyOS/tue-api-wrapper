@@ -71,6 +71,35 @@ def alma_studyservice_report(trigger_name: str = "", term_id: str = "") -> Respo
         raise _translate_error(error) from error
 
 
+@router.get("/api/alma/enrollments/reports")
+def alma_enrollment_reports() -> list[object]:
+    try:
+        return serialize(portal_service._alma_client().list_enrollment_reports())
+    except AlmaError as error:
+        raise _translate_error(error) from error
+
+
+@router.post("/api/alma/enrollments/report")
+def alma_enrollment_report(trigger_name: str = "", term: str = "") -> Response:
+    return _download_enrollment_report_response(trigger_name, term)
+
+
+@router.get("/api/alma/enrollments/report")
+def alma_enrollment_report_get(trigger_name: str = "", term: str = "") -> Response:
+    return _download_enrollment_report_response(trigger_name, term)
+
+
+def _download_enrollment_report_response(trigger_name: str = "", term: str = "") -> Response:
+    try:
+        document = portal_service._alma_client().download_enrollment_report(
+            trigger_name=trigger_name.strip() or None,
+            term=term.strip() or None,
+        )
+        return _pdf_response(document)
+    except AlmaError as error:
+        raise _translate_error(error) from error
+
+
 @router.post("/api/ilias/favorites")
 def ilias_add_favorite(url: str = Query(..., min_length=1)) -> dict[str, object]:
     try:

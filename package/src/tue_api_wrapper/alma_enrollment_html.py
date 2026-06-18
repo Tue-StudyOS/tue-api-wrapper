@@ -11,11 +11,12 @@ from .models import AlmaEnrollmentPage
 
 
 TERM_FIELD = "studentOverviewForm:enrollmentsDiv:termSelector:termPeriodDropDownList_input"
-HEADING_RE = re.compile(r"^Veranstaltung:\s*(?P<type>.+?)\s+(?P<title>.+)$")
-CODE_RE = re.compile(r"^(?P<number>[A-ZÄÖÜ]+[A-ZÄÖÜ0-9-]*\d+[A-Z]?|GTCNEURO)\s+(?P<title>.+)$")
+HEADING_RE = re.compile(r"^(?P<category>Veranstaltung|Prüfung):\s*(?P<title>.+)$")
+CODE_RE = re.compile(r"^(?P<number>[A-ZÄÖÜ]+[A-ZÄÖÜ0-9-]*\d+[A-Z]*|GTCNEURO)\s+(?P<title>.+)$")
+EMBEDDED_CODE_RE = re.compile(r"(?P<number>[A-ZÄÖÜ]+[A-ZÄÖÜ0-9-]*\d+[A-Z]*|GTCNEURO)\s+(?P<title>.+)$")
 SCHEDULE_NOISE_RE = re.compile(
     r"\b(?:Status|Aktionen|Details anzeigen|Informationen zu Belegzeiträumen|"
-    r"Raumdetails für .+? anzeigen)\b"
+    r"Ab-/Ummelden|Raumdetails für .+? anzeigen)\b"
 )
 
 
@@ -63,21 +64,24 @@ def _enrollment_entries(form, page_url: str) -> tuple[AlmaEnrollmentEntry, ...]:
         match = HEADING_RE.match(_clean(heading.get_text(" ", strip=True)))
         if match is None:
             continue
-        event_type = match.group("type")
-        number, title = _split_code(match.group("title"))
+        category = match.group("category")
         table = heading.find_next("table")
         if table is None:
             continue
+        schedule_text = _schedule_text(table)
+        event_type, number, title = _entry_identity(category, match.group("title"), schedule_text)
         status_text = _status_text(table)
         entries.append(
             AlmaEnrollmentEntry(
+                category=category,
                 title=title,
                 number=number,
                 event_type=event_type,
                 status=_extract_after_label(status_text, "Ihr aktueller Status"),
                 semester=_extract_after_label(status_text, "Semester der Leistung"),
-                schedule_text=_schedule_text(table),
+                schedule_text=schedule_text,
                 detail_url=_detail_url(table, page_url),
+                attempt=_extract_after_label(status_text, "Versuch (gilt nur für Prüfungen)"),
             )
         )
     return tuple(entries)
@@ -90,16 +94,53 @@ def _split_code(value: str) -> tuple[str | None, str]:
     return match.group("number"), match.group("title")
 
 
+def _entry_identity(category: str, heading_title: str, schedule_text: str | None) -> tuple[str | None, str | None, str]:
+    if category == "Prüfung":
+        number, fallback_title = _split_code(heading_title)
+        return category, number, _exam_title(schedule_text) or fallback_title
+
+    match = EMBEDDED_CODE_RE.search(_clean(heading_title))
+    if match is None:
+        return category, *_split_code(heading_title)
+    event_type = _clean(heading_title[: match.start()])
+    return event_type or category, match.group("number"), match.group("title")
+
+
+def _exam_title(schedule_text: str | None) -> str | None:
+    if not schedule_text:
+        return None
+    value = re.sub(r"^\d+\.\s*Parallelgruppe\s+", "", schedule_text).strip()
+    value = re.split(
+        r"\s+(?:Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)\s+\d{2}\.\d{2}\.\d{2}\b",
+        value,
+        maxsplit=1,
+    )[0]
+    value = re.split(r"\s+(?:Keine Uhrzeit festgelegt|Prüfungsform:|Prüfer/-in:)", value, maxsplit=1)[0]
+    return _clean(value) or None
+
+
 def _extract_after_label(text: str, label: str) -> str | None:
     match = re.search(fr"{re.escape(label)}:\s*([^:]+?)(?=\s+[A-ZÄÖÜ][^:]+:|$)", text)
     return _clean(match.group(1)) if match else None
 
 
 def _schedule_text(table) -> str | None:
-    cells = table.find_all("td")
-    if not cells:
+    candidates = [_clean(cell.get_text(" ", strip=True)) for cell in table.find_all("td")]
+    if not candidates:
         return None
-    value = _clean(cells[0].get_text(" ", strip=True))
+    value = next(
+        (
+            candidate
+            for candidate in candidates
+            if "Ihr aktueller Status:" not in candidate
+            and (
+                "Parallelgruppe" in candidate
+                or "Prüfungsform:" in candidate
+                or re.search(r"\b\d{2}\.\d{2}\.\d{2}\b", candidate)
+            )
+        ),
+        candidates[0],
+    )
     value = _clean(SCHEDULE_NOISE_RE.sub(" ", value))
     return value or None
 

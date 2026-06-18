@@ -113,9 +113,9 @@ def alma_timetable(term: str = Query(DEFAULT_DASHBOARD_TERM)) -> dict[str, objec
         raise _translate_error(error) from error
 
 @app.get("/api/alma/enrollments")
-def alma_enrollments() -> dict[str, object]:
+def alma_enrollments(term: str = "") -> dict[str, object]:
     try:
-        return serialize(_alma_client().fetch_enrollment_page())
+        return serialize(_alma_client().fetch_enrollment_page(term=term.strip() or None))
     except AlmaError as error:
         raise _translate_error(error) from error
 

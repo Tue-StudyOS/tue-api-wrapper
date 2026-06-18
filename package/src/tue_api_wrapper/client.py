@@ -16,7 +16,6 @@ from .alma_studyservice_models import AlmaStudyServicePage
 from .alma_academics_html import (
     extract_advanced_module_search_form,
     extract_module_search_form,
-    parse_enrollment_page,
     parse_exam_overview,
     parse_module_search_page,
     parse_module_search_results,
@@ -166,17 +165,10 @@ class AlmaClient:
             raise AlmaLoginError("Session is not authenticated; the study service page redirected back to login.")
         return response.text
 
-    def fetch_enrollment_page(self) -> AlmaEnrollmentPage:
-        response = self.session.get(
-            f"{self.base_url}/alma/pages/cm/exa/enrollment/info/start.xhtml?_flowId=searchOwnEnrollmentInfo-flow"
-            "&navigationPosition=hisinoneMeinStudium%2ChisinoneOwnEnrollmentList&recordRequest=true",
-            timeout=self.timeout_seconds,
-            allow_redirects=True,
-        )
-        response.raise_for_status()
-        if self._looks_logged_out(response.text):
-            raise AlmaLoginError("Session is not authenticated; the enrollment page redirected back to login.")
-        return parse_enrollment_page(response.text, response.url)
+    def fetch_enrollment_page(self, *, term: str | None = None) -> AlmaEnrollmentPage:
+        from .alma_enrollment_client import fetch_enrollment_page
+
+        return fetch_enrollment_page(self, term=term)
 
     def fetch_exam_overview(self) -> tuple[AlmaExamNode, ...]:
         response = self.session.get(
@@ -422,6 +414,21 @@ class AlmaClient:
             raise AlmaParseError("A non-empty Alma document id is required.")
         download_url = f"{self.base_url}/alma/rds?state=docdownload&docId={quote(doc_id)}"
         return self._download_document(download_url)
+
+    def list_enrollment_reports(self) -> tuple[AlmaDocumentReport, ...]:
+        from .alma_enrollment_client import list_enrollment_reports
+
+        return list_enrollment_reports(self)
+
+    def download_enrollment_report(
+        self,
+        *,
+        trigger_name: str | None = None,
+        term: str | None = None,
+    ) -> AlmaDownloadedDocument:
+        from .alma_enrollment_client import download_enrollment_report
+
+        return download_enrollment_report(self, trigger_name=trigger_name, term=term)
 
     @staticmethod
     def _extract_login_error(html: str) -> str | None:

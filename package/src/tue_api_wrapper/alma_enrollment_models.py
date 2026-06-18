@@ -12,3 +12,5 @@ class AlmaEnrollmentEntry:
     semester: str | None
     schedule_text: str | None
     detail_url: str | None
+    attempt: str | None = None
+    category: str | None = None

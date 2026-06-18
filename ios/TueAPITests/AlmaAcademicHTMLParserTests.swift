@@ -20,6 +20,55 @@ final class AlmaAcademicHTMLParserTests: XCTestCase {
         XCTAssertEqual(enrollment.availableTerms["Winter 2024/25"], "20241")
         XCTAssertEqual(enrollment.message, "Sie haben bisher fuer diesen Studiengang keine Anmeldung zugelassen.")
         XCTAssertEqual(enrollment.personName, "Sebastian Böhler")
+        XCTAssertTrue(enrollment.entries.isEmpty)
+    }
+
+    func testParsesBelegungenRowsWithExamDetails() throws {
+        let html = """
+        <form id="studentOverviewForm">
+          <select name="studentOverviewForm:enrollmentsDiv:termSelector:termPeriodDropDownList_input">
+            <option value="2026.2.1" selected="selected">Sommersemester 2026</option>
+          </select>
+          <h2>Veranstaltung: Vorlesung/Übung GTCNEURO Neural Data Science</h2>
+          <table>
+            <tr>
+              <td>Termine und Räume Status Aktionen 1. Parallelgruppe Neural Data Science jeden Mittwoch (15.04.26 bis 22.07.26) von 10:15 bis 11:45 wöchentlich Details anzeigen</td>
+              <td>Ihr aktueller Status: storniert Semester der Leistung: SoSe 2026</td>
+            </tr>
+          </table>
+          <h2>Prüfung: INFO-THEO-1-9CP THEO</h2>
+          <table>
+            <tr>
+              <td>Termine und Räume Status Aktionen</td>
+              <td>1. Parallelgruppe Probabilistic Machine Learning Donnerstag 23.07.26 Keine Uhrzeit festgelegt Prüfungsform: Schriftlich oder mündlich Prüfer/-in: Prof. Dr. Macke</td>
+              <td>Ihr aktueller Status: zugelassen Semester der Leistung: SoSe 2026 Versuch (gilt nur für Prüfungen): 1</td>
+              <td><a href="/alma/pages/startFlow.xhtml?_flowId=detailView-flow&amp;unitId=63233">Details anzeigen</a></td>
+            </tr>
+          </table>
+        </form>
+        """
+
+        let enrollment = try AlmaAcademicHTMLParser.parseEnrollment(html)
+
+        XCTAssertEqual(enrollment.entries.count, 2)
+        XCTAssertEqual(enrollment.entries[0].category, "Veranstaltung")
+        XCTAssertEqual(enrollment.entries[0].eventType, "Vorlesung/Übung")
+        XCTAssertEqual(enrollment.entries[0].number, "GTCNEURO")
+        XCTAssertEqual(enrollment.entries[0].title, "Neural Data Science")
+        XCTAssertEqual(enrollment.entries[0].status, "storniert")
+        XCTAssertTrue(enrollment.entries[0].scheduleText?.contains("jeden Mittwoch") == true)
+
+        let exam = enrollment.entries[1]
+        XCTAssertEqual(exam.category, "Prüfung")
+        XCTAssertEqual(exam.eventType, "Prüfung")
+        XCTAssertEqual(exam.number, "INFO-THEO-1-9CP")
+        XCTAssertEqual(exam.title, "Probabilistic Machine Learning")
+        XCTAssertEqual(exam.status, "zugelassen")
+        XCTAssertEqual(exam.semester, "SoSe 2026")
+        XCTAssertEqual(exam.attempt, "1")
+        XCTAssertTrue(exam.scheduleText?.contains("Donnerstag 23.07.26") == true)
+        XCTAssertTrue(exam.scheduleText?.contains("Prüfungsform: Schriftlich oder mündlich") == true)
+        XCTAssertEqual(exam.detailURL, "/alma/pages/startFlow.xhtml?_flowId=detailView-flow&unitId=63233")
     }
 
     func testParsesExamOverviewRows() throws {

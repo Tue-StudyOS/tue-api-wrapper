@@ -9,7 +9,7 @@ def extract_partial_updates(response_text: str) -> tuple[tuple[str, str], ...]:
     if "<partial-response" not in response_text:
         return ()
     try:
-        root = ET.fromstring(response_text)
+        root = ET.fromstring(response_text.lstrip())
     except ET.ParseError as exc:
         raise AlmaParseError("Could not parse the Alma partial response.") from exc
     return tuple(

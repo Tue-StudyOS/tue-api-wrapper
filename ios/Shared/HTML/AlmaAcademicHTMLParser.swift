@@ -32,7 +32,8 @@ enum AlmaAcademicHTMLParser {
             selectedTerm: selectedTerm,
             availableTerms: terms,
             message: enrollmentMessage(in: form),
-            personName: personName(in: html)
+            personName: personName(in: html),
+            entries: enrollmentRecords(in: form)
         )
     }
 
@@ -86,6 +87,139 @@ enum AlmaAcademicHTMLParser {
         let text = HTMLText.stripTags(form)
         let pattern = "Sie haben bisher.+?(?:angemeldet\\.|zugelassen\\.)"
         return HTMLRegex.firstCapture("(\(pattern))", in: text)
+    }
+
+    private static func enrollmentRecords(in form: String) -> [AlmaEnrollmentRecord] {
+        blocks(named: "h2", in: form).compactMap { heading -> AlmaEnrollmentRecord? in
+            let headingText = HTMLText.stripTags(heading)
+            guard let parsedHeading = parseEnrollmentHeading(headingText),
+                  let headingRange = form.range(of: heading),
+                  let table = nextBlock(named: "table", in: String(form[headingRange.upperBound...])) else {
+                return nil
+            }
+
+            let cells = blocks(named: "td", in: table).map(HTMLText.stripTags)
+            let scheduleText = scheduleText(from: cells)
+            let statusText = cells.first { $0.contains("Ihr aktueller Status:") } ?? HTMLText.stripTags(table)
+            let identity = enrollmentIdentity(
+                category: parsedHeading.category,
+                rawTitle: parsedHeading.rawTitle,
+                scheduleText: scheduleText
+            )
+
+            return AlmaEnrollmentRecord(
+                category: parsedHeading.category,
+                title: identity.title,
+                number: identity.number,
+                eventType: identity.eventType,
+                status: value(after: "Ihr aktueller Status", in: statusText),
+                semester: value(after: "Semester der Leistung", in: statusText),
+                scheduleText: scheduleText,
+                detailURL: detailURL(in: table),
+                attempt: value(after: "Versuch (gilt nur für Prüfungen)", in: statusText)
+            )
+        }
+    }
+
+    private static func parseEnrollmentHeading(_ text: String) -> (category: String, rawTitle: String)? {
+        guard let category = HTMLRegex.firstCapture("^(Veranstaltung|Prüfung):\\s*", in: text),
+              let rawTitle = HTMLRegex.firstCapture("^(?:Veranstaltung|Prüfung):\\s*(.+)$", in: text) else {
+            return nil
+        }
+        return (category, rawTitle)
+    }
+
+    private static func enrollmentIdentity(
+        category: String,
+        rawTitle: String,
+        scheduleText: String?
+    ) -> (eventType: String?, number: String?, title: String) {
+        if category == "Prüfung" {
+            let split = splitCode(rawTitle)
+            return (category, split.number, examTitle(from: scheduleText) ?? split.title)
+        }
+
+        if let match = HTMLRegex.matches("([A-ZÄÖÜ]+[A-ZÄÖÜ0-9-]*\\d+[A-Z]*|GTCNEURO)\\s+(.+)$", in: rawTitle).first,
+           let codeRange = Range(match.range(at: 1), in: rawTitle),
+           let titleRange = Range(match.range(at: 2), in: rawTitle) {
+            let eventType = String(rawTitle[..<codeRange.lowerBound]).trimmingCharacters(in: .whitespacesAndNewlines)
+            return (
+                eventType.isEmpty ? category : eventType,
+                String(rawTitle[codeRange]),
+                String(rawTitle[titleRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+            )
+        }
+
+        let split = splitCode(rawTitle)
+        return (category, split.number, split.title)
+    }
+
+    private static func splitCode(_ value: String) -> (number: String?, title: String) {
+        guard let number = HTMLRegex.firstCapture("^([A-ZÄÖÜ]+[A-ZÄÖÜ0-9-]*\\d+[A-Z]*|GTCNEURO)\\s+", in: value),
+              let title = HTMLRegex.firstCapture("^(?:[A-ZÄÖÜ]+[A-ZÄÖÜ0-9-]*\\d+[A-Z]*|GTCNEURO)\\s+(.+)$", in: value) else {
+            return (nil, value.trimmingCharacters(in: .whitespacesAndNewlines))
+        }
+        return (number, title.trimmingCharacters(in: .whitespacesAndNewlines))
+    }
+
+    private static func examTitle(from scheduleText: String?) -> String? {
+        guard var value = scheduleText?.trimmedOrNil else {
+            return nil
+        }
+        value = value.replacingOccurrences(
+            of: #"^\d+\.\s*Parallelgruppe\s+"#,
+            with: "",
+            options: .regularExpression
+        )
+        value = value.replacingOccurrences(
+            of: #"\s+(Montag|Dienstag|Mittwoch|Donnerstag|Freitag|Samstag|Sonntag)\s+\d{2}\.\d{2}\.\d{2}\b.*$"#,
+            with: "",
+            options: .regularExpression
+        )
+        value = value.replacingOccurrences(
+            of: #"\s+(Keine Uhrzeit festgelegt|Prüfungsform:|Prüfer/-in:).*$"#,
+            with: "",
+            options: .regularExpression
+        )
+        return value.trimmedOrNil
+    }
+
+    private static func scheduleText(from cells: [String]) -> String? {
+        let source = cells.first {
+            !$0.contains("Ihr aktueller Status:")
+                && (
+                    $0.contains("Parallelgruppe")
+                    || $0.contains("Prüfungsform:")
+                    || HTMLRegex.firstCapture("\\b\\d{2}\\.\\d{2}\\.\\d{2}\\b", in: $0) != nil
+                )
+        }
+            ?? cells.first
+        return source?
+            .replacingOccurrences(
+                of: "\\b(Status|Aktionen|Details anzeigen|Informationen zu Belegzeiträumen|Ab-/Ummelden)\\b",
+                with: " ",
+                options: .regularExpression
+            )
+            .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmedOrNil
+    }
+
+    private static func value(after label: String, in text: String) -> String? {
+        let escaped = NSRegularExpression.escapedPattern(for: label)
+        let pattern = "\(escaped):\\s*([^:]+?)(?=\\s+[A-ZÄÖÜ][^:]+:|$)"
+        return HTMLRegex.firstCapture(pattern, in: text)?.trimmedOrNil
+    }
+
+    private static func detailURL(in table: String) -> String? {
+        HTMLRegex.matches("<a\\b[^>]*>", in: table).compactMap { match -> String? in
+            guard let range = Range(match.range, in: table) else {
+                return nil
+            }
+            let tag = String(table[range])
+            let href = HTMLRegex.attribute("href", in: tag)
+            return href?.contains("_flowId=detailView-flow") == true ? href : nil
+        }.first
     }
 
     private static func personName(in html: String) -> String? {
@@ -147,6 +281,10 @@ enum AlmaAcademicHTMLParser {
         HTMLRegex.matches("<\(name)\\b[^>]*>.*?</\(name)>", in: html).compactMap { match in
             Range(match.range, in: html).map { String(html[$0]) }
         }
+    }
+
+    private static func nextBlock(named name: String, in html: String) -> String? {
+        HTMLRegex.firstCapture("(<\(name)\\b[^>]*>.*?</\(name)>)", in: html)
     }
 
     private static func optionTags(in select: String) -> [String] {

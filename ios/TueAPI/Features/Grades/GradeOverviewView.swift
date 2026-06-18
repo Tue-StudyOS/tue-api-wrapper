@@ -87,6 +87,7 @@ struct GradeOverviewView: View {
             LabeledContent("Tracked credits", value: creditsText(stats.trackedCredits))
             LabeledContent("Graded records", value: "\(stats.graded.count)")
             LabeledContent("Pending records", value: "\(stats.pending.count)")
+            LabeledContent("Belegungen", value: "\(payload.enrollment.entries.count)")
         }
     }
 
@@ -158,10 +159,24 @@ struct GradeOverviewView: View {
     }
 
     private func enrollmentSection(_ enrollment: AlmaEnrollmentState) -> some View {
-        Section("Enrollment") {
-            Text(enrollment.message?.trimmedOrNil ?? "No Alma enrollment message was exposed.")
-                .font(.body)
-                .textSelection(.enabled)
+        Section("Belegungen") {
+            if let message = enrollment.message?.trimmedOrNil {
+                Text(message)
+                    .font(.body)
+                    .textSelection(.enabled)
+            }
+
+            if enrollment.entries.isEmpty {
+                ContentUnavailableView(
+                    "No Belegungen",
+                    systemImage: "calendar.badge.exclamationmark",
+                    description: Text("No Alma enrolment or exam-registration rows were visible for this term.")
+                )
+            } else {
+                ForEach(enrollment.entries) { record in
+                    EnrollmentRecordRow(record: record)
+                }
+            }
         }
     }
 

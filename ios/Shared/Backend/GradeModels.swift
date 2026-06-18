@@ -7,12 +7,67 @@ struct AlmaEnrollmentState: Decodable {
     var availableTerms: [String: String]
     var message: String?
     var personName: String?
+    var entries: [AlmaEnrollmentRecord]
+
+    init(
+        selectedTerm: String?,
+        availableTerms: [String: String],
+        message: String?,
+        personName: String?,
+        entries: [AlmaEnrollmentRecord] = []
+    ) {
+        self.selectedTerm = selectedTerm
+        self.availableTerms = availableTerms
+        self.message = message
+        self.personName = personName
+        self.entries = entries
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        selectedTerm = try container.decodeIfPresent(String.self, forKey: .selectedTerm)
+        availableTerms = try container.decodeIfPresent([String: String].self, forKey: .availableTerms) ?? [:]
+        message = try container.decodeIfPresent(String.self, forKey: .message)
+        personName = try container.decodeIfPresent(String.self, forKey: .personName)
+        entries = try container.decodeIfPresent([AlmaEnrollmentRecord].self, forKey: .entries) ?? []
+    }
 
     enum CodingKeys: String, CodingKey {
-        case message
+        case entries, message
         case personName = "person_name"
         case selectedTerm = "selected_term"
         case availableTerms = "available_terms"
+    }
+}
+
+struct AlmaEnrollmentRecord: Decodable, Hashable, Identifiable {
+    var category: String?
+    var title: String
+    var number: String?
+    var eventType: String?
+    var status: String?
+    var semester: String?
+    var scheduleText: String?
+    var detailURL: String?
+    var attempt: String?
+
+    var id: String {
+        [
+            cleanIDComponent(category),
+            cleanIDComponent(number),
+            cleanIDComponent(title),
+            cleanIDComponent(semester),
+            cleanIDComponent(status)
+        ]
+            .compactMap { $0 }
+            .joined(separator: ":")
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case category, title, number, status, semester, attempt
+        case eventType = "event_type"
+        case scheduleText = "schedule_text"
+        case detailURL = "detail_url"
     }
 }
 

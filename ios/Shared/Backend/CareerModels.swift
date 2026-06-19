@@ -42,6 +42,32 @@ struct CareerSearchFilters: Decodable, Hashable {
         case postalCodes = "postal_codes"
         case subscriptionTypes = "subscription_types"
     }
+
+    init(
+        projectTypes: [CareerFacetOption] = [],
+        projectSubtypes: [CareerFacetOption] = [],
+        industries: [CareerFacetOption] = [],
+        organizations: [CareerFacetOption] = [],
+        postalCodes: [CareerPostalCodeOption] = [],
+        subscriptionTypes: [CareerSubscriptionType] = []
+    ) {
+        self.projectTypes = projectTypes
+        self.projectSubtypes = projectSubtypes
+        self.industries = industries
+        self.organizations = organizations
+        self.postalCodes = postalCodes
+        self.subscriptionTypes = subscriptionTypes
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        projectTypes = try container.decodeIfPresent([CareerFacetOption].self, forKey: .projectTypes) ?? []
+        projectSubtypes = try container.decodeIfPresent([CareerFacetOption].self, forKey: .projectSubtypes) ?? []
+        industries = try container.decodeIfPresent([CareerFacetOption].self, forKey: .industries) ?? []
+        organizations = try container.decodeIfPresent([CareerFacetOption].self, forKey: .organizations) ?? []
+        postalCodes = try container.decodeIfPresent([CareerPostalCodeOption].self, forKey: .postalCodes) ?? []
+        subscriptionTypes = try container.decodeIfPresent([CareerSubscriptionType].self, forKey: .subscriptionTypes) ?? []
+    }
 }
 
 struct CareerOrganization: Decodable, Identifiable, Hashable {

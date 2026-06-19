@@ -11,6 +11,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from tue_api_wrapper.campus_client import CampusClient
 from tue_api_wrapper.event_calendar_client import EventCalendarClient
+from tue_api_wrapper.praxisportal_client import PraxisportalClient
 from tue_api_wrapper.seatfinder_client import SeatfinderClient
 from tue_api_wrapper.talks_client import TalksClient
 from tue_api_wrapper.timms_client import TimmsClient
@@ -64,6 +65,15 @@ class LivePublicEndpointTests(unittest.TestCase):
         self.assertGreaterEqual(talks.returned_hits, 1)
         self.assertLessEqual(talks.returned_hits, 3)
         self.assertTrue(talks.items[0].title)
+
+    def test_praxisportal_public_search_returns_current_projects(self) -> None:
+        response = _retry(lambda: PraxisportalClient(timeout=15).search_projects(per_page=3, sort="newest"))
+
+        self.assertEqual(response.source_url, "https://www.praxisportal.uni-tuebingen.de/candidate/search")
+        self.assertGreaterEqual(response.total_hits, len(response.items))
+        self.assertLessEqual(len(response.items), 3)
+        self.assertTrue(response.items[0].title)
+        self.assertGreaterEqual(len(response.filters.project_types), 1)
 
 
 def _retry(call):

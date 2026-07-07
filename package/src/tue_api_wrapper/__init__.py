@@ -1,5 +1,7 @@
 from .client import AlmaClient
 from .config import AlmaError, AlmaLoginError
+from .anny_client import AnnyClient
+from .anny_models import AnnyResource, AnnyResourcePage, AnnyService, AnnyTimeSlot
 from .ilias_client import IliasClient
 from .ilias_course_models import IliasAssignmentDeadline, IliasCourseAssignmentsPage, IliasCourseExerciseAssignments
 from .moodle_client import MoodleClient
@@ -26,6 +28,11 @@ from .sdk import TuebingenAuthenticatedClient, TuebingenPublicClient, University
 
 __all__ = [
     "AlmaClient",
+    "AnnyClient",
+    "AnnyResource",
+    "AnnyResourcePage",
+    "AnnyService",
+    "AnnyTimeSlot",
     "AlmaCourseCatalogNode",
     "AlmaDownloadedDocument",
     "AlmaDocumentReport",

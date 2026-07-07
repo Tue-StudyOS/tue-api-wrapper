@@ -13,6 +13,7 @@ from .api_errors import alma_error_status_code, translate_alma_error
 from .api_routes_alma_assignments import router as alma_assignments_router
 from .api_routes_alma_exam_registration import router as alma_exam_registration_router
 from .api_routes_alma_registration import router as alma_registration_router
+from .api_routes_anny import router as anny_router
 from .api_routes_discovery import router as discovery_router
 from .api_routes_edit_actions import router as edit_actions_router
 from .api_routes_extended import router as extended_router
@@ -39,6 +40,7 @@ for router in (
     alma_assignments_router,
     alma_exam_registration_router,
     alma_registration_router,
+    anny_router,
     discovery_router,
     edit_actions_router,
     extended_router,

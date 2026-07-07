@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from ..alma_feature_client import fetch_current_lectures
+from ..anny_client import AnnyClient
 from ..campus_client import CampusClient
 from ..client import AlmaClient
 from ..directory_client import UniversityDirectoryClient
@@ -31,6 +32,49 @@ class PublicAlmaApi:
 
     def current_lectures(self, *, date: str | None = None, limit: int | None = 20):
         return fetch_current_lectures(self.client, date=date, limit=limit)
+
+
+@dataclass(slots=True)
+class PublicAnnyApi:
+    client: AnnyClient = field(default_factory=AnnyClient)
+
+    def resources(self, *, query: str = "", page: int = 1, page_size: int = 25):
+        return self.client.list_resources(query=query, page=page, page_size=page_size)
+
+    def resource(self, slug: str, *, visit_token: str | None = None):
+        return self.client.fetch_resource(slug, visit_token=visit_token)
+
+    def service_configuration(self, *, resource_id: str, service_id: str, timezone: str = "Europe/Berlin"):
+        return self.client.fetch_service_configuration(resource_id=resource_id, service_id=service_id, timezone=timezone)
+
+    def start_intervals(self, *, resource_id: str, service_id: str, date: str, timezone: str = "Europe/Berlin"):
+        return self.client.fetch_start_intervals(resource_id=resource_id, service_id=service_id, date=date, timezone=timezone)
+
+    def end_intervals(self, *, resource_id: str, service_id: str, date_time: str, timezone: str = "Europe/Berlin"):
+        return self.client.fetch_end_intervals(resource_id=resource_id, service_id=service_id, date_time=date_time, timezone=timezone)
+
+    def start_dates(self, *, resource_id: str, service_id: str, start_date: str, end_date: str, timezone: str = "Europe/Berlin"):
+        return self.client.fetch_start_dates(
+            resource_id=resource_id,
+            service_id=service_id,
+            start_date=start_date,
+            end_date=end_date,
+            timezone=timezone,
+        )
+
+    def availability_periods(self, *, resource_id: str, start_date: str, end_date: str, timezone: str = "Europe/Berlin"):
+        return self.client.fetch_availability_periods(resource_id=resource_id, start_date=start_date, end_date=end_date, timezone=timezone)
+
+    def calendar(self, *, resource_id: str, start_date: str, end_date: str, timezone: str = "Europe/Berlin"):
+        return self.client.fetch_calendar_events(resource_id=resource_id, start_date=start_date, end_date=end_date, timezone=timezone)
+
+    def booking_quote(self, *, resource_id: str, service_id: str, start_date: str, end_date: str):
+        return self.client.calculate_booking_quote(
+            resource_id=resource_id,
+            service_id=service_id,
+            start_date=start_date,
+            end_date=end_date,
+        )
 
 
 @dataclass(slots=True)
@@ -174,6 +218,7 @@ class TuebingenPublicClient:
         self,
         *,
         alma: PublicAlmaApi | None = None,
+        anny: PublicAnnyApi | None = None,
         campus: PublicCampusApi | None = None,
         directory: PublicDirectoryApi | None = None,
         discovery: CourseDiscoveryApi | None = None,
@@ -182,6 +227,7 @@ class TuebingenPublicClient:
         timms: PublicTimmsApi | None = None,
     ) -> None:
         self.alma = alma or PublicAlmaApi()
+        self.anny = anny or PublicAnnyApi()
         self.campus = campus or PublicCampusApi()
         self.directory = directory or PublicDirectoryApi()
         self.discovery = discovery or CourseDiscoveryApi()

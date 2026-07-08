@@ -4,6 +4,7 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
 
 from bs4 import BeautifulSoup
 
+from .alma_availability import raise_for_alma_unavailable_page
 from .alma_timetable_html import parse_timetable_contract
 from .config import AlmaParseError
 from .models import LoginForm
@@ -13,6 +14,7 @@ def extract_login_form(html: str, page_url: str) -> LoginForm:
     soup = BeautifulSoup(html, "html.parser")
     form = soup.find("form", id="loginForm") or soup.find("form", id="mobileLoginForm")
     if form is None:
+        raise_for_alma_unavailable_page(html)
         raise AlmaParseError("Could not find Alma login form.")
 
     payload: dict[str, str] = {}

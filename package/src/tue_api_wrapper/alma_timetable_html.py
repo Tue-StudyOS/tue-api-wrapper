@@ -6,6 +6,7 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
+from .alma_availability import raise_for_alma_unavailable_page
 from .alma_timetable_models import (
     AlmaTimetableContract,
     AlmaTimetableDay,
@@ -150,6 +151,7 @@ def build_timetable_action_request(
     soup = BeautifulSoup(html, "html.parser")
     form = _find_timetable_form(soup)
     if form is None:
+        raise_for_alma_unavailable_page(html)
         raise AlmaParseError("Could not find the Alma timetable form.")
 
     trigger = _find_named(form, None, trigger_name)
@@ -205,6 +207,7 @@ def parse_timetable_contract(html: str, page_url: str) -> AlmaTimetableContract:
     supports_custom_range = any(option.value == "zeitraum" for option in range_modes)
 
     if not terms and not days and export_url is None:
+        raise_for_alma_unavailable_page(html)
         raise AlmaParseError("The response did not look like an Alma timetable page.")
 
     return AlmaTimetableContract(

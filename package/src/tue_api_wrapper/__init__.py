@@ -1,5 +1,5 @@
 from .client import AlmaClient
-from .config import AlmaError, AlmaLoginError
+from .config import AlmaError, AlmaLoginError, AlmaServiceUnavailableError
 from .anny_client import AnnyClient
 from .anny_models import AnnyResource, AnnyResourcePage, AnnyService, AnnyTimeSlot
 from .ilias_client import IliasClient
@@ -42,6 +42,7 @@ __all__ = [
     "AlmaLoginError",
     "AlmaModuleSearchPage",
     "AlmaModuleSearchResult",
+    "AlmaServiceUnavailableError",
     "AlmaStudyServicePage",
     "IliasContentItem",
     "IliasContentPage",

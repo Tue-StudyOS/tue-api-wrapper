@@ -26,6 +26,10 @@ class AlmaLoginError(AlmaError):
     pass
 
 
+class AlmaServiceUnavailableError(AlmaError):
+    pass
+
+
 class AlmaParseError(AlmaError):
     pass
 

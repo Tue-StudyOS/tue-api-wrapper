@@ -39,7 +39,7 @@ events = client.campus.events(query="KI", limit=10)
 recordings = client.timms.search("theoretische informatik", limit=5)
 ```
 
-Use `TuebingenAuthenticatedClient` for private student data. Credentials stay local to the Python process.
+Use `TuebingenAuthenticatedClient` for private university data. Credentials stay local to the Python process.
 
 ```python
 import os
@@ -50,6 +50,7 @@ client = TuebingenAuthenticatedClient.login(
     password=os.environ["UNI_PASSWORD"],
 )
 
+profile = client.alma.profile()
 timetable = client.alma.timetable("Sommer 2026")
 documents = client.alma.studyservice_documents()
 tasks = client.ilias.tasks()
@@ -116,6 +117,7 @@ client.praxisportal.project(12345)
 ### Authenticated Alma
 
 ```python
+client.alma.profile()
 client.alma.timetable("Sommer 2026")
 client.alma.timetable_controls()
 client.alma.timetable_view(term="Sommer 2026", limit=50)

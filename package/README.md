@@ -5,7 +5,7 @@ Python SDK, FastAPI server, and local MCP server for University of Tübingen stu
 The package has three entry points:
 
 - `TuebingenPublicClient`: public data that does not need credentials
-- `TuebingenAuthenticatedClient`: private student data with explicit credentials
+- `TuebingenAuthenticatedClient`: private university data with explicit credentials
 - `tue-mcp`: local MCP server for agents and LLM tools
 
 ## Install for local development
@@ -50,6 +50,7 @@ client = TuebingenAuthenticatedClient.login(
     password=os.environ["UNI_PASSWORD"],
 )
 
+profile = client.alma.profile()
 timetable = client.alma.timetable("Sommer 2026")
 documents = client.alma.studyservice_documents()
 tasks = client.ilias.tasks()

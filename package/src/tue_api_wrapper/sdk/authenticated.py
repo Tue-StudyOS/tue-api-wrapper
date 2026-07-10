@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from ..alma_account_models import AlmaAccountProfile
 from ..alma_catalog_client import fetch_course_catalog_page
 from ..alma_course_assignments_client import fetch_timetable_course_assignments
 from ..alma_course_registration_client import (
@@ -41,6 +42,9 @@ class AuthenticatedAlmaApi:
 
     def timetable(self, term: str):
         return self.client.fetch_timetable_for_term(term)
+
+    def profile(self) -> AlmaAccountProfile:
+        return self.client.fetch_account_profile()
 
     def timetable_controls(self):
         return fetch_timetable_controls(self.client)

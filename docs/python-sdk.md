@@ -39,7 +39,7 @@ recordings = client.timms.search("theoretische informatik", limit=5)
 
 ## Authenticated Client
 
-Use `TuebingenAuthenticatedClient` for private student data. Credentials stay in your local process.
+Use `TuebingenAuthenticatedClient` for private university data. Credentials stay in your local process.
 
 Load credentials with the standard Python environment API and pass them explicitly:
 
@@ -52,12 +52,15 @@ client = TuebingenAuthenticatedClient.login(
     password=os.environ["UNI_PASSWORD"],
 )
 
+profile = client.alma.profile()
 timetable = client.alma.timetable("Sommer 2026")
 documents = client.alma.studyservice_documents()
 tasks = client.ilias.tasks()
 deadlines = client.moodle.deadlines(days=30)
 inbox = client.mail.inbox(limit=5)
 ```
+
+`profile.current_role` and `profile.available_roles` are strings reported by Alma. The SDK deliberately does not constrain them to an enum, so roles from staff or multi-role accounts remain usable without a package update.
 
 In a local shell:
 
@@ -77,7 +80,7 @@ Public:
 
 Authenticated:
 
-- `client.alma`: timetable, course offerings, exams, enrollments, study planner, document reports
+- `client.alma`: account roles, timetable, course offerings, exams, enrollments, study planner, document reports
 - `client.ilias`: root page, memberships, tasks, content, forums, exercises, search
 - `client.moodle`: dashboard, deadlines, courses, grades, messages, notifications
 - `client.mail`: inbox, mailboxes, message details
@@ -87,5 +90,5 @@ Authenticated:
 
 - `.env` and `.env.*` are ignored by this repository.
 - Do not commit university passwords, cookies, HAR files, downloaded PDFs, or mailbox exports.
-- Prefer the public client for course projects unless private student data is essential.
+- Prefer the public client for course projects unless private university data is essential.
 - The SDK returns live data or clear errors. It does not silently use mock data.

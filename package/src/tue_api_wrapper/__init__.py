@@ -1,3 +1,4 @@
+from .alma_account_models import AlmaAccountProfile
 from .client import AlmaClient
 from .config import AlmaError, AlmaLoginError, AlmaServiceUnavailableError
 from .anny_client import AnnyClient
@@ -28,6 +29,7 @@ from .sdk import TuebingenAuthenticatedClient, TuebingenPublicClient, University
 
 __all__ = [
     "AlmaClient",
+    "AlmaAccountProfile",
     "AnnyClient",
     "AnnyResource",
     "AnnyResourcePage",

@@ -8,6 +8,7 @@ from urllib.parse import parse_qsl, quote, unquote, urlparse
 from bs4 import BeautifulSoup
 import requests
 
+from .alma_account_models import AlmaAccountProfile
 from .alma_studyservice_client import (
     fetch_studyservice_contract,
     fetch_studyservice_documents_contract,
@@ -109,6 +110,11 @@ class AlmaClient:
                 raise AlmaLoginError(error_message)
             raise AlmaLoginError("Alma login did not reach an authenticated page.")
         return login_response.text
+
+    def fetch_account_profile(self) -> AlmaAccountProfile:
+        from .alma_account_client import fetch_account_profile
+
+        return fetch_account_profile(self)
 
     def fetch_timetable_page(self) -> str:
         response = self.session.get(self.timetable_url, timeout=self.timeout_seconds)

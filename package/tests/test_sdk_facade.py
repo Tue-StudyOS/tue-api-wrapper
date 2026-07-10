@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from tue_api_wrapper.sdk import TuebingenPublicClient, UniversityCredentials
-from tue_api_wrapper.sdk.authenticated import AuthenticatedIliasApi
+from tue_api_wrapper.sdk.authenticated import AuthenticatedAlmaApi, AuthenticatedIliasApi
 from tue_api_wrapper.sdk.public import PublicAlmaApi
 
 
@@ -61,6 +61,11 @@ class SdkFacadeTests(unittest.TestCase):
             {"course_limit": 3, "assignment_limit": 7},
         )
 
+    def test_authenticated_alma_exposes_account_profile(self) -> None:
+        api = AuthenticatedAlmaApi(UniversityCredentials("student", "secret"), _client=_FakeAlmaClient())
+
+        self.assertEqual(api.profile(), {"current_role": "student"})
+
 
 class _FakePublicAlmaClient:
     def search_public_module_descriptions(self, *, query: str, max_results: int):
@@ -78,6 +83,11 @@ class _FakeIliasClient:
 
     def fetch_assignment_deadlines(self, *, course_limit: int = 20, assignment_limit: int = 50):
         return {"course_limit": course_limit, "assignment_limit": assignment_limit}
+
+
+class _FakeAlmaClient:
+    def fetch_account_profile(self):
+        return {"current_role": "student"}
 
 
 if __name__ == "__main__":

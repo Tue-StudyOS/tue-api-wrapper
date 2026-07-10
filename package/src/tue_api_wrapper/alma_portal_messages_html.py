@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from html import unescape
 from urllib.parse import urljoin
-import xml.etree.ElementTree as ET
+from defusedxml import ElementTree as ET
+from defusedxml.common import DefusedXmlException
 
 from bs4 import BeautifulSoup
 
@@ -172,7 +173,7 @@ def parse_portal_messages_settings(
 
     try:
         root = ET.fromstring(response_text)
-    except ET.ParseError as exc:
+    except (ET.ParseError, DefusedXmlException) as exc:
         raise AlmaParseError("Could not parse the Alma portal-messages partial response.") from exc
 
     updates = {

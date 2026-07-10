@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import xml.etree.ElementTree as ET
+from defusedxml import ElementTree as ET
+from defusedxml.common import DefusedXmlException
 
 from .config import AlmaParseError
 
@@ -10,7 +11,7 @@ def extract_partial_updates(response_text: str) -> tuple[tuple[str, str], ...]:
         return ()
     try:
         root = ET.fromstring(response_text.lstrip())
-    except ET.ParseError as exc:
+    except (ET.ParseError, DefusedXmlException) as exc:
         raise AlmaParseError("Could not parse the Alma partial response.") from exc
     return tuple(
         (update.get("id", "").strip(), update.text or "")

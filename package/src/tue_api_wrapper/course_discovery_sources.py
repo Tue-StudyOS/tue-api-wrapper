@@ -117,7 +117,7 @@ def moodle_course_documents(items: Iterable[MoodleCourseSummary]) -> tuple[Cours
 
 
 def _stable_id(prefix: str, value: str) -> str:
-    digest = hashlib.sha1(value.encode("utf-8")).hexdigest()[:12]
+    digest = hashlib.sha1(value.encode("utf-8"), usedforsecurity=False).hexdigest()[:12]
     return f"{prefix}:{digest}"
 
 

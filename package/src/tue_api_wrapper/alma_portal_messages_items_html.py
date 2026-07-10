@@ -4,7 +4,8 @@ from dataclasses import dataclass
 from datetime import datetime
 import re
 from urllib.parse import urljoin
-import xml.etree.ElementTree as ET
+from defusedxml import ElementTree as ET
+from defusedxml.common import DefusedXmlException
 
 from bs4 import BeautifulSoup
 
@@ -66,7 +67,7 @@ def parse_portal_messages_partial_response(response_text: str, page_url: str) ->
         return parse_portal_messages_page(response_text, page_url)
     try:
         root = ET.fromstring(response_text)
-    except ET.ParseError as exc:
+    except (ET.ParseError, DefusedXmlException) as exc:
         raise AlmaParseError("Could not parse the Alma portal-messages partial response.") from exc
     updates = [update.text or "" for update in root.findall(".//update")]
     target_html = next((content for content in updates if "portalMessagesContent" in content), "")

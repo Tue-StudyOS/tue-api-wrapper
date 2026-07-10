@@ -27,7 +27,7 @@ from .portal_service import DEFAULT_DASHBOARD_TERM, PortalService, normalize_das
 
 app = FastAPI(
     title="tue-api-wrapper",
-    version="0.2.2",
+    version="0.2.3",
     description="Unified Alma and ILIAS backend for CLI, web, and ChatGPT surfaces.",
 )
 app.add_middleware(
@@ -263,7 +263,7 @@ async def handle_alma_error(_request, error: AlmaError) -> JSONResponse:
 def main() -> None:
     uvicorn.run(
         "tue_api_wrapper.api_server:app",
-        host="0.0.0.0",
+        host=os.getenv("HOST", "127.0.0.1"),
         port=int(os.getenv("PORT", "8000")),
         reload=False,
     )

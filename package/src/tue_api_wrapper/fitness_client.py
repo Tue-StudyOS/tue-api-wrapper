@@ -51,11 +51,17 @@ def parse_kuf_occupancy_page(html: str, page_url: str) -> KufOccupancyPage:
 
 def parse_kuf_training_count_image(image_bytes: bytes) -> int:
     try:
-        image = Image.open(BytesIO(image_bytes)).convert("RGBA")
+        source_image = Image.open(BytesIO(image_bytes))
     except Exception as error:  # pragma: no cover - Pillow error shape is version-specific
         raise ValueError("KuF occupancy image could not be decoded.") from error
-    if image.width > 400 or image.height > 200:
-        raise ValueError("KuF occupancy image was larger than expected.")
+
+    with source_image:
+        if source_image.width > 400 or source_image.height > 200:
+            raise ValueError("KuF occupancy image was larger than expected.")
+        try:
+            image = source_image.convert("RGBA")
+        except Exception as error:  # pragma: no cover - Pillow error shape is version-specific
+            raise ValueError("KuF occupancy image could not be decoded.") from error
 
     mask = _black_pixel_mask(image)
     digit_bounds = _digit_bounds(mask)

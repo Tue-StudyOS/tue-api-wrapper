@@ -4,7 +4,9 @@ from datetime import timezone
 from email.utils import parsedate_to_datetime
 from html import unescape
 import re
-import xml.etree.ElementTree as ET
+from defusedxml import ElementTree as ET
+from defusedxml.common import DefusedXmlException
+from xml.etree.ElementTree import Element  # nosec B405
 
 import requests
 
@@ -20,7 +22,7 @@ UTEVENT_NS = "{http://uni-tuebingen.de/ns/event/}"
 def parse_university_events_feed(feed_xml: str, *, query: str = "", limit: int = 24) -> UniversityCalendarResponse:
     try:
         root = ET.fromstring(feed_xml)
-    except ET.ParseError as error:
+    except (ET.ParseError, DefusedXmlException) as error:
         raise ValueError("University event feed was not valid XML.") from error
 
     channel = root.find("channel")
@@ -57,7 +59,7 @@ class EventCalendarClient:
         return parse_university_events_feed(response.text, query=query, limit=limit)
 
 
-def _parse_item(item: ET.Element) -> UniversityCalendarEvent:
+def _parse_item(item: Element) -> UniversityCalendarEvent:
     event_id = _node_text(item, "guid") or _node_text(item, "link") or _node_text(item, "title") or "event"
     starts_at = _parse_pub_date(_node_text(item, "pubDate"))
     return UniversityCalendarEvent(
@@ -73,7 +75,7 @@ def _parse_item(item: ET.Element) -> UniversityCalendarEvent:
     )
 
 
-def _node_text(node: ET.Element, name: str) -> str | None:
+def _node_text(node: Element, name: str) -> str | None:
     child = node.find(name)
     return _clean_text(child.text) if child is not None else None
 

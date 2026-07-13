@@ -14,6 +14,14 @@ from tue_api_wrapper.config import AlmaLoginError, AlmaParseError
 
 
 class AlmaAccountProfileHtmlTests(unittest.TestCase):
+    def test_parses_observed_dozent_account_roles(self) -> None:
+        profile = parse_account_profile(
+            '<html><body class="loggedin CURRENT_ROLE_dozent ALL_ROLES dozent pruefer"></body></html>'
+        )
+
+        self.assertEqual(profile.current_role, "dozent")
+        self.assertEqual(profile.available_roles, ("dozent", "pruefer"))
+
     def test_parses_current_and_available_roles_as_server_strings(self) -> None:
         profile = parse_account_profile(
             '<html><body class="loggedin CURRENT_ROLE_custom-role ALL_ROLES student custom-role"></body></html>'

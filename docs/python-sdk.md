@@ -62,6 +62,10 @@ inbox = client.mail.inbox(limit=5)
 
 `profile.current_role` and `profile.available_roles` are strings reported by Alma. The SDK deliberately does not constrain them to an enum, so roles from staff or multi-role accounts remain usable without a package update.
 
+A verified Tübingen teaching account reported `current_role == "dozent"` and
+`available_roles == ("dozent", "pruefer")`. These are Alma's technical role
+identifiers; applications should still preserve unknown future values.
+
 In a local shell:
 
 ```bash

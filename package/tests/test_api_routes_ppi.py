@@ -30,7 +30,7 @@ class PpiRouteTests(unittest.TestCase):
         self.assertNotIn("ppi-password", repr(request))
 
     def test_ppi_routes_are_registered(self) -> None:
-        paths = {route.path for route in api_server.app.routes}
+        paths = set(api_server.app.openapi()["paths"])
 
         self.assertTrue(
             {

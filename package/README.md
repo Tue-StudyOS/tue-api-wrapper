@@ -65,6 +65,31 @@ export UNI_USERNAME=your-zdv-id
 export UNI_PASSWORD=your-password
 ```
 
+## PPI exam protocols
+
+PPI has its own account and password. Do not pass your university/ZDV password to it.
+
+```python
+from tue_api_wrapper import PpiClient
+
+ppi = PpiClient()
+
+# Creates a PPI account and sends an activation link to the corresponding
+# <ZDV username>@student.uni-tuebingen.de mailbox.
+signup = ppi.signup("zxabc12", "a-separate-ppi-password")
+
+ppi.login("zxabc12", "a-separate-ppi-password")
+catalog = ppi.fetch_lecture_catalog()
+borrowed = ppi.fetch_borrowed_lectures()
+lecture = next(item for item in borrowed.lectures if item.download_available and item.id is not None)
+archive = ppi.download_lecture(lecture.id)
+ppi.close()
+```
+
+The local API server reads `PPI_USERNAME` and `PPI_PASSWORD` for authenticated
+PPI routes. Signup uses `POST /api/ppi/signup`; catalog, borrowing, downloads,
+and token requests are available below `/api/ppi/`.
+
 ## Local MCP server
 
 ```bash

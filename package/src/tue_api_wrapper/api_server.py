@@ -21,6 +21,7 @@ from .api_routes_ilias import router as ilias_router
 from .api_routes_mail import router as mail_router
 from .api_routes_moodle import router as moodle_router
 from .api_routes_products import router as products_router
+from .api_routes_ppi import router as ppi_router
 from .client import AlmaClient
 from .config import AlmaError
 from .portal_service import DEFAULT_DASHBOARD_TERM, PortalService, normalize_dashboard_term, serialize
@@ -47,6 +48,7 @@ for router in (
     ilias_router,
     mail_router,
     moodle_router,
+    ppi_router,
     products_router,
 ):
     app.include_router(router)

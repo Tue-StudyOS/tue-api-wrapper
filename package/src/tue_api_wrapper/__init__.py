@@ -25,6 +25,22 @@ from .models import (
 )
 from .portal_cache import CacheConfig, PortalCache
 from .portal_service import PortalService, clear_portal_cache, configure_portal_cache
+from .ppi_client import (
+    PpiAccessError,
+    PpiAuthenticationError,
+    PpiClient,
+    PpiError,
+    PpiValidationError,
+)
+from .ppi_models import (
+    PpiBorrowedLecture,
+    PpiBorrowedLecturesPage,
+    PpiDownload,
+    PpiLecture,
+    PpiLectureCatalog,
+    PpiSignupResult,
+    PpiTokenRequestResult,
+)
 from .sdk import TuebingenAuthenticatedClient, TuebingenPublicClient, UniversityCredentials
 
 __all__ = [
@@ -60,6 +76,18 @@ __all__ = [
     "CacheConfig",
     "PortalService",
     "PortalCache",
+    "PpiAccessError",
+    "PpiAuthenticationError",
+    "PpiBorrowedLecture",
+    "PpiBorrowedLecturesPage",
+    "PpiClient",
+    "PpiDownload",
+    "PpiError",
+    "PpiLecture",
+    "PpiLectureCatalog",
+    "PpiSignupResult",
+    "PpiTokenRequestResult",
+    "PpiValidationError",
     "TimetableResult",
     "TuebingenAuthenticatedClient",
     "TuebingenPublicClient",

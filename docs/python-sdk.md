@@ -90,9 +90,22 @@ Authenticated:
 - `client.mail`: inbox, mailboxes, message details
 - `client.public`: the same public client from authenticated projects
 
+PPI is separate from both clients because it does not authenticate through the
+university identity provider:
+
+```python
+from tue_api_wrapper import PpiClient
+
+ppi = PpiClient()
+ppi.login("zxabc12", "a-separate-ppi-password")
+catalog = ppi.fetch_lecture_catalog()
+borrowed = ppi.fetch_borrowed_lectures()
+```
+
 ## Security Notes
 
 - `.env` and `.env.*` are ignored by this repository.
 - Do not commit university passwords, cookies, HAR files, downloaded PDFs, or mailbox exports.
+- Never reuse `UNI_PASSWORD` as the PPI password; PPI stores an independent account credential.
 - Prefer the public client for course projects unless private university data is essential.
 - The SDK returns live data or clear errors. It does not silently use mock data.

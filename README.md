@@ -74,6 +74,24 @@ credentials = UniversityCredentials.from_env(".env")
 client = TuebingenAuthenticatedClient(credentials)
 ```
 
+### PPI exam protocols
+
+PPI uses an independent account. The ZDV username identifies the student
+mailbox, but the password must be a separately chosen PPI password.
+
+```python
+from tue_api_wrapper import PpiClient
+
+ppi = PpiClient()
+signup = ppi.signup("zxabc12", "a-separate-ppi-password")
+# Follow the activation link sent to signup.activation_email.
+
+ppi.login("zxabc12", "a-separate-ppi-password")
+catalog = ppi.fetch_lecture_catalog()
+borrowed = ppi.fetch_borrowed_lectures()
+ppi.close()
+```
+
 ## Common Methods
 
 ### Public Alma
@@ -212,7 +230,10 @@ Useful URLs:
 - health check: `http://127.0.0.1:8000/api/health`
 - OpenAPI docs: `http://127.0.0.1:8000/docs`
 
-Public routes work without credentials. Authenticated routes read local credentials from environment variables such as `UNI_USERNAME` and `UNI_PASSWORD`.
+Public routes work without credentials. Authenticated university routes read
+`UNI_USERNAME` and `UNI_PASSWORD`. PPI routes instead require the independent
+`PPI_USERNAME` and `PPI_PASSWORD` values. The PPI surface includes signup,
+lecture listing, borrowing, downloads, and token requests below `/api/ppi/`.
 
 ## Feedback Issue Creation
 

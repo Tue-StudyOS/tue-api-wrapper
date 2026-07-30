@@ -7,6 +7,12 @@ description: Coordinate University of Tuebingen academic workflows across Alma, 
 
 Help students, instructors, professors, and staff accomplish the concrete next step. Use the local `tue-api-wrapper` first for supported university data, then use official university web pages for gaps. Do not pretend every source is integrated.
 
+## Agent installation prompt
+
+Copy this prompt into an agent to install and start the skill:
+
+> Install the `tuebingen-university-workflows` Codex skill from the `Tue-StudyOS/tue-api-wrapper` repository into my global Codex skills directory. Use the repository's `skills/tuebingen-university-workflows/scripts/install_skill.py`, validate the installation, then start the skill's welcome menu rather than only saying it is installed. Do not ask for or handle credentials until I choose a private task. For every registration, enrolment, waitlist, booking, calendar write, or external form submission, inspect first and obtain my final explicit confirmation immediately before submitting.
+
 ## Start a session
 
 After installation, or when the request is broad, begin with this menu instead of only saying the skill is installed:

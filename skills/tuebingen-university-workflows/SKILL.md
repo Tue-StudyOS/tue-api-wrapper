@@ -11,7 +11,7 @@ Help students, instructors, professors, and staff accomplish the concrete next s
 
 Copy this prompt into a compatible agent to install and start the skill:
 
-> Install the `tuebingen-university-workflows` agent skill from the `Tue-StudyOS/tue-api-wrapper` repository into this provider's skills directory. Determine the correct destination from the provider documentation, then run the repository's `skills/tuebingen-university-workflows/scripts/install_skill.py --destination <provider-skills-directory>`, validate the installation, and start the skill's welcome menu rather than only saying it is installed. Do not ask for or handle credentials until I choose a private task. For every registration, enrolment, waitlist, booking, calendar write, or external form submission, inspect first and obtain my final explicit confirmation immediately before submitting.
+> Install the `tuebingen-university-workflows` agent skill from the `Tue-StudyOS/tue-api-wrapper` repository into this provider's skills directory. Do not clone the full repository: retrieve only `skills/tuebingen-university-workflows/` with a sparse checkout or equivalent. Determine the correct destination from the provider documentation, then run that directory's `scripts/install_skill.py --destination <provider-skills-directory>`, validate the installation, and start the skill's welcome menu rather than only saying it is installed. Do not ask for or handle credentials until I choose a private task. For every registration, enrolment, waitlist, booking, calendar write, or external form submission, inspect first and obtain my final explicit confirmation immediately before submitting.
 
 ## Start a session
 

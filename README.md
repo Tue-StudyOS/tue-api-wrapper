@@ -29,16 +29,21 @@ This repository bundles a provider-agnostic agent skill for University of
 Tuebingen students, instructors, professors, and staff. It supports semester
 and course planning, teaching coordination, course and material discovery,
 private university data, documents, registrations, and daily workload planning.
-Install it into the skill directory specified by your agent provider:
+Retrieve only the skill directory, not a full repository checkout, then install
+it into the skill directory specified by your agent provider. For example:
 
 ```bash
-python3 skills/tuebingen-university-workflows/scripts/install_skill.py \
+git clone --depth=1 --filter=blob:none --sparse \
+  https://github.com/Tue-StudyOS/tue-api-wrapper.git /tmp/tuebingen-university-workflows-skill
+git -C /tmp/tuebingen-university-workflows-skill sparse-checkout set \
+  skills/tuebingen-university-workflows
+python3 /tmp/tuebingen-university-workflows-skill/skills/tuebingen-university-workflows/scripts/install_skill.py \
   --destination /path/to/your-provider-skills
 ```
 
 Paste this into an agent to install and begin using it right away:
 
-> Install the `tuebingen-university-workflows` agent skill from the `Tue-StudyOS/tue-api-wrapper` repository into this provider's skills directory. Determine the correct destination from the provider documentation, then run the repository's `skills/tuebingen-university-workflows/scripts/install_skill.py --destination <provider-skills-directory>`, validate the installation, and start the skill's welcome menu rather than only saying it is installed. Do not ask for or handle credentials until I choose a private task. For every registration, enrolment, waitlist, booking, calendar write, or external form submission, inspect first and obtain my final explicit confirmation immediately before submitting.
+> Install the `tuebingen-university-workflows` agent skill from the `Tue-StudyOS/tue-api-wrapper` repository into this provider's skills directory. Do not clone the full repository: retrieve only `skills/tuebingen-university-workflows/` with a sparse checkout or equivalent. Determine the correct destination from the provider documentation, then run that directory's `scripts/install_skill.py --destination <provider-skills-directory>`, validate the installation, and start the skill's welcome menu rather than only saying it is installed. Do not ask for or handle credentials until I choose a private task. For every registration, enrolment, waitlist, booking, calendar write, or external form submission, inspect first and obtain my final explicit confirmation immediately before submitting.
 
 The skill uses public data without credentials and asks the account owner to
 configure private credentials only in their local process. It never asks users

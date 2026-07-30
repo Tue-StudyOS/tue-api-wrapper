@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Install the bundled skill into the local Codex skill directory."""
+"""Install the bundled skill into an agent provider's skill directory."""
 
 from __future__ import annotations
 
 import argparse
-import os
 import shutil
 import sys
 from pathlib import Path
@@ -16,7 +15,7 @@ SKILL_NAME = "tuebingen-university-workflows"
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     source = Path(__file__).resolve().parent.parent
-    destination = Path(args.destination).expanduser() if args.destination else default_destination()
+    destination = Path(args.destination).expanduser()
     validate_source(source)
 
     target = destination / SKILL_NAME
@@ -53,15 +52,11 @@ def parser() -> argparse.ArgumentParser:
     argument_parser = argparse.ArgumentParser(description=__doc__)
     argument_parser.add_argument(
         "--destination",
-        help="Skill directory (defaults to $CODEX_HOME/skills or ~/.codex/skills).",
+        required=True,
+        help="Target directory for this agent provider's skills.",
     )
     argument_parser.add_argument("--force", action="store_true", help="Replace an existing copy of this skill.")
     return argument_parser
-
-
-def default_destination() -> Path:
-    codex_home = os.environ.get("CODEX_HOME")
-    return Path(codex_home).expanduser() / "skills" if codex_home else Path.home() / ".codex" / "skills"
 
 
 def validate_source(source: Path) -> None:

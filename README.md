@@ -4,7 +4,7 @@ Python SDK, local API server, MCP tools, and app clients for University of Tuebi
 
 The project wraps live university systems such as Alma, ILIAS, Moodle, university mail, TIMMS, campus pages, and public course data. It does not ship mock data or replace those upstream systems. Public features work without credentials; private student features require credentials in your local process.
 
-![CI](https://github.com/SebastianBoehler/tue-api-wrapper/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/Tue-StudyOS/tue-api-wrapper/actions/workflows/ci.yml/badge.svg)
 ![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-Apache--2.0-D22128.svg)
 
@@ -37,7 +37,7 @@ python3 skills/tuebingen-university-workflows/scripts/install_skill.py
 
 Paste this into an agent to install and begin using it right away:
 
-> Install the `tuebingen-university-workflows` Codex skill from the `SebastianBoehler/tue-api-wrapper` repository into my global Codex skills directory. Use the repository's `skills/tuebingen-university-workflows/scripts/install_skill.py`, validate the installation, then start the skill's welcome menu rather than only saying it is installed. Do not ask for or handle credentials until I choose a private task. For every registration, enrolment, waitlist, booking, calendar write, or external form submission, inspect first and obtain my final explicit confirmation immediately before submitting.
+> Install the `tuebingen-university-workflows` Codex skill from the `Tue-StudyOS/tue-api-wrapper` repository into my global Codex skills directory. Use the repository's `skills/tuebingen-university-workflows/scripts/install_skill.py`, validate the installation, then start the skill's welcome menu rather than only saying it is installed. Do not ask for or handle credentials until I choose a private task. For every registration, enrolment, waitlist, booking, calendar write, or external form submission, inspect first and obtain my final explicit confirmation immediately before submitting.
 
 The skill uses public data without credentials and asks the account owner to
 configure private credentials only in their local process. It never asks users

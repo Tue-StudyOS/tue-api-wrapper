@@ -23,6 +23,27 @@ pip install "tue-api-wrapper[mcp]"
 pip install "tue-api-wrapper[discovery]"
 ```
 
+## Install the Codex university-workflows skill
+
+This repository bundles an installable Codex skill for University of Tuebingen
+students, instructors, professors, and staff. It supports semester and course
+planning, teaching coordination, course and material discovery, private
+university data, documents, registrations, and daily workload planning. From a
+clone of this repository, install it into the agent's global skill directory:
+
+```bash
+python3 skills/tuebingen-university-workflows/scripts/install_skill.py
+```
+
+Paste this into an agent to install and begin using it right away:
+
+> Install the `tuebingen-university-workflows` Codex skill from the `SebastianBoehler/tue-api-wrapper` repository into my global Codex skills directory. Use the repository's `skills/tuebingen-university-workflows/scripts/install_skill.py`, validate the installation, then start the skill's welcome menu rather than only saying it is installed. Do not ask for or handle credentials until I choose a private task. For every registration, enrolment, waitlist, booking, calendar write, or external form submission, inspect first and obtain my final explicit confirmation immediately before submitting.
+
+The skill uses public data without credentials and asks the account owner to
+configure private credentials only in their local process. It never asks users
+to paste passwords into chat. Re-run the installer with `--force` only to
+replace an existing copy of this same skill.
+
 ## Python Module Usage
 
 Use `TuebingenPublicClient` for public data. It does not need a university login.

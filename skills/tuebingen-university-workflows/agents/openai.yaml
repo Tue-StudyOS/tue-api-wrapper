@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tuebingen University Workflows"
+  short_description: "Coordinate Tuebingen academic workflows"
+  default_prompt: "Use $tuebingen-university-workflows to help with a University of Tuebingen workflow."

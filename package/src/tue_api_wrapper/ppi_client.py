@@ -55,7 +55,7 @@ class PpiClient:
         self.session = session or requests.Session()
         self.session.headers.setdefault(
             "User-Agent",
-            "tue-api-wrapper/0.3 (+https://ppi.fsi.uni-tuebingen.de/)",
+            "tue-api-wrapper/0.4 (+https://ppi.fsi.uni-tuebingen.de/)",
         )
         self._authenticated = False
 

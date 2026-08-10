@@ -102,6 +102,10 @@ class PpiClient:
             raise PpiAuthenticationError("PPI rejected the username or PPI-specific password.")
         self._authenticated = True
 
+    def restore_authenticated_session(self) -> None:
+        """Mark a client with restored cookies ready for server-validated requests."""
+        self._authenticated = True
+
     def fetch_lecture_catalog(self) -> PpiLectureCatalog:
         self._require_authenticated()
         catalog_response = self._authenticated_get("lectures.php")

@@ -7,6 +7,8 @@ import unittest
 from importlib.util import find_spec
 from dataclasses import dataclass
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -187,6 +189,42 @@ class CourseDiscoveryTests(unittest.TestCase):
         self.assertEqual(response.results[0].document.source, "alma")
         self.assertFalse(response.status.semantic_available)
         self.assertEqual(response.errors, ())
+
+    def test_private_search_uses_injected_moodle_loader(self) -> None:
+        loaded: list[bool] = []
+
+        class FakeMoodle:
+            def fetch_enrolled_courses(self, *, limit: int):
+                loaded.append(True)
+                return SimpleNamespace(items=())
+
+        service = CourseDiscoveryService(
+            public_alma=FakePublicAlma(),  # type: ignore[arg-type]
+            moodle_loader=FakeMoodle,
+            persist_cache=False,
+        )
+
+        with patch(
+            "tue_api_wrapper.course_discovery_service.build_moodle_client",
+            side_effect=AssertionError("global Moodle credentials must not be used"),
+        ):
+            response = service.search("machine learning", include_private=True, limit=5)
+
+        self.assertEqual(loaded, [True])
+        self.assertNotIn("Moodle discovery failed", " ".join(response.errors))
+
+    def test_stateless_service_does_not_read_or_write_shared_cache(self) -> None:
+        with patch(
+            "tue_api_wrapper.course_discovery_service.CourseDiscoveryCache",
+            side_effect=AssertionError("shared cache must not be constructed"),
+        ):
+            service = CourseDiscoveryService(
+                public_alma=FakePublicAlma(),  # type: ignore[arg-type]
+                persist_cache=False,
+            )
+            service.refresh(limit=20)
+
+        self.assertIsNotNone(service.status().last_refresh)
 
     def test_service_hydrates_selected_program_facets_on_demand(self) -> None:
         alma = FakePublicAlma()

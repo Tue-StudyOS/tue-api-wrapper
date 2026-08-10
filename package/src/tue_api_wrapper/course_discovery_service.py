@@ -29,9 +29,7 @@ from .course_discovery_program_search import fetch_program_scoped_documents
 from .course_discovery_store import InMemoryDiscoveryStore
 from .ilias_client import IliasClient
 from .moodle_auth import build_moodle_client
-
-AlmaLoader = Callable[[], AlmaClient]
-IliasLoader = Callable[[], IliasClient]
+from .moodle_client import MoodleClient
 
 
 class CourseDiscoveryService:
@@ -39,22 +37,26 @@ class CourseDiscoveryService:
         self,
         *,
         public_alma: AlmaClient | None = None,
-        alma_loader: AlmaLoader | None = None,
-        ilias_loader: IliasLoader | None = None,
+        alma_loader: Callable[[], AlmaClient] | None = None,
+        ilias_loader: Callable[[], IliasClient] | None = None,
+        moodle_loader: Callable[[], MoodleClient] | None = build_moodle_client,
+        persist_cache: bool = True,
     ) -> None:
         self._public_alma = public_alma or AlmaClient()
         self._alma_loader = alma_loader
         self._ilias_loader = ilias_loader
+        self._moodle_loader = moodle_loader
         self._embedding_provider = build_embedding_provider()
         self._store = build_lance_store(self._embedding_provider) or InMemoryDiscoveryStore()
         self._store_name = getattr(self._store, "name", "memory")
-        self._cache = CourseDiscoveryCache()
+        self._cache = CourseDiscoveryCache() if persist_cache else None
         self._last_refresh: str | None = None
         self._errors: list[str] = []
         self._available_degree_labels: tuple[str, ...] = ()
-        cached_documents, self._last_refresh = self._cache.load()
-        if cached_documents:
-            self._store.replace(cached_documents)
+        if self._cache is not None:
+            cached_documents, self._last_refresh = self._cache.load()
+            if cached_documents:
+                self._store.replace(cached_documents)
 
     def refresh(
         self,
@@ -67,7 +69,8 @@ class CourseDiscoveryService:
         documents = _dedupe_documents(documents)[:limit]
         documents = self._enrich_alma_details(documents, errors)
         self._last_refresh = datetime.now(timezone.utc).isoformat()
-        self._cache.save(documents, self._last_refresh)
+        if self._cache is not None:
+            self._cache.save(documents, self._last_refresh)
         self._store.replace(documents)
         self._errors = list(errors)
         return self.status()
@@ -184,10 +187,12 @@ class CourseDiscoveryService:
             except AlmaError as error:
                 errors.append(f"ILIAS discovery failed: {error}")
 
-        try:
-            documents.extend(moodle_course_documents(build_moodle_client().fetch_enrolled_courses(limit=limit).items))
-        except AlmaError as error:
-            errors.append(f"Moodle discovery failed: {error}")
+        if self._moodle_loader is not None:
+            try:
+                courses = self._moodle_loader().fetch_enrolled_courses(limit=limit)
+                documents.extend(moodle_course_documents(courses.items))
+            except AlmaError as error:
+                errors.append(f"Moodle discovery failed: {error}")
         return documents
 
     def _enrich_alma_details(

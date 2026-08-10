@@ -86,6 +86,17 @@ class PpiClientTests(unittest.TestCase):
         self.assertEqual(catalog.lectures[0].id, 17)
         self.assertTrue(catalog.lectures[0].borrowed)
 
+    def test_restored_cookie_session_can_resume_authenticated_requests(self) -> None:
+        session = _FakeSession([
+            _FakeResponse(url="https://ppi.example/download.php", text=BORROWED_HTML),
+        ])
+        client = PpiClient(base_url="https://ppi.example", session=session)
+
+        client.restore_authenticated_session()
+        borrowed = client.fetch_borrowed_lectures()
+
+        self.assertEqual(borrowed.lectures[0].id, 17)
+
     def test_borrow_verifies_the_server_returned_an_entitlement(self) -> None:
         session = _authenticated_session([
             _FakeResponse(url="https://ppi.example/lectures.php", text=LECTURES_HTML),

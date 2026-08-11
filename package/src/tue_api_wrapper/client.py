@@ -17,13 +17,13 @@ from .alma_studyservice_models import AlmaStudyServicePage
 from .alma_academics_html import (
     extract_advanced_module_search_form,
     extract_module_search_form,
-    parse_exam_overview,
     parse_module_search_page,
     parse_module_search_results,
     parse_module_search_results_page,
 )
 from .alma_catalog_tree_html import parse_course_catalog_page
 from .alma_detail_client import fetch_public_module_detail
+from .alma_exam_overview_client import fetch_exam_overview as fetch_expanded_exam_overview
 from .config import (
     AlmaLoginError,
     AlmaParseError,
@@ -177,16 +177,11 @@ class AlmaClient:
         return fetch_enrollment_page(self, term=term)
 
     def fetch_exam_overview(self) -> tuple[AlmaExamNode, ...]:
-        response = self.session.get(
+        return fetch_expanded_exam_overview(
+            self,
             f"{self.base_url}/alma/pages/sul/examAssessment/personExamsReadonly.xhtml?_flowId=examsOverviewForPerson-flow"
             "&navigationPosition=hisinoneMeinStudium%2CexamAssessmentForStudent&recordRequest=true",
-            timeout=self.timeout_seconds,
-            allow_redirects=True,
         )
-        response.raise_for_status()
-        if self._looks_logged_out(response.text):
-            raise AlmaLoginError("Session is not authenticated; the exam overview page redirected back to login.")
-        return parse_exam_overview(response.text)
 
     def fetch_course_catalog(self) -> tuple[AlmaCourseCatalogNode, ...]:
         response = self.session.get(

@@ -14,7 +14,7 @@ The package has three entry points:
 cd package
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -e .
+pip install -e ".[dev]"
 ```
 
 Install MCP support when you want the agent server:
@@ -64,6 +64,33 @@ In a local shell:
 export UNI_USERNAME=your-zdv-id
 export UNI_PASSWORD=your-password
 ```
+
+## Course search and ILIAS registration
+
+ALMA course search uses the exact values returned by `course_offerings().term_options`:
+
+```python
+terms = client.alma.course_offerings().term_options
+courses = client.alma.course_offerings(query="Advanced Information Retrieval", term="eq|31|2026")
+```
+
+Search semester values differ from timetable/catalogue period IDs (`237`, for example).
+Invalid values and rejected search forms raise `AlmaParseError` instead of returning an empty course list.
+A semester without a query also submits a search.
+
+Inspect direct ILIAS registration with `client.ilias.course_join_support(url)`.
+`client.ilias.join_course(url, accept_agreement=True)` can return `requires_input` with
+`registration_fields`: field names, labels, and the available option values. Supply those
+exact values through `registration_values={...}` after reviewing the requested study details.
+The helper handles the additional form step and uses its fresh action URL internally.
+Agreement acceptance and study details must be supplied explicitly; they are never inferred.
+
+The HTTP equivalent is `POST /api/ilias/course-join?url=...&accept_agreement=true`,
+with a JSON object mapping registration field names to values as the request body.
+A `submitted` result is unconfirmed; only explicit membership confirmation produces `joined`.
+
+Run tests with `python -m pytest tests -q`. Enable the public live smoke tests with
+`TUE_API_LIVE_PUBLIC_TESTS=1 python -m pytest tests/test_public_endpoints_live.py -q`.
 
 ## PPI exam protocols
 

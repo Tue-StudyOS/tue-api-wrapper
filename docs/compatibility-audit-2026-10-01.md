@@ -29,7 +29,7 @@ Checks used local credentials from `.env.local`; no university registration was 
 
 | Surface | Result |
 | --- | --- |
-| Python suite | 215 passed, 8 skipped; 3 subtests passed |
+| Python suite | 219 passed, 8 skipped; 3 subtests passed after integrating current main |
 | Python compilation | Passed |
 | Public live endpoint tests | 6 passed: seatfinder, TIMMS, canteen, events, talks, Praxisportal |
 | ALMA live authenticated | Profile, timetable controls, planner, exams, exam reports, enrolments, documents, portal messages passed |
@@ -54,7 +54,7 @@ Checks used local credentials from `.env.local`; no university registration was 
   PPI's separate credentials, every course-specific content path, private document downloads,
   and mutation endpoints were not exercised live.
 - Existing XML-as-HTML warnings remain in the ALMA portal-message tests.
-- Changes are local. Installed connector bundles and deployed services were not updated.
+- Repository changes were prepared for main. Installed connector bundles and deployed services were not updated.
   Dependency versions were not broadly upgraded.
 
 ## Reproduce the repository checks

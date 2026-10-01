@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import re
-from urllib.parse import urljoin
+from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
 
 from bs4 import BeautifulSoup
 
 from .config import AlmaParseError
-from .ilias_actions_models import IliasWaitlistResult, IliasWaitlistSupport
+from .ilias_registration_fields import registration_fields
+from .ilias_actions_models import (
+    IliasCourseJoinResult,
+    IliasCourseJoinSupport,
+    IliasWaitlistResult,
+    IliasWaitlistSupport,
+)
 
 
 def find_waitlist_join_url(html: str, page_url: str) -> str | None:
@@ -18,6 +24,40 @@ def find_waitlist_join_url(html: str, page_url: str) -> str | None:
         return page_url
     link = soup.find("a", href=lambda value: bool(value and "ilCourseRegistrationGUI" in value))
     return urljoin(page_url, link["href"]) if link else None
+
+
+def parse_course_join_support(html: str, page_url: str) -> IliasCourseJoinSupport:
+    join_url = find_waitlist_join_url(html, page_url)
+    text = _page_text(html)
+    join_label = _join_control_label(html)
+    direct_join = join_label is not None and "Warteliste" not in f"{text} {join_label}"
+    return IliasCourseJoinSupport(
+        supported=direct_join,
+        requires_agreement=_requires_agreement(html),
+        join_url=_sanitized_registration_url(join_url) if direct_join and join_url else None,
+        message="Direct self-enrolment is available." if direct_join else None,
+        registration_fields=registration_fields(html),
+    )
+
+
+def parse_course_join_result(html: str, final_url: str) -> IliasCourseJoinResult:
+    text = _page_text(html)
+    requires_agreement = _requires_agreement(html)
+    if registration_fields(html):
+        status = "requires_input"
+    elif requires_agreement:
+        status = "requires_agreement"
+    elif "Sie sind dem Kurs beigetreten" in text or re.search(r"Status der Mitgliedschaft:\s*Kursmitglied", text):
+        status = "joined"
+    else:
+        status = "submitted"
+    return IliasCourseJoinResult(
+        status=status,
+        message=_first_direct_join_message(text),
+        final_url=_sanitized_registration_url(final_url),
+        requires_agreement=requires_agreement,
+        registration_fields=registration_fields(html),
+    )
 
 
 def build_waitlist_payload(html: str, *, accept_agreement: bool = False) -> dict[str, str]:
@@ -49,11 +89,11 @@ def build_waitlist_payload(html: str, *, accept_agreement: bool = False) -> dict
 def parse_waitlist_support(html: str, page_url: str) -> IliasWaitlistSupport:
     join_url = find_waitlist_join_url(html, page_url)
     text = _page_text(html)
-    supported = join_url is not None or "Warteliste" in text or "cmd[join]" in html
+    supported = "Warteliste" in f"{text} {_join_control_label(html) or ''}"
     return IliasWaitlistSupport(
         supported=supported,
         requires_agreement=_requires_agreement(html),
-        join_url=join_url,
+        join_url=_sanitized_registration_url(join_url) if join_url else None,
         message=_first_relevant_message(text),
     )
 
@@ -93,6 +133,25 @@ def _requires_agreement(html: str) -> bool:
     return "Nutzungsvereinbarung" in text and "Einverständnis" not in text
 
 
+def _join_control_label(html: str) -> str | None:
+    soup = BeautifulSoup(html, "html.parser")
+    control = soup.find(attrs={"name": "cmd[join]"})
+    if control is None:
+        return None
+    return str(control.get("value") or control.get_text(" ", strip=True))
+
+
+def _first_direct_join_message(text: str) -> str | None:
+    for pattern in (
+        r"Sie sind dem Kurs beigetreten\.",
+        r"Status der Mitgliedschaft:\s*[^.]+",
+    ):
+        match = re.search(pattern, text)
+        if match:
+            return match.group(0)
+    return None
+
+
 def _page_text(html: str) -> str:
     return " ".join(BeautifulSoup(html, "html.parser").get_text(" ", strip=True).split())
 
@@ -113,3 +172,9 @@ def _first_relevant_message(text: str) -> str | None:
         if match:
             return match.group(0)
     return None
+
+
+def _sanitized_registration_url(url: str) -> str:
+    parsed = urlsplit(url)
+    query = urlencode([(key, value) for key, value in parse_qsl(parsed.query) if key != "rtoken"])
+    return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, query, parsed.fragment))

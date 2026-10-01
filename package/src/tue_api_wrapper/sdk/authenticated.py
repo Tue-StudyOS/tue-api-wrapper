@@ -16,7 +16,13 @@ from ..alma_planner_client import fetch_study_planner
 from ..alma_timetable_client import fetch_timetable_controls, fetch_timetable_view, refresh_timetable_export_url
 from ..client import AlmaClient
 from ..course_discovery_service import CourseDiscoveryService
-from ..ilias_actions_client import add_to_favorites, inspect_waitlist_support, join_waitlist
+from ..ilias_actions_client import (
+    add_to_favorites,
+    inspect_course_join_support,
+    inspect_waitlist_support,
+    join_course,
+    join_waitlist,
+)
 from ..ilias_client import IliasClient
 from ..ilias_feature_client import fetch_ilias_info_page, fetch_ilias_search_filters, search_ilias
 from ..mail_client import MailClient
@@ -191,6 +197,12 @@ class AuthenticatedIliasApi:
 
     def join_waitlist(self, url: str, *, accept_agreement: bool = False):
         return join_waitlist(self.client, url=url, accept_agreement=accept_agreement)
+
+    def course_join_support(self, url: str):
+        return inspect_course_join_support(self.client, url=url)
+
+    def join_course(self, url: str, *, accept_agreement: bool = False, registration_values: dict[str, str] | None = None):
+        return join_course(self.client, url=url, accept_agreement=accept_agreement, registration_values=registration_values)
 
 @dataclass(slots=True)
 class AuthenticatedMoodleApi:

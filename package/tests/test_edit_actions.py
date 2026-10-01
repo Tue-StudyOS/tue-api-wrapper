@@ -17,7 +17,13 @@ from tue_api_wrapper.alma_official_documents import (
 )
 from tue_api_wrapper.alma_timetable_pdf import render_timetable_pdf
 from tue_api_wrapper.client import AlmaClient
-from tue_api_wrapper.ilias_actions_client import add_to_favorites, join_waitlist
+from tue_api_wrapper.ilias_actions_client import (
+    add_to_favorites,
+    inspect_course_join_support,
+    inspect_waitlist_support,
+    join_course,
+    join_waitlist,
+)
 from tue_api_wrapper.ilias_client import IliasClient
 from tue_api_wrapper.models import CalendarOccurrence
 
@@ -105,6 +111,17 @@ WAITLIST_DONE_HTML = """
   <p>Status der Mitgliedschaft: Eingetragen auf der Warteliste</p>
   <p>Zu dieser Nutzungsvereinbarung haben Sie ihr Einverständnis erklärt.</p>
 </main>
+"""
+
+DIRECT_JOIN_HTML = """
+<form action="/ilias.php?baseClass=ilrepositorygui&amp;cmdClass=ilCourseRegistrationGUI&amp;cmd=post&amp;ref_id=42&amp;rtoken=abc">
+  <input type="checkbox" name="agreement" value="1" />
+  <input type="submit" name="cmd[join]" value="Beitreten" />
+</form>
+"""
+
+DIRECT_JOIN_DONE_HTML = """
+<main><p>Sie sind dem Kurs beigetreten.</p><p>Status der Mitgliedschaft: Kursmitglied</p></main>
 """
 
 
@@ -280,6 +297,62 @@ class EditActionTests(unittest.TestCase):
         self.assertEqual(result.status, "joined_waitlist")
         self.assertEqual(result.waitlist_position, 23)
         self.assertEqual(session.posts[1][1]["agreement"], "1")
+
+    def test_ilias_direct_join_preview_distinguishes_it_from_waitlist(self) -> None:
+        session = _Session(gets=[_FakeResponse(url="https://ovidius.uni-tuebingen.de/ilias.php", text=DIRECT_JOIN_HTML)])
+        client = IliasClient(session=session)
+
+        support = inspect_course_join_support(client, url="https://ovidius.uni-tuebingen.de/goto.php/crs/42")
+
+        self.assertTrue(support.supported)
+        self.assertTrue(support.requires_agreement)
+        self.assertNotIn("rtoken", support.join_url or "")
+        self.assertEqual(session.posts, [])
+
+    def test_ilias_waitlist_preview_is_not_direct_join(self) -> None:
+        waitlist_session = _Session(
+            gets=[_FakeResponse(url="https://ovidius.uni-tuebingen.de/ilias.php", text=WAITLIST_HTML)]
+        )
+        direct_session = _Session(
+            gets=[_FakeResponse(url="https://ovidius.uni-tuebingen.de/ilias.php", text=WAITLIST_HTML)]
+        )
+
+        waitlist = inspect_waitlist_support(
+            IliasClient(session=waitlist_session),
+            url="https://ovidius.uni-tuebingen.de/goto.php/crs/42",
+        )
+        direct = inspect_course_join_support(
+            IliasClient(session=direct_session),
+            url="https://ovidius.uni-tuebingen.de/goto.php/crs/42",
+        )
+
+        self.assertTrue(waitlist.supported)
+        self.assertFalse(direct.supported)
+
+    def test_ilias_direct_join_requires_explicit_agreement(self) -> None:
+        session = _Session(gets=[_FakeResponse(url="https://ovidius.uni-tuebingen.de/ilias.php", text=DIRECT_JOIN_HTML)])
+        client = IliasClient(session=session)
+
+        result = join_course(client, url="https://ovidius.uni-tuebingen.de/goto.php/crs/42")
+
+        self.assertEqual(result.status, "requires_agreement")
+        self.assertEqual(session.posts, [])
+
+    def test_ilias_direct_join_submits_after_agreement(self) -> None:
+        session = _Session(
+            gets=[_FakeResponse(url="https://ovidius.uni-tuebingen.de/ilias.php", text=DIRECT_JOIN_HTML)],
+            posts=[_FakeResponse(url="https://ovidius.uni-tuebingen.de/goto.php/crs/42", text=DIRECT_JOIN_DONE_HTML)],
+        )
+        client = IliasClient(session=session)
+
+        result = join_course(
+            client,
+            url="https://ovidius.uni-tuebingen.de/goto.php/crs/42",
+            accept_agreement=True,
+        )
+
+        self.assertEqual(result.status, "joined")
+        self.assertEqual(session.posts[0][1]["agreement"], "1")
 
 
 if __name__ == "__main__":

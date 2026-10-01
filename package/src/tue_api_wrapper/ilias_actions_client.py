@@ -8,12 +8,21 @@ from .config import AlmaLoginError, AlmaParseError
 from .ilias_actions_html import (
     build_waitlist_payload,
     find_waitlist_join_url,
+    parse_course_join_result,
+    parse_course_join_support,
     parse_waitlist_result,
     parse_waitlist_support,
     require_waitlist_url,
 )
-from .ilias_actions_models import IliasActionResult, IliasWaitlistResult, IliasWaitlistSupport
+from .ilias_actions_models import (
+    IliasActionResult,
+    IliasCourseJoinResult,
+    IliasCourseJoinSupport,
+    IliasWaitlistResult,
+    IliasWaitlistSupport,
+)
 from .ilias_client import IliasClient
+from .ilias_registration_fields import registration_fields, validate_registration_values
 
 
 def add_to_favorites(client: IliasClient, *, url: str) -> IliasActionResult:
@@ -35,6 +44,47 @@ def inspect_waitlist_support(client: IliasClient, *, url: str) -> IliasWaitlistS
     if _looks_logged_out(response.text):
         raise AlmaLoginError("Session is not authenticated; the ILIAS registration page redirected back to login.")
     return parse_waitlist_support(response.text, response.url)
+
+
+def inspect_course_join_support(client: IliasClient, *, url: str) -> IliasCourseJoinSupport:
+    response = _fetch_registration_page(client, url)
+    return parse_course_join_support(response.text, response.url)
+
+
+def join_course(
+    client: IliasClient,
+    *,
+    url: str,
+    accept_agreement: bool = False,
+    registration_values: dict[str, str] | None = None,
+) -> IliasCourseJoinResult:
+    response = _fetch_registration_page(client, url)
+    for _ in range(2):
+        support = parse_course_join_support(response.text, response.url)
+        join_url = find_waitlist_join_url(response.text, response.url)
+        if not support.supported or join_url is None:
+            raise AlmaParseError("This ILIAS page does not expose direct self-enrolment.")
+        if support.requires_agreement and not accept_agreement:
+            return parse_course_join_result(response.text, response.url)
+        fields = registration_fields(response.text)
+        if fields and registration_values is None:
+            return parse_course_join_result(response.text, response.url)
+        if fields:
+            validate_registration_values(response.text, registration_values or {})
+        payload = build_waitlist_payload(response.text, accept_agreement=accept_agreement)
+        if fields:
+            payload.update(registration_values or {})
+        response = client.session.post(
+            _require_ovidius_url(join_url), data=payload,
+            timeout=client.timeout_seconds, allow_redirects=True,
+        )
+        response.raise_for_status()
+        if _looks_logged_out(response.text):
+            raise AlmaLoginError("Session is not authenticated during ILIAS course registration.")
+        result = parse_course_join_result(response.text, response.url)
+        if result.status not in {"requires_input", "requires_agreement"}:
+            return result
+    return parse_course_join_result(response.text, response.url)
 
 
 def join_waitlist(
@@ -71,6 +121,14 @@ def _post_join(client: IliasClient, url: str, html: str, *, accept_agreement: bo
     response.raise_for_status()
     if _looks_logged_out(response.text):
         raise AlmaLoginError("Session is not authenticated; the ILIAS waitlist action redirected back to login.")
+    return response
+
+
+def _fetch_registration_page(client: IliasClient, url: str):
+    response = client.session.get(_require_ovidius_url(url), timeout=client.timeout_seconds, allow_redirects=True)
+    response.raise_for_status()
+    if _looks_logged_out(response.text):
+        raise AlmaLoginError("Session is not authenticated; the ILIAS registration page redirected back to login.")
     return response
 
 

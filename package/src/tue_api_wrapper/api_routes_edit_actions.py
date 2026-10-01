@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Body, Query
 from fastapi.responses import Response
 
 from .alma_official_documents import (
@@ -10,7 +10,13 @@ from .alma_official_documents import (
 )
 from .api_errors import translate_alma_error
 from .config import AlmaError
-from .ilias_actions_client import add_to_favorites, inspect_waitlist_support, join_waitlist
+from .ilias_actions_client import (
+    add_to_favorites,
+    inspect_course_join_support,
+    inspect_waitlist_support,
+    join_course,
+    join_waitlist,
+)
 from .portal_service import PortalService, serialize
 
 router = APIRouter()
@@ -129,6 +135,35 @@ def ilias_waitlist_join(
                 portal_service._ilias_client(),
                 url=url,
                 accept_agreement=accept_agreement,
+            )
+        )
+        portal_service.invalidate_portal_cache()
+        return result
+    except AlmaError as error:
+        raise _translate_error(error) from error
+
+
+@router.get("/api/ilias/course-join/support")
+def ilias_course_join_support(url: str = Query(..., min_length=1)) -> dict[str, object]:
+    try:
+        return serialize(inspect_course_join_support(portal_service._ilias_client(), url=url))
+    except AlmaError as error:
+        raise _translate_error(error) from error
+
+
+@router.post("/api/ilias/course-join")
+def ilias_course_join(
+    url: str = Query(..., min_length=1),
+    accept_agreement: bool = Query(False),
+    registration_values: dict[str, str] | None = Body(None),
+) -> dict[str, object]:
+    try:
+        result = serialize(
+            join_course(
+                portal_service._ilias_client(),
+                url=url,
+                accept_agreement=accept_agreement,
+                registration_values=registration_values,
             )
         )
         portal_service.invalidate_portal_cache()

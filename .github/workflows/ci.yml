@@ -22,18 +22,18 @@ jobs:
           python-version: "3.12"
 
       - name: Install package
-        run: pip install -e .
+        run: pip install -e ".[dev]"
 
       - name: Compile sources
         run: python -m compileall src
 
       - name: Run tests
-        run: python -m unittest discover -s tests -v
+        run: python -m pytest tests -q
 
       - name: Run public endpoint smoke tests
         env:
           TUE_API_LIVE_PUBLIC_TESTS: "1"
-        run: python -m unittest discover -s tests -p test_public_endpoints_live.py -v
+        run: python -m pytest tests/test_public_endpoints_live.py -q
 
   go-cli:
     name: Go CLI

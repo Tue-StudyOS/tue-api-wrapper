@@ -33,6 +33,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+dev = ["pytest>=8,<10"]
 mcp = ["mcp>=1.26,<2"]
 discovery = ["lancedb>=0.25,<1", "sentence-transformers>=5,<6"]
 

@@ -118,7 +118,19 @@ def extract_course_search_form(html: str, page_url: str) -> AlmaCourseSearchForm
     )
 
 
+def validate_course_search_response(html: str) -> None:
+    soup = BeautifulSoup(html, "html.parser")
+    text = soup.get_text(" ", strip=True)
+    if soup.select_one(".ui-messages-error, .ui-message-error, .alert-danger") is not None or "Keine gültige Auswahl" in text:
+        raise AlmaParseError("Alma rejected the course-search form; check the search criteria and semester.")
+    table = soup.find("table", id=lambda value: bool(value and "genSearchRes" in value and value.endswith("Table")))
+    empty = any(marker in text for marker in ("Keine Veranstaltungen gefunden", "Keine Ergebnisse gefunden"))
+    if soup.find("form", id="genericSearchMask") is None and table is None and not empty:
+        raise AlmaParseError("The response did not look like an Alma course-search page.")
+
+
 def parse_course_search_page(html: str, page_url: str, *, query: str) -> AlmaCourseSearchPage:
+    validate_course_search_response(html)
     form = extract_course_search_form(html, page_url)
     results = _parse_course_search_results(html, page_url)
     selected_term = next((option for option in form.term_options if option.is_selected), None)

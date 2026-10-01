@@ -1,8 +1,15 @@
 from __future__ import annotations
 
-from .alma_course_search_html import COURSE_SEARCH_URL, _parse_course_search_results, extract_course_search_form, parse_course_search_page
+from .alma_course_search_html import (
+    COURSE_SEARCH_URL,
+    _parse_course_search_results,
+    extract_course_search_form,
+    parse_course_search_page,
+    validate_course_search_response,
+)
 from .alma_course_search_models import AlmaCourseSearchPage
 from .client import AlmaClient
+from .config import AlmaParseError
 
 
 def search_courses(
@@ -20,8 +27,10 @@ def search_courses(
     response.raise_for_status()
 
     normalized_query = query.strip()
-    if normalized_query:
+    if normalized_query or term is not None:
         form = extract_course_search_form(response.text, response.url)
+        if term is not None and term not in {option.value for option in form.term_options}:
+            raise AlmaParseError("Invalid Alma search term; use a value from term_options, not a timetable period ID.")
         payload = dict(form.payload)
         payload[form.query_field_name] = normalized_query
         if term is not None:
@@ -35,6 +44,7 @@ def search_courses(
             allow_redirects=True,
         )
         response.raise_for_status()
+        validate_course_search_response(response.text)
         selected_term = next(
             (option for option in form.term_options if option.value == (term or "")),
             next((option for option in form.term_options if option.is_selected), None),

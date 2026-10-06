@@ -1,4 +1,6 @@
+import { notifyRenderedHeight as notifyActionHeight } from "./widget-height.js";
 import "./action-confirmation.css";
+import { callHostTool } from "./widget-bridge.js";
 
 import type { CriticalActionPublicIntent, CriticalActionResult, CriticalActionView } from "../../src/types/actions.js";
 
@@ -24,7 +26,7 @@ interface ActionOpenAIHost {
   notifyIntrinsicHeight?: (height?: number) => void;
 }
 
-type ActionRenderResult = CriticalActionView | ActionToolResult | { error: string } | null;
+type ActionRenderResult = CriticalActionView | ActionToolResult | { error: string } | { view: "error"; message: string } | null;
 
 let currentResult: ActionRenderResult = null;
 let confirmationToken = "";
@@ -32,15 +34,6 @@ let isSubmitting = false;
 
 function host(): ActionOpenAIHost | undefined {
   return (window as typeof window & { openai?: ActionOpenAIHost }).openai;
-}
-
-function notifyActionHeight(root: HTMLElement) {
-  const shell = root.querySelector<HTMLElement>(".action-shell, .widget-empty");
-  if (!shell) {
-    host()?.notifyIntrinsicHeight?.();
-    return;
-  }
-  host()?.notifyIntrinsicHeight?.(Math.ceil(shell.getBoundingClientRect().height));
 }
 
 export function isCriticalActionView(value: unknown): value is CriticalActionView {
@@ -54,14 +47,16 @@ export function renderActionTemplate(
   escapeHtml: EscapeHtml,
 ) {
   currentResult = result;
-  confirmationToken = metadata?.confirmationToken ?? confirmationToken;
+  confirmationToken = metadata?.confirmationToken ?? "";
 
   if (isActionToolResult(result)) {
     root.innerHTML = renderCompleted(result, escapeHtml);
   } else if (isCriticalActionView(result)) {
     root.innerHTML = renderConfirmation(result.intent, escapeHtml);
-  } else if (result?.error) {
+  } else if (result && "error" in result) {
     root.innerHTML = renderError(result.error, escapeHtml);
+  } else if (result && "view" in result && result.view === "error") {
+    root.innerHTML = renderError(result.message, escapeHtml);
   } else {
     root.innerHTML = renderError("No action intent was provided to this confirmation view.", escapeHtml);
   }
@@ -92,7 +87,7 @@ function renderConfirmation(intent: CriticalActionPublicIntent, escapeHtml: Esca
             <p class="widget-kicker">Action intent</p>
             <h2>Nothing has been submitted yet</h2>
           </div>
-          <span>${escapeHtml(intent.method)} ${escapeHtml(intent.endpoint)}</span>
+
         </div>
 
         <div class="action-facts">
@@ -130,8 +125,9 @@ function renderConfirmation(intent: CriticalActionPublicIntent, escapeHtml: Esca
             : ""
         }
 
+        ${intent.requiresEnrolmentKey ? '<label class="action-section">Course enrolment key <input id="enrolment-key" type="password" autocomplete="off" maxlength="256" required></label>' : ""}
         <div class="action-controls">
-          <button class="widget-button danger" data-action="proceed-critical-action" ${isSubmitting ? "disabled" : ""}>
+          <button class="widget-button danger" data-action="proceed-critical-action" ${isSubmitting || !confirmationToken || Date.parse(intent.expiresAt) <= Date.now() ? "disabled" : ""}>
             ${isSubmitting ? "Submitting..." : "Proceed"}
           </button>
           <button class="widget-button ghost" data-action="cancel-critical-action" ${isSubmitting ? "disabled" : ""}>
@@ -148,7 +144,7 @@ function renderCompleted(result: ActionToolResult, escapeHtml: EscapeHtml): stri
     <div class="widget-stack action-shell">
       <header class="widget-hero">
         <div>
-          <p class="widget-kicker">Action complete</p>
+          <p class="widget-kicker">Action result</p>
           <h1>${escapeHtml(result.intent.actionLabel)}</h1>
           <p>${escapeHtml(result.result.message ?? `Finished with status ${result.result.status}.`)}</p>
         </div>
@@ -176,7 +172,7 @@ function renderCancelled(escapeHtml: EscapeHtml): string {
     <div class="widget-empty">
       <p class="widget-kicker">Cancelled</p>
       <h1>No action was submitted</h1>
-      <p>${escapeHtml("The prepared action was discarded locally. Upstream university state was not changed.")}</p>
+      <p>${escapeHtml("The server discarded the prepared action. Upstream university state was not changed.")}</p>
     </div>
   `;
 }
@@ -207,9 +203,24 @@ function bindActionHandlers(root: HTMLElement, escapeHtml: EscapeHtml) {
 }
 
 async function handleAction(action: string, root: HTMLElement, escapeHtml: EscapeHtml) {
-  if (action === "cancel-critical-action") {
-    root.innerHTML = renderCancelled(escapeHtml);
-    notifyActionHeight(root);
+  if (isSubmitting) return;
+  if (action === "cancel-critical-action" && isCriticalActionView(currentResult)) {
+    const intentId = currentResult.intent.id;
+    const token = confirmationToken;
+    isSubmitting = true;
+    renderActionTemplate(root, currentResult, { confirmationToken }, escapeHtml);
+    try {
+      await callHostTool("cancel_critical_action", { intentId, confirmationToken: token });
+      currentResult = null;
+      confirmationToken = "";
+      root.innerHTML = renderCancelled(escapeHtml);
+      notifyActionHeight(root);
+    } catch (error) {
+      currentResult = { error: error instanceof Error ? error.message : "Cancellation could not be confirmed." };
+      renderActionTemplate(root, currentResult, undefined, escapeHtml);
+    } finally {
+      isSubmitting = false;
+    }
     return;
   }
 
@@ -229,15 +240,20 @@ async function handleAction(action: string, root: HTMLElement, escapeHtml: Escap
     return;
   }
 
+  const enrolmentKey = root.querySelector<HTMLInputElement>("#enrolment-key")?.value;
+  if (currentResult.intent.requiresEnrolmentKey && !enrolmentKey) {
+    root.querySelector<HTMLInputElement>("#enrolment-key")?.reportValidity(); return;
+  }
   isSubmitting = true;
   renderActionTemplate(root, currentResult, { confirmationToken }, escapeHtml);
 
   try {
-    const response = await host()?.callTool?.<ActionToolResult>("confirm_critical_action", {
+    const result = await callHostTool<ActionToolResult>("confirm_critical_action", {
       intentId: currentResult.intent.id,
       confirmationToken,
+      ...(enrolmentKey ? { enrolmentKey } : {}),
     });
-    currentResult = response?.structuredContent ?? { error: "The backend did not return an action result." };
+    currentResult = result;
   } catch (error) {
     currentResult = { error: error instanceof Error ? error.message : "The action could not be submitted." };
   } finally {
@@ -253,6 +269,7 @@ function formatTimestamp(value: string): string {
     return value;
   }
   return new Intl.DateTimeFormat("de-DE", {
+    timeZone: "Europe/Berlin",
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);

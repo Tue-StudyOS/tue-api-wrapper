@@ -1,11 +1,10 @@
 .widget-tags {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 0.5rem;
   max-width: 100%;
   min-width: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
+
   padding-bottom: 0.2rem;
   scrollbar-gutter: stable;
 }
@@ -25,12 +24,12 @@
   width: 100%;
   display: block;
   overflow-x: auto;
-  overflow-y: auto;
+  overflow-y: visible;
   overscroll-behavior: contain;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--card);
-  max-height: min(22rem, 58dvh);
+
   scrollbar-gutter: stable;
 }
 .widget-table {

@@ -1,17 +1,20 @@
 import { build } from "esbuild";
+import { rm } from "node:fs/promises";
 
 const workingDirectory = process.cwd();
+await Promise.all(["web/dist/widget.js.map", "web/dist/widget.css.map"].map((path) => rm(path, { force: true })));
 
 await build({
   absWorkingDir: workingDirectory,
-  entryPoints: ["src/index.ts"],
-  outfile: "dist/index.js",
+  entryPoints: { index: "src/index.ts", "link-sidecar": "src/relay/client.ts", "export-tools": "src/export-tools.ts" },
+  outdir: "dist",
   bundle: true,
   platform: "node",
   format: "esm",
   packages: "external",
-  sourcemap: true,
-  target: "node20"
+  minify: true,
+  sourcemap: false,
+  target: "node24"
 });
 
 await build({
@@ -25,6 +28,7 @@ await build({
   loader: {
     ".css": "css"
   },
-  sourcemap: true,
+  minify: true,
+  sourcemap: false,
   target: "es2022"
 });

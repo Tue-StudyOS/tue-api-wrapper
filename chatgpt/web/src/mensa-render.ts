@@ -1,4 +1,5 @@
 import "./mensa-render.css";
+import { escapeHtml } from "./widget-format.js";
 
 import type { CampusCanteen, CampusFoodPlanView, CampusMenu } from "../../src/types.js";
 
@@ -10,15 +11,6 @@ const knownCanteens = [
   { id: "621", label: "Mensa Morgenstelle" },
   { id: "623", label: "Mensa Prinz Karl" },
 ] as const;
-
-function escapeHtml(value: string | null | undefined): string {
-  return (value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object");
@@ -246,6 +238,11 @@ async function submitMensaFilters(form: HTMLFormElement, callTool: CallTool, ren
     args.icons = [icon];
   }
 
+  const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+  if (submit?.disabled) return;
+  if (submit) { submit.disabled = true; submit.textContent = "Loading…"; }
+  let errorBox = form.querySelector<HTMLElement>('[role="alert"]');
+  errorBox?.remove();
   try {
     const result = await callTool<unknown>("get_mensa_food_plan", args);
     if (isMensaFoodPlanView(result)) {
@@ -253,8 +250,13 @@ async function submitMensaFilters(form: HTMLFormElement, callTool: CallTool, ren
       return;
     }
     const error = isRecord(result) && typeof result.error === "string" ? result.error : "The mensa tool returned an unsupported result.";
-    renderResult({ view: "error", message: error });
+    throw new Error(error);
   } catch (error) {
-    renderResult({ view: "error", message: error instanceof Error ? error.message : "Mensa refresh failed." });
+    errorBox = document.createElement("p");
+    errorBox.setAttribute("role", "alert");
+    errorBox.textContent = error instanceof Error ? error.message : "Mensa refresh failed.";
+    form.append(errorBox);
+  } finally {
+    if (submit) { submit.disabled = false; submit.textContent = "Refresh"; }
   }
 }

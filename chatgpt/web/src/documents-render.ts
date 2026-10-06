@@ -1,13 +1,6 @@
 import type { DocumentsSummaryPayload } from "../../src/types.js";
 
-function escapeHtml(value: string | null | undefined): string {
-  return (value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
+import { escapeHtml } from "./widget-format.js";
 
 function renderStatusRow(label: string, value: string | null | undefined): string {
   if (!value) {
@@ -26,11 +19,11 @@ function renderTabs(documents: DocumentsSummaryPayload): string {
     return "";
   }
   return `
-    <div class="widget-tabs" aria-label="Study-service tabs">
+    <div class="widget-tags" aria-label="Alma page sections">
       ${documents.tabs
         .map(
           (tab) => `
-            <span class="widget-tab${tab.is_active ? " is-active" : ""}">
+            <span>
               ${escapeHtml(tab.label)}
             </span>
           `,
@@ -147,7 +140,7 @@ function renderReports(documents: DocumentsSummaryPayload): string {
             (item) => `
               <div class="widget-row compact">
                 <strong>${escapeHtml(item.label)}</strong>
-                <span>${escapeHtml(item.trigger_name)}</span>
+
               </div>
             `,
           )
@@ -184,7 +177,7 @@ export function renderDocuments(documents: DocumentsSummaryPayload): string {
         <div>
           <p class="widget-kicker">Documents</p>
           <h1>Study-service exports</h1>
-          <p>Keep the bureaucratic options visible without forcing the user back through Alma navigation.</p>
+          <p>View your available certificates, report options, and current PDF.</p>
         </div>
       </header>
       ${renderPageState(documents)}

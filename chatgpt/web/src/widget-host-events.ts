@@ -48,6 +48,7 @@ function normalizeToolResult(toolOutput: unknown, metadata?: Record<string, unkn
   if (hasView(toolOutput)) {
     return toolOutput;
   }
+  if (typeof metadata?.error === "string") return { view: "error", message: metadata.error };
   return errorFromToolOutput(toolOutput) ?? dashboardFromMetadata(metadata) ?? toolOutput ?? null;
 }
 

@@ -1,4 +1,13 @@
-export const defaultStudyTerm = "Sommer 2026";
+// University semester boundaries: https://uni-tuebingen.de/en/843
+export function currentStudyTerm(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en", { timeZone: "Europe/Berlin", year: "numeric", month: "numeric" }).formatToParts(now);
+  const year = Number(parts.find(part => part.type === "year")!.value);
+  const month = Number(parts.find(part => part.type === "month")!.value);
+  if (month >= 4 && month <= 9) return `Sommer ${year}`;
+  const start = month < 4 ? year - 1 : year;
+  return `Winter ${start}/${String((start + 1) % 100).padStart(2, "0")}`;
+}
+export const defaultStudyTerm = currentStudyTerm();
 
 const relativeStudyTerms = new Set([
   "aktuell",
@@ -12,7 +21,7 @@ const relativeStudyTerms = new Set([
   "this term",
 ]);
 
-export function normalizeStudyTerm(term: string | null | undefined, fallback = defaultStudyTerm): string {
+export function normalizeStudyTerm(term: string | null | undefined, fallback = currentStudyTerm()): string {
   const raw = term?.trim();
   if (!raw) {
     return fallback;

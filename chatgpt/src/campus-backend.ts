@@ -1,5 +1,5 @@
 import type { CampusCanteen } from "./types.js";
-import { buildPortalApiUrl, PortalBackendError } from "./backend.js";
+import { fetchPortalJson } from "./backend-http.js";
 
 export interface CampusFoodPlanParams {
   date?: string;
@@ -14,28 +14,8 @@ function buildCampusQueryString(params: CampusFoodPlanParams): string {
   return suffix ? `?${suffix}` : "";
 }
 
-async function fetchCampusJson<T>(path: string): Promise<T> {
-  const url = buildPortalApiUrl(path);
-
-  let response: Response;
-  try {
-    response = await fetch(url);
-  } catch {
-    throw new PortalBackendError(`Could not reach the backend at ${new URL(url).origin}.`);
-  }
-
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    throw new PortalBackendError(
-      `Backend request failed for ${path} with ${response.status}${detail ? `: ${detail}` : ""}`,
-    );
-  }
-
-  return (await response.json()) as T;
-}
-
 export async function loadCampusFoodPlan(params: CampusFoodPlanParams = {}): Promise<CampusCanteen[]> {
-  return fetchCampusJson<CampusCanteen[]>(
+  return fetchPortalJson<CampusCanteen[]>(
     `/api/campus/canteens${buildCampusQueryString(params)}`,
   );
 }

@@ -1,3 +1,4 @@
+import { outputSchemas } from "../tool-output-schemas.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -10,6 +11,7 @@ export function registerMailTools(server: McpServer) {
     server,
     "get_mail_inbox",
     {
+      outputSchema: outputSchemas.get_mail_inbox,
       title: "Get mail inbox",
       description:
         "Use this when the user wants to triage inbox messages, filter by sender, search mailbox text, or look at unread mail.",
@@ -40,9 +42,6 @@ export function registerMailTools(server: McpServer) {
               text: `Loaded ${inbox.messages.length} messages from ${inbox.mailbox} with ${inbox.unread_count} unread.`,
             },
           ],
-          _meta: {
-            inbox,
-          },
         };
       }),
   );
@@ -51,6 +50,7 @@ export function registerMailTools(server: McpServer) {
     server,
     "get_mail_message",
     {
+      outputSchema: outputSchemas.get_mail_message,
       title: "Get mail message detail",
       description:
         "Use this when the user wants the full plaintext body and headers for a specific mail UID from the inbox response.",
@@ -72,9 +72,6 @@ export function registerMailTools(server: McpServer) {
               text: `Loaded mail message "${message.subject}" from ${message.mailbox}.`,
             },
           ],
-          _meta: {
-            message,
-          },
         };
       }),
   );

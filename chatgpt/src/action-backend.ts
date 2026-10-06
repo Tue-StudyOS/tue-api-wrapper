@@ -1,14 +1,5 @@
-import { PortalBackendError } from "./backend.js";
+import { PortalBackendError, fetchPortalJson as fetchJson } from "./backend-http.js";
 import type { CriticalActionResult } from "./types/actions.js";
-
-const apiBaseUrl = process.env.PORTAL_API_BASE_URL;
-
-function requireBaseUrl(): string {
-  if (!apiBaseUrl) {
-    throw new PortalBackendError("PORTAL_API_BASE_URL is not configured. Critical actions need the live backend.");
-  }
-  return apiBaseUrl;
-}
 
 function queryString(params: Record<string, string | number | boolean | undefined>): string {
   const query = new URLSearchParams();
@@ -21,29 +12,13 @@ function queryString(params: Record<string, string | number | boolean | undefine
   return suffix ? `?${suffix}` : "";
 }
 
-async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const baseUrl = requireBaseUrl();
-  let response: Response;
-  try {
-    response = await fetch(`${baseUrl}${path}`, init);
-  } catch {
-    throw new PortalBackendError(`Could not reach the backend at ${baseUrl}.`);
-  }
-
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    throw new PortalBackendError(
-      `Backend request failed for ${path} with ${response.status}${detail ? `: ${detail}` : ""}`,
-    );
-  }
-
-  return (await response.json()) as T;
-}
-
 function actionResult(raw: Record<string, unknown>): CriticalActionResult {
+  if (raw.success === false || raw.status === "failed" || raw.status === "error") {
+    throw new PortalBackendError("The university portal did not complete this action. Check its status before trying again.");
+  }
   const finalUrl = raw.final_url ?? raw.page_url ?? raw.course_url ?? null;
   return {
-    status: String(raw.status ?? raw.success ?? "submitted"),
+    status: typeof raw.status === "string" && raw.status ? raw.status : raw.success === true ? "success" : "unverified",
     message: typeof raw.message === "string" ? raw.message : null,
     finalUrl: typeof finalUrl === "string" ? finalUrl : null,
     raw,

@@ -14,16 +14,16 @@ const widgetJs = readFileSync(join(projectRoot, "web/dist/widget.js"), "utf8");
 const widgetCss = readFileSync(join(projectRoot, "web/dist/widget.css"), "utf8");
 
 const widgetDomain = process.env.APP_BASE_URL;
-const apiBaseUrl = process.env.PORTAL_API_BASE_URL;
 
-export const widgetUri = "ui://study-hub/dashboard-v8.html";
-export const detailWidgetUri = "ui://study-hub/detail-v8.html";
-export const actionWidgetUri = "ui://study-hub/action-v8.html";
-export const mensaWidgetUri = "ui://study-hub/mensa-v8.html";
+export const widgetUri = "ui://study-hub/dashboard-v9.html";
+export const detailWidgetUri = "ui://study-hub/detail-v9.html";
+export const actionWidgetUri = "ui://study-hub/action-v9.html";
+export const mensaWidgetUri = "ui://study-hub/mensa-v9.html";
 
 const widgetAliases = {
   dashboard: [
     widgetUri,
+    "ui://study-hub/dashboard-v8.html",
     "ui://study-hub/dashboard-v7.html",
     "ui://study-hub/dashboard-v6.html",
     "ui://study-hub/dashboard-v5.html",
@@ -31,6 +31,7 @@ const widgetAliases = {
   ],
   detail: [
     detailWidgetUri,
+    "ui://study-hub/detail-v8.html",
     "ui://study-hub/detail-v7.html",
     "ui://study-hub/detail-v6.html",
     "ui://study-hub/detail-v5.html",
@@ -38,6 +39,7 @@ const widgetAliases = {
   ],
   action: [
     actionWidgetUri,
+    "ui://study-hub/action-v8.html",
     "ui://study-hub/action-v7.html",
     "ui://study-hub/action-v6.html",
     "ui://study-hub/action-v5.html",
@@ -45,6 +47,7 @@ const widgetAliases = {
   ],
   mensa: [
     mensaWidgetUri,
+    "ui://study-hub/mensa-v8.html",
   ],
 } as const;
 
@@ -52,11 +55,12 @@ type WidgetTemplate = "dashboard" | "detail" | "action" | "mensa";
 
 function buildWidgetHtml(template: WidgetTemplate, uri: string) {
   const meta: Record<string, unknown> = {
+    "openai/ui": { availableDisplayModes: ["inline", "fullscreen"] },
     ui: {
       prefersBorder: true,
       csp: {
-        connectDomains: apiBaseUrl ? [apiBaseUrl] : [],
-        resourceDomains: [],
+        connectDomains: [],
+        resourceDomains: template === "mensa" ? ["https://www.my-stuwe.de"] : [],
       },
     },
     "openai/widgetDescription":

@@ -2,28 +2,27 @@ import { z } from "zod";
 
 import { PortalBackendError } from "./backend.js";
 import type { DashboardPayload } from "./types.js";
+import { recoveryHint } from "./server-instructions.js";
 
 export const limitSchema = z.number().int().min(1).max(20).optional();
 export const courseFilterListSchema = z.array(z.string().min(1)).max(12).optional();
 
-export function readOnlyAnnotations() {
+export function readOnlyAnnotations(openWorldHint = false) {
   return {
     readOnlyHint: true,
     destructiveHint: false,
-    openWorldHint: false,
+    openWorldHint,
     idempotentHint: true,
   };
 }
 
 export function toolErrorResponse(error: PortalBackendError) {
   return {
-    structuredContent: {
-      error: error.message,
-    },
+    isError: true,
     content: [
       {
         type: "text" as const,
-        text: error.message,
+        text: `${error.message}\n${recoveryHint}`,
       },
     ],
     _meta: {
@@ -34,14 +33,11 @@ export function toolErrorResponse(error: PortalBackendError) {
 
 export function widgetErrorResponse(error: PortalBackendError) {
   return {
-    structuredContent: {
-      view: "error" as const,
-      message: error.message,
-    },
+    isError: true,
     content: [
       {
         type: "text" as const,
-        text: error.message,
+        text: `${error.message}\n${recoveryHint}`,
       },
     ],
     _meta: {
@@ -57,7 +53,7 @@ export async function runReadTool<T>(loader: () => Promise<T>) {
     if (error instanceof PortalBackendError) {
       return toolErrorResponse(error);
     }
-    throw error;
+    return toolErrorResponse(new PortalBackendError("The study service returned an unexpected response. Contact support."));
   }
 }
 
@@ -68,7 +64,7 @@ export async function runWidgetTool<T>(loader: () => Promise<T>) {
     if (error instanceof PortalBackendError) {
       return widgetErrorResponse(error);
     }
-    throw error;
+    return widgetErrorResponse(new PortalBackendError("The study service returned an unexpected response. Contact support."));
   }
 }
 

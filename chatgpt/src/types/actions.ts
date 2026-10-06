@@ -15,6 +15,7 @@ export interface CriticalActionPublicIntent {
   method: "POST";
   sideEffects: string[];
   requiredInputs: string[];
+  requiresEnrolmentKey?: boolean;
   preparedAt: string;
   expiresAt: string;
 }

@@ -1,3 +1,4 @@
+import { outputSchemas } from "../tool-output-schemas.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -7,7 +8,10 @@ import type { CampusCanteen, CampusFoodPlanPayload, CampusMenu } from "../types.
 import { asStructured, readOnlyAnnotations, runReadTool } from "../tool-runtime.js";
 import { mensaWidgetUri } from "../widget-resources.js";
 
-const campusDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional();
+const campusDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
+  const date = new Date(`${value}T12:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}, "Use a valid calendar date in YYYY-MM-DD format.").optional();
 const canteenIdsSchema = z.array(z.string().regex(/^\d+$/)).min(1).max(5).optional();
 const iconsSchema = z.array(z.string().min(1)).min(1).max(4).optional();
 
@@ -61,6 +65,7 @@ export function registerCampusTools(server: McpServer) {
     server,
     "get_mensa_food_plan",
     {
+      outputSchema: outputSchemas.get_mensa_food_plan,
       title: "Get mensa food plan",
       description:
         "Use this when the user asks about mensa menus, cafeteria food, lunch options, or vegan and vegetarian meals in Tübingen.",
@@ -69,7 +74,7 @@ export function registerCampusTools(server: McpServer) {
         canteenIds: canteenIdsSchema,
         icons: iconsSchema,
       },
-      annotations: readOnlyAnnotations(),
+      annotations: readOnlyAnnotations(true),
       _meta: {
         ui: {
           resourceUri: mensaWidgetUri,
@@ -113,11 +118,6 @@ export function registerCampusTools(server: McpServer) {
                   : `No published Tübingen mensa menus matched ${targetDate}${iconSummary}.`,
             },
           ],
-          _meta: {
-            mensaFoodPlan: result,
-            date: targetDate,
-            canteens,
-          },
         };
       }),
   );

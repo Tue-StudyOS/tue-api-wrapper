@@ -1,3 +1,4 @@
+import { outputSchemas } from "../tool-output-schemas.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -10,6 +11,7 @@ export function registerSearchTools(server: McpServer) {
     server,
     "search",
     {
+      outputSchema: outputSchemas.search,
       title: "Search unified study portal",
       description:
         "Use this when the user wants to search Alma and ILIAS items by topic, course name, or document label.",
@@ -29,12 +31,9 @@ export function registerSearchTools(server: McpServer) {
           content: [
             {
               type: "text" as const,
-              text: `Found ${results.length} matching unified study items for "${query}".`,
+              text: JSON.stringify({ results: results.map(({ id, title, url }) => ({ id, title, url })) }),
             },
           ],
-          _meta: {
-            results,
-          },
         };
       }),
   );
@@ -43,6 +42,7 @@ export function registerSearchTools(server: McpServer) {
     server,
     "fetch",
     {
+      outputSchema: outputSchemas.fetch,
       title: "Fetch unified study item",
       description:
         "Use this when the user already has an item id from search and wants the full text for that Alma or ILIAS result.",
@@ -62,12 +62,9 @@ export function registerSearchTools(server: McpServer) {
           content: [
             {
               type: "text" as const,
-              text: `Loaded ${item.title}.`,
+              text: JSON.stringify(item),
             },
           ],
-          _meta: {
-            item,
-          },
         };
       }),
   );

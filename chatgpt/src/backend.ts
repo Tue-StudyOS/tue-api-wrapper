@@ -19,50 +19,11 @@ import type {
   ModuleDetail,
   SearchItem
 } from "./types.js";
-import { defaultStudyTerm, normalizeOptionalStudyTerm, normalizeStudyTerm } from "./terms.js";
+import { normalizeOptionalStudyTerm, normalizeStudyTerm } from "./terms.js";
 
-const apiBaseUrl = process.env.PORTAL_API_BASE_URL;
-export function buildPortalApiUrl(path: string): string {
-  if (!apiBaseUrl) {
-    throw new PortalBackendError(
-      "PORTAL_API_BASE_URL is not configured. The ChatGPT app is now live-data only."
-    );
-  }
-  if (path.startsWith("http://") || path.startsWith("https://")) {
-    return path;
-  }
-  return `${apiBaseUrl}${path}`;
-}
+import { buildPortalApiUrl, fetchPortalJson as fetchJson, PortalBackendError } from "./backend-http.js";
+export { buildPortalApiUrl, PortalBackendError } from "./backend-http.js";
 
-export class PortalBackendError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "PortalBackendError";
-  }
-}
-async function fetchJson<T>(path: string): Promise<T> {
-  if (!apiBaseUrl) {
-    throw new PortalBackendError(
-      "PORTAL_API_BASE_URL is not configured. The ChatGPT app is now live-data only."
-    );
-  }
-
-  let response: Response;
-  try {
-    response = await fetch(`${apiBaseUrl}${path}`);
-  } catch {
-    throw new PortalBackendError(`Could not reach the backend at ${apiBaseUrl}.`);
-  }
-
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    throw new PortalBackendError(
-      `Backend request failed for ${path} with ${response.status}${detail ? `: ${detail}` : ""}`
-    );
-  }
-
-  return (await response.json()) as T;
-}
 function buildQueryString(params: Record<string, string | number | readonly string[] | undefined>): string {
   const query = new URLSearchParams();
 
@@ -141,9 +102,9 @@ export interface LearningSpaceSearchParams {
   createdMode?: string;
   createdDate?: string;
 }
-export async function loadDashboard(term = defaultStudyTerm): Promise<DashboardPayload> {
+export async function loadDashboard(term = normalizeStudyTerm(undefined), limit = 8): Promise<DashboardPayload> {
   const dashboard = await fetchJson<DashboardPayload>(
-    `/api/dashboard?term=${encodeURIComponent(normalizeStudyTerm(term))}`
+    `/api/dashboard?term=${encodeURIComponent(normalizeStudyTerm(term))}&limit=${limit}`
   );
   return normalizeDashboard(dashboard);
 }
@@ -160,7 +121,7 @@ export async function loadExams(limit = 8): Promise<AlmaExamRecord[]> {
   return fetchJson<AlmaExamRecord[]>(`/api/alma/exams?limit=${limit}`);
 }
 
-export async function loadTimetable(term = defaultStudyTerm): Promise<AlmaTimetablePayload> {
+export async function loadTimetable(term = normalizeStudyTerm(undefined)): Promise<AlmaTimetablePayload> {
   return fetchJson<AlmaTimetablePayload>(`/api/alma/timetable?term=${encodeURIComponent(normalizeStudyTerm(term))}`);
 }
 
@@ -283,6 +244,15 @@ export async function inspectLearningSpace(target: string): Promise<LearningSpac
     content,
     forum,
     exercise,
+    errors: Object.fromEntries(
+      [["content", contentResult], ["forum", forumResult], ["exercise", exerciseResult]]
+        .flatMap(([name, result]) => {
+          const settled = result as PromiseSettledResult<unknown>;
+          return settled.status === "rejected"
+            ? [[name, settled.reason instanceof PortalBackendError ? settled.reason.message : "This section could not be loaded."]]
+            : [];
+        }),
+    ),
   };
 }
 

@@ -1,0 +1,52 @@
+@media (max-width: 720px) {
+  .widget-shell.is-expanded .widget-grid {
+    grid-template-columns: 1fr;
+  }
+  .widget-hero,
+  .widget-grid,
+  .metric-row {
+    grid-template-columns: 1fr;
+  }
+
+  .widget-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .widget-search {
+    grid-template-columns: 1fr;
+  }
+
+  .widget-hero {
+    flex-direction: column;
+  }
+
+  .widget-card-header,
+  .widget-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .widget-row-actions,
+  .widget-card-actions,
+  .widget-modal-actions {
+    justify-content: flex-start;
+  }
+
+  .widget-agenda-row {
+    flex-direction: column;
+  }
+
+  .widget-agenda-time {
+    min-width: 0;
+  }
+
+  .widget-stack,
+  .widget-empty {
+    padding: 0.85rem;
+  }
+
+  .widget-modal-stack {
+    height: auto;
+    min-height: 0;
+  }
+}

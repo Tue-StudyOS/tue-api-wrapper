@@ -1,3 +1,4 @@
+import { outputSchemas } from "../tool-output-schemas.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -11,6 +12,7 @@ export function registerWidgetTools(server: McpServer) {
     server,
     "show_dashboard",
     {
+      outputSchema: outputSchemas.show_dashboard,
       title: "Show study dashboard",
       description:
         "Use this when the user wants a compact overview of upcoming events, documents, exams, and ILIAS entry points.",
@@ -41,9 +43,6 @@ export function registerWidgetTools(server: McpServer) {
               text: `Showing the unified study dashboard for ${dashboard.termLabel}.`,
             },
           ],
-          _meta: {
-            dashboard,
-          },
         };
       }),
   );
@@ -52,6 +51,7 @@ export function registerWidgetTools(server: McpServer) {
     server,
     "list_documents",
     {
+      outputSchema: outputSchemas.list_documents,
       title: "Show study-service documents",
       description:
         "Use this when the user specifically wants Alma study-service document jobs or certificate options in the widget.",
@@ -86,9 +86,6 @@ export function registerWidgetTools(server: McpServer) {
                 : "The Alma study-service page loaded, but no report jobs, output-request groups, or current PDF downloads are currently available.",
             },
           ],
-          _meta: {
-            documents,
-          },
         };
       }),
   );

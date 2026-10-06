@@ -1,78 +1,23 @@
-import { createServer } from "node:http";
-
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-
-import { createAppServer, serverName } from "./study-server.js";
+import { createStudyHttpApp } from "./http-app.js";
+import { StateStore } from "./auth/state-store.js";
 
 const port = Number(process.env.PORT ?? 8080);
-const mcpPath = "/mcp";
-
-const httpServer = createServer(async (req, res) => {
-  if (!req.url) {
-    res.writeHead(400).end("Missing URL");
-    return;
-  }
-
-  const url = new URL(req.url, `http://${req.headers.host ?? "localhost"}`);
-
-  if (req.method === "GET" && url.pathname === "/") {
-    res.writeHead(200, { "content-type": "text/plain" }).end("TUE Study Hub MCP server");
-    return;
-  }
-
-  if (req.method === "GET" && url.pathname === "/healthz") {
-    res.writeHead(200, { "content-type": "application/json" }).end(
-      JSON.stringify({
-        status: "ok",
-        service: serverName,
-        mcpPath,
-      }),
-    );
-    return;
-  }
-
-  if (req.method === "OPTIONS" && url.pathname === mcpPath) {
-    res.writeHead(204, {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "content-type, mcp-session-id",
-      "Access-Control-Expose-Headers": "Mcp-Session-Id",
-    });
-    res.end();
-    return;
-  }
-
-  const supportedMethods = new Set(["GET", "POST", "DELETE"]);
-  if (req.method && supportedMethods.has(req.method) && url.pathname === mcpPath) {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Expose-Headers", "Mcp-Session-Id");
-
-    const appServer = createAppServer();
-    const transport = new StreamableHTTPServerTransport({
-      sessionIdGenerator: undefined,
-      enableJsonResponse: true,
-    });
-
-    res.on("close", () => {
-      transport.close();
-      appServer.close();
-    });
-
-    try {
-      await appServer.connect(transport);
-      await transport.handleRequest(req, res);
-    } catch (error) {
-      console.error("MCP request error", error);
-      if (!res.headersSent) {
-        res.writeHead(500).end("Internal server error");
-      }
-    }
-    return;
-  }
-
-  res.writeHead(404).end("Not Found");
-});
-
-httpServer.listen(port, () => {
-  console.log(`TUE Study Hub MCP server listening on http://localhost:${port}${mcpPath}`);
-});
+const origin = new URL(process.env.APP_BASE_URL ?? "http://127.0.0.1:8080");
+if (origin.username || origin.password || origin.pathname !== "/" || origin.search || origin.hash ||
+    (origin.protocol !== "https:" && !(origin.protocol === "http:" && ["127.0.0.1", "localhost", "[::1]"].includes(origin.hostname)))) {
+  throw new Error("APP_BASE_URL must be a public HTTPS origin or a loopback development origin.");
+}
+if (process.env.NODE_ENV === "production" && (!process.env.APP_BASE_URL || origin.protocol !== "https:")) {
+  throw new Error("Production requires a public HTTPS APP_BASE_URL.");
+}
+const store = new StateStore(process.env.STUDY_STATE_PATH ?? "./data/study.sqlite");
+const { app, relay } = createStudyHttpApp(origin, store);
+const cleanup = setInterval(() => store.prune(), 300_000).unref();
+const server = app.listen(port, () => console.log(`Tübingen Study Hub listening on port ${port}`));
+function shutdown() {
+  clearInterval(cleanup); relay.close();
+  server.close(() => { store.close(); process.exit(0); });
+  setTimeout(() => process.exit(1), 5000).unref();
+}
+process.once("SIGTERM", shutdown);
+process.once("SIGINT", shutdown);

@@ -1,3 +1,4 @@
+import { outputSchemas } from "../tool-output-schemas.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -13,6 +14,7 @@ export function registerIliasTools(server: McpServer) {
     server,
     "search_learning_spaces",
     {
+      outputSchema: outputSchemas.search_learning_spaces,
       title: "Search ILIAS learning spaces",
       description:
         "Use this when the user wants to search authenticated ILIAS content beyond current memberships, optionally with advanced filters like content type or creation date.",
@@ -47,9 +49,6 @@ export function registerIliasTools(server: McpServer) {
               text: `Loaded ${results.results.length} ILIAS search results for "${results.query}" on page ${results.page_number}.`,
             },
           ],
-          _meta: {
-            results,
-          },
         };
       }),
   );
@@ -58,6 +57,7 @@ export function registerIliasTools(server: McpServer) {
     server,
     "inspect_learning_space",
     {
+      outputSchema: outputSchemas.inspect_learning_space,
       title: "Inspect ILIAS learning space",
       description:
         "Use this when the user wants the contents, forum topics, and exercise assignments for a specific ILIAS target URL or goto reference.",
@@ -79,9 +79,6 @@ export function registerIliasTools(server: McpServer) {
               text: `Loaded learning space details with ${sectionCount} content sections, ${inspection.forum.length} forum topics, and ${inspection.exercise.length} exercise assignments.`,
             },
           ],
-          _meta: {
-            inspection,
-          },
         };
       }),
   );

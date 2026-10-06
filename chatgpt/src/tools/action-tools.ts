@@ -1,15 +1,12 @@
+import { outputSchemas } from "../tool-output-schemas.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import {
-  addIliasFavorite,
-  enrolInMoodleCourse,
-  joinIliasWaitlist,
   loadAlmaRegistrationSupport,
   loadIliasWaitlistSupport,
   loadMoodleEnrolmentSupport,
-  registerForAlmaCourse,
 } from "../action-backend.js";
 import { PortalBackendError } from "../backend.js";
 import { actionWidgetUri } from "../widget-resources.js";
@@ -26,6 +23,7 @@ export function registerActionTools(server: McpServer) {
     server,
     "prepare_alma_course_registration",
     {
+      outputSchema: outputSchemas.prepare_alma_course_registration,
       title: "Prepare Alma course registration",
       description:
         "Use this when the user wants to register for an Alma course. This only renders a confirmation UI; it never registers until the user presses Proceed.",
@@ -63,7 +61,7 @@ export function registerActionTools(server: McpServer) {
             ],
             requiredInputs: planelementId ? [`Registration path ${planelementId}`] : [],
           },
-          () => registerForAlmaCourse(support.detail_url, planelementId),
+          { kind: "alma_course_registration", url: support.detail_url, planelementId },
         );
       }),
   );
@@ -72,12 +70,12 @@ export function registerActionTools(server: McpServer) {
     server,
     "prepare_ilias_waitlist_join",
     {
+      outputSchema: outputSchemas.prepare_ilias_waitlist_join,
       title: "Prepare ILIAS waitlist join",
       description:
         "Use this when the user wants to join an ILIAS course waitlist. This only renders a confirmation UI until the user presses Proceed.",
       inputSchema: {
         url: z.string().min(1),
-        acceptAgreement: z.boolean().optional(),
       },
       annotations: actionAnnotations(false),
       _meta: {
@@ -85,14 +83,14 @@ export function registerActionTools(server: McpServer) {
         "openai/outputTemplate": actionWidgetUri,
       },
     },
-    async ({ url, acceptAgreement }) =>
+    async ({ url }) =>
       prepareTool(async () => {
         const support = await loadIliasWaitlistSupport(url);
         if (!support.supported) {
           throw new PortalBackendError(support.message ?? "This ILIAS page does not expose a waitlist join action.");
         }
-        if (support.requires_agreement && !acceptAgreement) {
-          throw new PortalBackendError("This ILIAS waitlist requires accepting the usage agreement before confirmation.");
+        if (support.requires_agreement) {
+          throw new PortalBackendError("Open this ILIAS page and read and accept its usage agreement yourself before preparing the waitlist action again.");
         }
         return storeAction(
           {
@@ -105,11 +103,10 @@ export function registerActionTools(server: McpServer) {
             method: "POST",
             sideEffects: [
               "Submits a waitlist join request in ILIAS for the signed-in university account.",
-              "May accept the usage agreement if that input is displayed as accepted.",
             ],
-            requiredInputs: support.requires_agreement ? ["Usage agreement accepted"] : [],
+            requiredInputs: [],
           },
-          () => joinIliasWaitlist(url, Boolean(acceptAgreement)),
+          { kind: "ilias_waitlist_join", url },
         );
       }),
   );
@@ -118,6 +115,7 @@ export function registerActionTools(server: McpServer) {
     server,
     "prepare_ilias_add_favorite",
     {
+      outputSchema: outputSchemas.prepare_ilias_add_favorite,
       title: "Prepare ILIAS favorite",
       description:
         "Use this when the user wants to add an ILIAS item to favorites. This only renders a confirmation UI until the user presses Proceed.",
@@ -142,7 +140,7 @@ export function registerActionTools(server: McpServer) {
             sideEffects: ["Adds the selected ILIAS item to the signed-in account's favorites or desktop."],
             requiredInputs: [],
           },
-          () => addIliasFavorite(url),
+          { kind: "ilias_add_favorite", url },
         ),
       ),
   );
@@ -151,12 +149,12 @@ export function registerActionTools(server: McpServer) {
     server,
     "prepare_moodle_course_enrolment",
     {
+      outputSchema: outputSchemas.prepare_moodle_course_enrolment,
       title: "Prepare Moodle course enrolment",
       description:
         "Use this when the user wants to self-enrol in a Moodle course. This only renders a confirmation UI until the user presses Proceed.",
       inputSchema: {
         courseId: z.number().int().positive(),
-        enrolmentKey: z.string().optional(),
       },
       annotations: actionAnnotations(false),
       _meta: {
@@ -164,14 +162,11 @@ export function registerActionTools(server: McpServer) {
         "openai/outputTemplate": actionWidgetUri,
       },
     },
-    async ({ courseId, enrolmentKey }) =>
+    async ({ courseId }) =>
       prepareTool(async () => {
         const support = await loadMoodleEnrolmentSupport(courseId);
         if (!support.self_enrolment_available) {
           throw new PortalBackendError("This Moodle course does not expose self-enrolment.");
-        }
-        if (support.requires_enrolment_key && !enrolmentKey) {
-          throw new PortalBackendError("This Moodle course requires an enrolment key before confirmation.");
         }
         return storeAction(
           {
@@ -183,9 +178,10 @@ export function registerActionTools(server: McpServer) {
             endpoint: `/api/moodle/course/${courseId}/enrol`,
             method: "POST",
             sideEffects: ["Submits Moodle self-enrolment for the signed-in university account."],
-            requiredInputs: support.requires_enrolment_key ? ["Enrolment key provided"] : [],
+            requiredInputs: support.requires_enrolment_key ? ["Enter the course enrolment key in this confirmation widget."] : [],
+            requiresEnrolmentKey: support.requires_enrolment_key,
           },
-          () => enrolInMoodleCourse(courseId, enrolmentKey),
+          { kind: "moodle_course_enrolment", courseId },
         );
       }),
   );
@@ -194,22 +190,28 @@ export function registerActionTools(server: McpServer) {
     server,
     "confirm_critical_action",
     {
+      outputSchema: outputSchemas.confirm_critical_action,
       title: "Confirm critical action",
       description:
         "Use only from the confirmation widget after the user presses Proceed. It executes the prepared action exactly once.",
       inputSchema: {
         intentId: z.string().min(1),
         confirmationToken: z.string().min(1),
+        enrolmentKey: z.string().max(256).optional(),
       },
       annotations: actionAnnotations(true),
       _meta: {
+        ui: { visibility: ["app"] },
         "openai/widgetAccessible": true,
       },
     },
-    async ({ intentId, confirmationToken }) => {
+    async ({ intentId, confirmationToken, enrolmentKey }) => {
       try {
         const stored = consumePendingAction(intentId, confirmationToken);
-        const result = await stored.execute();
+        if (stored.intent.requiresEnrolmentKey && !enrolmentKey) {
+          throw new PortalBackendError("An enrolment key is required. Prepare the action again and enter the key in its widget.");
+        }
+        const result = await stored.execute(enrolmentKey);
         return {
           structuredContent: {
             status: "completed",
@@ -229,7 +231,28 @@ export function registerActionTools(server: McpServer) {
         if (error instanceof PortalBackendError) {
           return toolErrorResponse(error);
         }
-        throw error;
+        return toolErrorResponse(new PortalBackendError("The action result could not be verified. Check the university portal before trying again."));
+      }
+    },
+  );
+
+  registerAppTool(
+    server,
+    "cancel_critical_action",
+    {
+      outputSchema: outputSchemas.cancel_critical_action,
+      title: "Cancel prepared action",
+      description: "Discard a prepared action when the user presses Cancel in its confirmation widget.",
+      inputSchema: { intentId: z.string().min(1), confirmationToken: z.string().min(1) },
+      annotations: actionAnnotations(false),
+      _meta: { ui: { visibility: ["app"] }, "openai/widgetAccessible": true },
+    },
+    async ({ intentId, confirmationToken }) => {
+      try {
+        consumePendingAction(intentId, confirmationToken);
+        return { structuredContent: { status: "cancelled" }, content: [{ type: "text" as const, text: "The prepared action was discarded. No university action was submitted." }] };
+      } catch (error) {
+        return toolErrorResponse(error instanceof PortalBackendError ? error : new PortalBackendError("The action could not be cancelled."));
       }
     },
   );

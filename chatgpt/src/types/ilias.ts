@@ -97,6 +97,7 @@ export interface IliasSearchResponse {
 }
 
 export interface LearningSpaceInspection {
+  errors: Partial<Record<"content" | "forum" | "exercise", string>>;
   content: IliasContentPage | null;
   forum: IliasForumTopic[];
   exercise: IliasExerciseAssignment[];

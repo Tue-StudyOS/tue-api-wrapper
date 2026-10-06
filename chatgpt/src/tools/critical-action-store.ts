@@ -3,19 +3,25 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { PortalBackendError } from "../backend.js";
 import type { CriticalActionPublicIntent, CriticalActionResult } from "../types/actions.js";
 import { asStructured, toolErrorResponse } from "../tool-runtime.js";
+import { StateStore, digest } from "../auth/state-store.js";
+import { studyContext } from "../request-context.js";
+import { executeAction, type ActionCommand } from "./action-command.js";
 
 export interface StoredCriticalAction {
   intent: CriticalActionPublicIntent;
   token: string;
-  execute: () => Promise<CriticalActionResult>;
+  command: ActionCommand;
+  execute: (enrolmentKey?: string) => Promise<CriticalActionResult>;
 }
 
-const pendingActions = new Map<string, StoredCriticalAction>();
+const internalStore = new StateStore(":memory:");
+function context() { return studyContext.getStore() ?? { store: internalStore, userId: "internal-development" }; }
+interface PersistedAction { intent: CriticalActionPublicIntent; command: ActionCommand; }
 const expiryMs = 10 * 60 * 1000;
 
 export function actionAnnotations(destructiveHint: boolean) {
   return {
-    readOnlyHint: !destructiveHint,
+    readOnlyHint: false,
     destructiveHint,
     openWorldHint: false,
     idempotentHint: false,
@@ -24,8 +30,10 @@ export function actionAnnotations(destructiveHint: boolean) {
 
 export function storeAction(
   data: Omit<CriticalActionPublicIntent, "id" | "preparedAt" | "expiresAt">,
-  execute: () => Promise<CriticalActionResult>,
+  command: ActionCommand,
 ) {
+  const { store, userId } = context();
+  store.prune();
   const now = new Date();
   const intent: CriticalActionPublicIntent = {
     ...data,
@@ -36,9 +44,10 @@ export function storeAction(
   const stored: StoredCriticalAction = {
     intent,
     token: randomBytes(24).toString("base64url"),
-    execute,
+    command,
+    execute: key => executeAction(command, key),
   };
-  pendingActions.set(intent.id, stored);
+  store.put("action", `${userId}:${intent.id}:${digest(stored.token)}`, { intent, command }, Date.parse(intent.expiresAt));
   return stored;
 }
 
@@ -68,18 +77,18 @@ export async function prepareTool(loader: () => Promise<StoredCriticalAction>) {
     if (error instanceof PortalBackendError) {
       return toolErrorResponse(error);
     }
-    throw error;
+    return toolErrorResponse(new PortalBackendError("The action could not be prepared. Contact support."));
   }
 }
 
 export function consumePendingAction(intentId: string, confirmationToken: string): StoredCriticalAction {
-  const stored = pendingActions.get(intentId);
-  if (!stored || stored.token !== confirmationToken) {
+  const { store, userId } = context();
+  const stored = store.take<PersistedAction>("action", `${userId}:${intentId}:${digest(confirmationToken)}`);
+  if (!stored) {
     throw new PortalBackendError("This confirmation is no longer valid. Prepare the action again.");
   }
-  pendingActions.delete(intentId);
   if (Date.parse(stored.intent.expiresAt) <= Date.now()) {
     throw new PortalBackendError("This confirmation expired. Prepare the action again.");
   }
-  return stored;
+  return { ...stored, token: confirmationToken, execute: key => executeAction(stored.command, key) };
 }

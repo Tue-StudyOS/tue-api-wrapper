@@ -1,20 +1,31 @@
 @import "./widget-shell.css";
+@import "./widget-controls.css";
+@import "./widget-rows.css";
 
+/* Host tokens are supplied through MCP Apps host context. */
 :root {
-  color-scheme: light;
+  color-scheme: light dark;
   --tue-red: #a11e3b;
-  --bg: #f6f6f3;
-  --card: #ffffff;
-  --surface: #f2f2ef;
-  --ink: #1b1a19;
-  --muted: #70706b;
-  --line: #e2e2de;
+  --bg: transparent;
+  --card: var(--color-background-primary, light-dark(#ffffff, #212121));
+  --surface: var(--color-background-secondary, light-dark(#f7f7f7, #2f2f2f));
+  --ink: var(--color-text-primary, light-dark(#171717, #f5f5f5));
+  --muted: var(--color-text-secondary, light-dark(#595959, #b4b4b4));
+  --line: var(--color-border-secondary, light-dark(#e5e5e5, #424242));
   --accent: #a11e3b;
-  --accent-soft: #f5e8ec;
-  --row-tint: #f4f4f1;
-  --focus: #a11e3b;
-  --shadow: 0 10px 26px rgba(0, 0, 0, 0.06);
+  --accent-soft: var(--surface);
+  --row-tint: var(--surface);
+  --focus: var(--color-ring-primary, var(--ink));
+  --shadow: none;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --radius: var(--border-radius-lg, 1rem);
 }
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
 
 * {
   box-sizing: border-box;
@@ -25,19 +36,21 @@ body {
   margin: 0;
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+
 }
 
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  font-family: var(--font-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  font-size: var(--font-text-md-size, 1rem);
+  line-height: var(--font-text-md-line-height, 1.5);
 }
 
 #root {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+
 }
 
 a {
@@ -48,17 +61,17 @@ a {
 .widget-stack,
 .widget-empty {
   display: grid;
-  gap: 0.85rem;
-  padding: 1rem;
+  gap: var(--space-4);
+  padding: var(--space-4);
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow-x: hidden;
+
 }
 
 .widget-empty {
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: var(--radius);
   background: var(--card);
   box-shadow: var(--shadow);
 }
@@ -66,7 +79,7 @@ a {
 .widget-card,
 .metric-card {
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: var(--radius);
   background: var(--card);
   box-shadow: var(--shadow);
   max-width: 100%;
@@ -92,8 +105,8 @@ a {
 .widget-card h2,
 .widget-empty h1 {
   margin: 0;
-  font-size: 1.5rem;
-  line-height: 1.1;
+  font-size: var(--font-heading-sm-size, 1.125rem);
+  line-height: 1.4;
   max-width: 100%;
   overflow-wrap: anywhere;
   hyphens: auto;
@@ -101,11 +114,11 @@ a {
 
 .widget-kicker {
   margin: 0 0 0.4rem;
-  color: var(--accent);
-  font-size: 0.7rem;
-  font-weight: 700;
+  color: var(--muted);
+  font-size: var(--font-text-sm-size, 0.875rem);
+  font-weight: 600;
   letter-spacing: 0;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .widget-hero p,
@@ -132,19 +145,19 @@ a {
 .metric-card {
   display: grid;
   gap: 0.4rem;
-  padding: 1rem;
+  padding: var(--space-4);
   background: var(--card);
 }
 
 .metric-card strong {
-  font-size: 1.95rem;
+  font-size: var(--font-heading-md-size, 1.5rem);
   letter-spacing: 0;
   overflow-wrap: anywhere;
   font-variant-numeric: tabular-nums;
 }
 
 .widget-card {
-  padding: 1.05rem;
+  padding: var(--space-6);
 }
 
 .widget-card-header {
@@ -200,9 +213,9 @@ a {
 
 .widget-tab.is-active {
   background: var(--card);
-  color: var(--accent);
-  font-weight: 700;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+  color: var(--muted);
+  font-weight: 600;
+  box-shadow: none;
 }
 
 .widget-summary {
@@ -214,9 +227,9 @@ a {
   display: grid;
   gap: 0.3rem;
   border: 1px solid var(--line);
-  border-radius: 18px;
-  background: var(--surface);
-  padding: 0.85rem;
+  border-radius: var(--radius);
+  background: transparent;
+  padding: var(--space-3);
 }
 
 .widget-summary span {
@@ -231,210 +244,5 @@ a {
 }
 
 .widget-card-wide {
-  min-height: 12rem;
-}
-
-.widget-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
-  border-top: 1px solid var(--line);
-  padding-top: 0.8rem;
-  min-width: 0;
-}
-
-.widget-row:first-child {
-  border-top: 0;
-  padding-top: 0;
-}
-
-.widget-row.compact {
-  align-items: flex-start;
-}
-
-.widget-agenda-row {
-  align-items: stretch;
-  gap: 0.9rem;
-  border: 1px solid transparent;
-  border-radius: 16px;
-  padding: 0.95rem;
-  background: var(--surface);
-}
-
-.widget-agenda-row[data-accent="teal"] {
-  background: var(--row-tint);
-}
-
-.widget-agenda-row[data-accent="rose"] {
-  background: var(--row-tint);
-}
-
-.widget-agenda-time {
-  display: grid;
-  gap: 0.2rem;
-  min-width: 7.2rem;
-  padding-left: 0.9rem;
-  border-left: 4px solid var(--accent);
-}
-
-.widget-agenda-row[data-accent="teal"] .widget-agenda-time {
-  border-left-color: #8d8d88;
-}
-
-.widget-agenda-row[data-accent="rose"] .widget-agenda-time {
-  border-left-color: var(--accent);
-}
-
-.widget-agenda-time strong {
-  font-size: 0.88rem;
-  line-height: 1.2;
-}
-
-.widget-agenda-time span {
-  color: var(--accent);
-  font-size: 0.76rem;
-  font-weight: 700;
-}
-
-.widget-agenda-content {
-  display: grid;
-  gap: 0.22rem;
-  min-width: 0;
-  flex: 1;
-}
-
-.widget-agenda-content strong {
-  font-size: 0.95rem;
-  line-height: 1.3;
-}
-
-.widget-agenda-content p {
-  margin: 0;
-}
-
-.widget-row-actions {
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.widget-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--accent);
-  border-radius: 999px;
-  min-height: 2.45rem;
-  padding: 0.7rem 1rem;
-  background: var(--accent);
-  color: #ffffff;
-  font: inherit;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.widget-button.small {
-  min-height: 2.2rem;
-  padding: 0.45rem 0.8rem;
-  font-size: 0.9rem;
-}
-
-.widget-button.ghost {
-  border: 1px solid var(--line);
-  background: var(--card);
-  color: var(--ink);
-}
-
-.widget-button:focus-visible,
-.widget-tab:focus-visible,
-.widget-input:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-}
-
-.widget-search {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.7rem;
-  margin-bottom: 0.9rem;
-}
-
-.widget-input {
-  width: 100%;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--card);
-  color: var(--ink);
-  padding: 0.75rem 0.9rem;
-  font: inherit;
-}
-
-.widget-panel-note {
-  margin: 0 0 0.9rem;
-  color: var(--muted);
-  font-size: 0.92rem;
-}
-
-.widget-footer-meta {
-  padding: 0 0.15rem;
-  color: var(--muted);
-  font-size: 0.78rem;
-}
-
-.widget-modal-stack {
-  height: min(680px, calc(100dvh - 1rem));
-  min-height: 420px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
-}
-
-@media (max-width: 720px) {
-  .widget-hero,
-  .widget-grid,
-  .metric-row {
-    grid-template-columns: 1fr;
-  }
-
-  .widget-summary {
-    grid-template-columns: 1fr;
-  }
-
-  .widget-search {
-    grid-template-columns: 1fr;
-  }
-
-  .widget-hero {
-    flex-direction: column;
-  }
-
-  .widget-card-header,
-  .widget-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .widget-row-actions,
-  .widget-card-actions,
-  .widget-modal-actions {
-    justify-content: flex-start;
-  }
-
-  .widget-agenda-row {
-    flex-direction: column;
-  }
-
-  .widget-agenda-time {
-    min-width: 0;
-  }
-
-  .widget-stack,
-  .widget-empty {
-    padding: 0.85rem;
-  }
-
-  .widget-modal-stack {
-    height: min(620px, calc(100dvh - 1rem));
-    min-height: 360px;
-  }
+  min-height: 0;
 }

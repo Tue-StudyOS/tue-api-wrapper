@@ -1,4 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { serverInstructions } from "./server-instructions.js";
+import { installToolSecurity } from "./auth/tool-security.js";
 
 import { registerWidgetResources } from "./widget-resources.js";
 import { registerActionTools } from "./tools/action-tools.js";
@@ -11,10 +13,10 @@ import { registerStudyTools } from "./tools/study-tools.js";
 import { registerWidgetTools } from "./tools/widget-tools.js";
 
 export const serverName = "tue-study-hub";
-const enableMailTools = process.env.CHATGPT_ENABLE_MAIL_TOOLS !== "false";
 
 export function createAppServer() {
-  const server = new McpServer({ name: serverName, version: "0.8.0" });
+  const server = new McpServer({ name: serverName, version: "0.8.0" }, { instructions: serverInstructions });
+  installToolSecurity(server);
 
   registerWidgetResources(server);
   registerSearchTools(server);
@@ -22,9 +24,7 @@ export function createAppServer() {
   registerCampusTools(server);
   registerCourseTools(server);
   registerIliasTools(server);
-  if (enableMailTools) {
-    registerMailTools(server);
-  }
+  registerMailTools(server);
   registerWidgetTools(server);
   registerActionTools(server);
 

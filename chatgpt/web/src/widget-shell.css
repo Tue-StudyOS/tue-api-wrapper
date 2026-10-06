@@ -3,15 +3,13 @@
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  height: min(680px, calc(100dvh - 1rem));
-  min-height: 420px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
 }
 
 .widget-shell.is-expanded {
-  height: min(880px, calc(100dvh - 1rem));
+  height: auto;
   max-width: 1360px;
   margin: 0 auto;
 }
@@ -41,7 +39,7 @@
 @media (max-width: 720px) {
   .widget-shell,
   .widget-shell.is-expanded {
-    height: min(620px, calc(100dvh - 1rem));
-    min-height: 360px;
+    height: auto;
+    min-height: 0;
   }
 }

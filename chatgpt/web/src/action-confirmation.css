@@ -4,11 +4,9 @@
 }
 
 .action-shell {
-  height: min(680px, calc(100dvh - 1rem));
-  min-height: 420px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
 }
 
 .action-hero {
@@ -19,7 +17,7 @@
   border: 1px solid var(--line);
   border-radius: 6px;
   padding: 0.45rem 0.75rem;
-  color: var(--accent);
+  color: var(--muted);
   font-size: 0.85rem;
   font-weight: 700;
 }
@@ -73,8 +71,8 @@
 
 @media (max-width: 720px) {
   .action-shell {
-    height: min(620px, calc(100dvh - 1rem));
-    min-height: 360px;
+    height: auto;
+    min-height: 0;
   }
 
   .action-facts {

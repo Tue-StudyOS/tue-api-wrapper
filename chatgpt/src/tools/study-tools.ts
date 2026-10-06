@@ -1,3 +1,4 @@
+import { outputSchemas } from "../tool-output-schemas.js";
 import { registerAppTool } from "@modelcontextprotocol/ext-apps/server";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -5,7 +6,6 @@ import { z } from "zod";
 import {
   loadDashboard,
   loadDocumentsSummary,
-  loadExams,
   loadMemberships,
   loadTasks,
   loadTimetable,
@@ -23,6 +23,7 @@ export function registerStudyTools(server: McpServer) {
     server,
     "get_study_snapshot",
     {
+      outputSchema: outputSchemas.get_study_snapshot,
       title: "Get study snapshot",
       description:
         "Use this when the user asks for an overall status update or combines multiple questions about upcoming lectures, open tasks, grades, and learning spaces.",
@@ -45,9 +46,6 @@ export function registerStudyTools(server: McpServer) {
               text: `Loaded a study snapshot for ${dashboard.termLabel} with ${snapshot.nextEvents.length} upcoming events, ${snapshot.openTasks.length} tasks, and ${snapshot.grades.length} recent exam rows.`,
             },
           ],
-          _meta: {
-            snapshot,
-          },
         };
       }),
   );
@@ -56,6 +54,7 @@ export function registerStudyTools(server: McpServer) {
     server,
     "get_upcoming_schedule",
     {
+      outputSchema: outputSchemas.get_upcoming_schedule,
       title: "Get upcoming schedule",
       description:
         "Use this when the user asks about next lectures, meetings, classes, or calendar items from Alma.",
@@ -82,9 +81,6 @@ export function registerStudyTools(server: McpServer) {
               text: `Loaded ${items.length} upcoming Alma schedule items for ${timetable.term_label}.`,
             },
           ],
-          _meta: {
-            items,
-          },
         };
       }),
   );
@@ -93,6 +89,7 @@ export function registerStudyTools(server: McpServer) {
     server,
     "get_current_tasks",
     {
+      outputSchema: outputSchemas.get_current_tasks,
       title: "Get current tasks",
       description:
         "Use this when the user asks about open ILIAS tasks, due items, or assignment deadlines.",
@@ -115,9 +112,6 @@ export function registerStudyTools(server: McpServer) {
               text: `Loaded ${tasks.length} ILIAS tasks.`,
             },
           ],
-          _meta: {
-            tasks,
-          },
         };
       }),
   );
@@ -126,6 +120,7 @@ export function registerStudyTools(server: McpServer) {
     server,
     "get_current_grades",
     {
+      outputSchema: outputSchemas.get_current_grades,
       title: "Get current grades",
       description:
         "Use this when the user asks about grades, passed exams, credits, or current Alma study progress.",
@@ -137,27 +132,9 @@ export function registerStudyTools(server: McpServer) {
     },
     async ({ limit }) =>
       runReadTool(async () => {
-        const [dashboard, exams] = await Promise.all([
-          loadDashboard(),
-          loadExams(limit ?? 8),
-        ]);
-        const passedExamCount = exams.filter((exam) => {
-          const normalizedStatus = (exam.status ?? "").trim().toUpperCase();
-          const normalizedGrade = (exam.grade ?? "").trim();
-          return (
-            normalizedStatus === "BE"
-            || normalizedStatus === "PASSED"
-            || normalizedStatus === "BESTANDEN"
-            || (normalizedGrade !== "" && normalizedGrade !== "-" && normalizedGrade !== "5,0")
-          );
-        }).length;
-        const trackedCredits = Number(
-          exams
-            .map((exam) => Number.parseFloat((exam.cp ?? "0").replace(",", ".")))
-            .filter((value) => Number.isFinite(value))
-            .reduce((sum, value) => sum + value, 0)
-            .toFixed(1),
-        );
+        const dashboard = await loadDashboard(undefined, limit ?? 8);
+        const exams = dashboard.exams;
+        const { passedExamCount, trackedCredits } = dashboard.study;
         return {
           structuredContent: {
             study: {
@@ -175,22 +152,9 @@ export function registerStudyTools(server: McpServer) {
           content: [
             {
               type: "text" as const,
-              text: `Loaded ${exams.length} exam rows with ${trackedCredits} tracked credits, ${dashboard.study.currentSemesterCredits ?? "unknown"} saved-semester credits, and ${passedExamCount} passed exams.`,
+              text: `Loaded ${exams.length} visible exam rows; the full leaf-record overview has ${trackedCredits} tracked credits, ${dashboard.study.currentSemesterCredits ?? "unknown"} saved-semester credits, and ${passedExamCount} passed exams.`,
             },
           ],
-          _meta: {
-            study: {
-              selectedTerm: dashboard.study.selectedTerm ?? dashboard.enrollment.selected_term,
-              message: dashboard.study.message ?? dashboard.enrollment.message,
-              passedExamCount,
-              trackedCredits,
-              currentSemesterCredits: dashboard.study.currentSemesterCredits,
-              currentSemesterCreditCourses: dashboard.study.currentSemesterCreditCourses,
-              currentSemesterCreditUnresolved: dashboard.study.currentSemesterCreditUnresolved,
-              currentSemesterCreditError: dashboard.study.currentSemesterCreditError,
-            },
-            exams,
-          },
         };
       }),
   );
@@ -199,6 +163,7 @@ export function registerStudyTools(server: McpServer) {
     server,
     "get_learning_spaces",
     {
+      outputSchema: outputSchemas.get_learning_spaces,
       title: "Get learning spaces",
       description:
         "Use this when the user asks which ILIAS courses, groups, or learning spaces they currently belong to.",
@@ -221,9 +186,6 @@ export function registerStudyTools(server: McpServer) {
               text: `Loaded ${memberships.length} ILIAS memberships.`,
             },
           ],
-          _meta: {
-            memberships,
-          },
         };
       }),
   );
@@ -232,6 +194,7 @@ export function registerStudyTools(server: McpServer) {
     server,
     "get_documents_summary",
     {
+      outputSchema: outputSchemas.get_documents_summary,
       title: "Get study-service documents summary",
       description:
         "Use this when the user wants Alma document jobs, transcript options, output-request groups, or the current study-service PDF.",
@@ -256,9 +219,6 @@ export function registerStudyTools(server: McpServer) {
                 : "The Alma study-service page loaded, but no report jobs, output-request groups, or current PDF downloads are currently available.",
             },
           ],
-          _meta: {
-            documents,
-          },
         };
       }),
   );

@@ -1,0 +1,102 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "tuebingen-study-hub",
+  "version": "0.1.0",
+  "description": "Tübingen study workflows with official website recovery when university data tools fail.",
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Sebastian Boehler",
+    "email": "s.boehler@student.uni-tuebingen.de"
+  },
+  "repository": "https://github.com/SebastianBoehler/tue-api-wrapper",
+  "keywords": [
+    "university",
+    "tuebingen",
+    "study",
+    "alma",
+    "ilias",
+    "moodle"
+  ],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Tübingen Study Hub",
+        "shortDescription": "Your university study tools",
+        "longDescription": "An independent study assistant for University of Tübingen students. Search courses and learning spaces; inspect schedules, grades, ILIAS tasks, documents, university mail and mensa menus. Prepare supported registrations and enrolments, then confirm them in the widget. Private features require your own local sidecar to stay running. University passwords stay on your device. Requested data passes through the relay to ChatGPT. Browser recovery uses host browser tools when available. This is not an official university service.",
+        "developerName": "Sebastian Boehler",
+        "category": "Productivity",
+        "capabilities": [
+          "Interactive study dashboard",
+          "Course discovery",
+          "Study services",
+          "Browser recovery"
+        ],
+        "logo": "./assets/logo.svg",
+        "composerIcon": "./assets/logo.svg",
+        "defaultPrompt": [
+          "Show my study dashboard and next lectures.",
+          "Find courses for my next semester.",
+          "Show today’s vegan mensa options."
+        ]
+      },
+      "onboardingSkill": "./skills/tuebingen-connect/SKILL.md",
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Inspect a study overview and upcoming schedule.",
+              "prompt": "Show my study dashboard and next lectures.",
+              "tools_triggered": "show_dashboard, get_study_snapshot, get_upcoming_schedule",
+              "expected_behavior": "Displays the requested term and schedule with clear errors if account access is unavailable."
+            },
+            {
+              "description": "Inspect grades, ILIAS work and learning spaces.",
+              "prompt": "Show my grades, credits, ILIAS tasks and learning spaces.",
+              "tools_triggered": "get_current_grades, get_current_tasks, get_learning_spaces",
+              "expected_behavior": "Shows full leaf-record credit totals separately from the visible exam rows, plus tasks and memberships."
+            },
+            {
+              "description": "Discover a course and inspect its related learning space.",
+              "prompt": "Find Neural Data Science and show its details and available learning materials.",
+              "tools_triggered": "get_course_catalog_filters, search_courses, get_course_detail, get_combined_course_detail, search_learning_spaces, inspect_learning_space",
+              "expected_behavior": "Returns course sources and detail sections; identifies unavailable learning-space sections explicitly."
+            },
+            {
+              "description": "Inspect menus, documents and a selected mail message.",
+              "prompt": "Show vegan mensa options, my certificate options and unread university mail.",
+              "tools_triggered": "get_mensa_food_plan, list_documents, get_mail_inbox, get_mail_message",
+              "expected_behavior": "Displays a filterable menu, document options and selected plaintext mail without sending messages."
+            },
+            {
+              "description": "Prepare a favorite and verify cancellation prevents submission.",
+              "prompt": "Prepare adding this ILIAS course to my favorites, then let me cancel.",
+              "tools_triggered": "prepare_ilias_add_favorite, cancel_critical_action",
+              "expected_behavior": "Displays the exact proposed change; Cancel invalidates the intent and makes no university mutation."
+            }
+          ],
+          "negative": [
+            {
+              "description": "Unrelated commercial request.",
+              "prompt": "Order a laptop for me.",
+              "expected_behavior": "Does not invoke this university plugin."
+            },
+            {
+              "description": "Unsupported mail mutation.",
+              "prompt": "Send this email to my professor.",
+              "expected_behavior": "Explains that this plugin only reads mail and does not send a message."
+            },
+            {
+              "description": "Attempt to bypass action confirmation.",
+              "prompt": "Register me now without displaying confirmation.",
+              "expected_behavior": "Does not submit the registration; a supported registration requires its confirmation flow."
+            }
+          ]
+        },
+        "commerce": false
+      },
+      "publication": {
+        "release_notes": "Initial student release with local university sessions, OAuth account linking, confirmation widgets and browser recovery."
+      }
+    }
+  }
+}

@@ -1,0 +1,48 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      APP_BASE_URL: ${APP_BASE_URL:?Set the production HTTPS origin}
+      STUDY_STATE_PATH: /app/data/study.sqlite
+      NODE_OPTIONS: --max-old-space-size=256
+    volumes:
+      - study-state:/app/data
+    ports:
+      - "80:80"
+      - "443:443"
+    mem_limit: 512m
+    cpus: 1
+    memswap_limit: 512m
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 128
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  tls:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    network_mode: service:app
+    environment:
+      APP_BASE_URL: ${APP_BASE_URL:?Set the production HTTPS origin}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - tls-data:/data
+      - tls-config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    mem_limit: 128m
+    memswap_limit: 128m
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 64
+volumes:
+  study-state:
+  tls-data:
+  tls-config:

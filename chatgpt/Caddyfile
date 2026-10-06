@@ -1,0 +1,7 @@
+{$APP_BASE_URL} {
+  # Access logging is disabled. Never log OAuth, device, or document capabilities.
+  reverse_proxy 127.0.0.1:8080 {
+    flush_interval -1
+  }
+  header Strict-Transport-Security "max-age=31536000"
+}

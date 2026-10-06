@@ -1,158 +1,91 @@
-# ChatGPT App
+# Tübingen Study Hub plugin
 
-This folder contains a ChatGPT Apps SDK scaffold for the unified Alma + ILIAS study hub, including dashboard widgets and public Alma detail rendering.
+An independent ChatGPT and Codex plugin for University of Tübingen students,
+published by Sebastian Boehler. Support: s.boehler@student.uni-tuebingen.de.
 
-## Preview
+The hosted service runs one Node 24 process with SQLite. It provides OAuth,
+MCP, account links, confirmation records and an outbound device relay. Each
+student runs the university API and sidecar on their own device. University
+passwords and cookies stay there; requested study data passes through the
+relay to ChatGPT. No separate identity service, Redis or external database is
+required. Private tools return explicit errors when the device is unavailable.
 
-The current widget bundle rendering a public Alma module detail:
+## Features and UI
 
-![ChatGPT widget preview](../docs/assets/previews/chatgpt-widget-preview.png)
+The server advertises 28 tools with output schemas, safety annotations and the
+`study` OAuth scope. All existing study features remain in the first release.
 
-## Tool surface
+| Feature | Tools | UI |
+| --- | --- | --- |
+| Connection | `get_connection_profile` | Account login and consent page; opaque profile ID |
+| Unified search | `search`, `fetch` | Chat results with source links |
+| Study overview | `get_study_snapshot`, `show_dashboard` | Compact inline summary; full dashboard on expansion |
+| Schedule | `get_upcoming_schedule` | Agenda with dates and source links |
+| Work and grades | `get_current_tasks`, `get_current_grades` | Task rows, exam rows and credit totals |
+| Learning spaces | `get_learning_spaces`, `search_learning_spaces`, `inspect_learning_space` | Membership rows and content/forum/exercise detail |
+| Courses | `get_course_catalog_filters`, `search_courses`, `search_course_offerings`, `get_course_detail`, `get_combined_course_detail`, `get_study_planner` | Search filters, course cards, detail sections and semester grid |
+| Documents | `get_documents_summary`, `list_documents` | Document options and short-lived PDF download links |
+| Mail | `get_mail_inbox`, `get_mail_message` | Inbox rows and selected plaintext message; no sending |
+| Mensa | `get_mensa_food_plan` | Date/canteen/diet filters and meal rows |
+| University actions | Four `prepare_*` tools, `confirm_critical_action`, `cancel_critical_action` | Preview with Proceed/Cancel; human Moodle key input |
 
-- `search`: standard read-only search for unified portal items
-- `fetch`: standard read-only fetch by item id
-- `get_study_snapshot`: combined status for upcoming schedule, tasks, grades, and spaces
-- `get_upcoming_schedule`: Alma timetable view for next lectures or meetings
-- `get_current_tasks`: ILIAS derived task overview
-- `get_current_grades`: Alma exam rows plus tracked credits and passed exam count
-- `get_learning_spaces`: authenticated ILIAS memberships
-- `get_documents_summary`: Alma study-service summary with tabs, output requests, and current PDF availability
-- `get_mensa_food_plan`: widget-backed Tübingen mensa plan with date, canteen, and meal-type filters
-- `get_mail_inbox`: inbox triage and filtering inside ChatGPT
-- `get_mail_message`: full plaintext mail message detail by UID
-- `get_course_catalog_filters`: valid Alma public module-search filters for degree, subject, faculty, language, and element type
-- `search_courses`: public Alma module-description search
-- `search_course_offerings`: authenticated Alma course search for term-specific offerings
-- `get_course_detail`: structured Alma course or module detail for a known detail URL
-- `get_study_planner`: Alma semester grid and visible planner modules
-- `search_learning_spaces`: authenticated ILIAS search
-- `inspect_learning_space`: content, forum, and exercise summary for a specific ILIAS space
-- `show_dashboard`: widget-backed study overview
-- `list_documents`: widget-backed Alma study-service document list
+University usage agreements must be read and accepted on the official website.
+The model cannot accept an agreement or obtain a course key from chat. Each
+confirmation belongs to one account, expires in ten minutes and can be consumed
+once. A failed or uncertain submission is never retried automatically.
 
-The widget uses the MCP Apps bridge for tool-result updates and only falls back to `window.openai.sendFollowUpMessage(...)` for optional follow-up messaging. The data tools are designed so ChatGPT can answer questions like:
+The widget uses the MCP Apps bridge with `window.openai` compatibility, host
+themes, system typography, explicit error states and two inline actions. Full
+navigation appears in fullscreen mode. See [design notes](DESIGN.md).
 
-- "What are my next lectures or meetings?"
-- "What tasks are due soon?"
-- "What are my current grades and credits?"
-- "Which learning spaces am I enrolled in?"
-- "What courses fit my degree or subject next semester?"
-- "What mail needs my attention today?"
-- "What document job do I need for my enrollment certificate?"
-- "What does this ILIAS space currently contain?"
+## Skills
 
-The widget also uses ChatGPT host capabilities when available:
-
-- `window.openai.callTool(...)` for in-widget panel refreshes without remounting the widget
-- `window.openai.setWidgetState(...)` to persist the active panel, course query, and selected detail
-- `window.openai.requestModal(...)` to open host-owned detail views
-- `window.openai.requestDisplayMode(...)` for fullscreen expansion
-- `window.openai.requestClose()` inside the modal detail view
+The package contains [connection onboarding](skills/tuebingen-connect/SKILL.md)
+and [browser recovery](skills/tuebingen-browser-recovery/SKILL.md). If a university
+call fails, use available host browser/computer tools after the user signs in
+on the official service. The plugin supplies instructions, not browser access.
+If no browser tool is available, provide the official entry point and steps.
 
 ## Development
 
-```bash
-npm install
+Use Node 24 or newer:
+
+```sh
+npm ci --workspaces=false
+npm run check
+npm test
 npm run build
 npm run dev
 ```
 
-The server listens on `http://localhost:8080/mcp` by default.
+Development defaults to `http://127.0.0.1:8080`. HTTP is allowed only on loopback;
+production requires an HTTPS `APP_BASE_URL`. A local student starts the Python
+API, then runs:
 
-Set `PORTAL_API_BASE_URL` to point at the Python backend in `../package`. The app is live-data only and returns explicit backend errors when that API is not reachable.
-
-## Auth and deployment
-
-This app does not implement Apps SDK OAuth yet. All private university data tools are therefore legacy/dev-authenticated through the Python backend, not production multi-user authentication.
-
-For now, the only supported private-data deployment model is single-user development:
-
-- deploy the Python backend with `UNI_USERNAME` and `UNI_PASSWORD` set in the backend environment
-- point `PORTAL_API_BASE_URL` at that private backend
-- keep the ChatGPT app deployment private to your own setup rather than exposing it as a broadly shared public app
-
-Do not use this model for multiple students. The backend credentials represent one account, and ChatGPT widget state, browser storage, and cookies must not store university passwords.
-
-Production ChatGPT auth should use Apps SDK OAuth with protected resource metadata, PKCE-capable authorization, bearer-token verification on each MCP request, and per-tool scope checks. If private university portal access is still needed there, credentials belong in an explicit server-side encrypted account-linking vault keyed by the authenticated user, not in widget storage.
-
-Typical local setup:
-
-```bash
-cd ../package
-UNI_USERNAME=... UNI_PASSWORD=... PORT=8001 PYTHONPATH=src python -m tue_api_wrapper.api_server
-
-cd ../chatgpt
-PORTAL_API_BASE_URL=http://127.0.0.1:8001 npm run dev
+```sh
+npm run link-sidecar -- --server http://127.0.0.1:8080
 ```
 
-Health check:
+The sidecar prints the link password for the account connection page. Its local
+connection file is mode 0600. Never paste that password in chat. The Python API
+normally runs on port 8000; `--backend http://127.0.0.1:8001` selects another local
+port. `PORTAL_API_BASE_URL` is retained only for internal backend tests; HTTP MCP
+requests always use the authenticated student's relay and never this variable.
 
-```bash
-curl http://localhost:8080/healthz
+## Deployment and submission
+
+[Deployment instructions](DEPLOYMENT.md) cover a single VM with persistent SQLite
+and Caddy TLS. [Submission instructions](SUBMISSION.md) describe the production
+ZIP generator, reviewer access, public URLs and remaining external checks.
+[Release review](RELEASE_REVIEW.md) records the implemented checks and their limits.
+[Capacity measurements](CAPACITY.md) record the isolated small-container benchmark.
+
+```sh
+npm run release:package -- https://YOUR_PRODUCTION_HOST
 ```
 
-## Cloud Run
-
-The server is already an Apps SDK / MCP server. On Cloud Run, the public connector URL is:
-
-```text
-https://YOUR_SERVICE_URL/mcp
-```
-
-Use the Cloud Run service origin itself as `APP_BASE_URL`. This keeps the widget metadata aligned with the deployed host origin, which is important for app submission and iframe loading.
-
-Build the container manually:
-
-```bash
-docker build -t gcr.io/PROJECT_ID/tue-study-hub-chatgpt .
-```
-
-Deploy the container manually:
-
-```bash
-gcloud run deploy tue-study-hub-chatgpt \
-  --image gcr.io/PROJECT_ID/tue-study-hub-chatgpt \
-  --region europe-west3 \
-  --allow-unauthenticated \
-  --set-env-vars PORTAL_API_BASE_URL=https://your-backend.example.com
-```
-
-`--allow-unauthenticated` keeps the MCP endpoint reachable by ChatGPT. Without Apps SDK OAuth, "private" here means a private ChatGPT app configuration and a legacy/dev backend that uses your own env-backed university credentials, not production multi-user auth or a connector endpoint that is network-inaccessible to OpenAI.
-
-Then update the service so `APP_BASE_URL` matches the Cloud Run URL that was assigned:
-
-```bash
-gcloud run services update tue-study-hub-chatgpt \
-  --region europe-west3 \
-  --update-env-vars APP_BASE_URL=https://YOUR_SERVICE_URL
-```
-
-Or use the included helper, which builds, deploys, reads the resulting Cloud Run URL, and then writes it back into `APP_BASE_URL` automatically:
-
-```bash
-./scripts/deploy-cloud-run.sh PROJECT_ID europe-west3 \
-  gcr.io/PROJECT_ID/tue-study-hub-chatgpt \
-  https://your-backend.example.com
-```
-
-If you prefer declarative deployment, edit the placeholders in [cloudrun.service.yaml](/Users/sebastianboehler/Documents/GitHub/tue-api-wrapper/chatgpt/cloudrun.service.yaml) and apply it with `gcloud run services replace`.
-
-Cloud Build is also included:
-
-```bash
-gcloud builds submit --config cloudbuild.yaml --substitutions _IMAGE=gcr.io/PROJECT_ID/tue-study-hub-chatgpt
-```
-
-After deployment, verify:
-
-```bash
-curl https://YOUR_SERVICE_URL/healthz
-curl https://YOUR_SERVICE_URL/
-```
-
-Expected endpoints:
-
-- root: `/`
-- health: `/healthz`
-- MCP connector: `/mcp`
+Replace the hostname with the real production origin. The source manifest is
+not an upload-ready MCP package; the generator fills the URLs and creates the
+portable MCP configuration. Credentials and demo account access belong in the
+secure review dashboard, never the ZIP. This repository has not been submitted
+or deployed by this review.

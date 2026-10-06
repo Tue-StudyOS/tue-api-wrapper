@@ -45,6 +45,18 @@ If the user chooses an option, ask only for missing task details: role, term, de
 
 For university information outside the wrapper, browse official University of Tuebingen pages, faculty/course pages, and the cited upstream system. State the source and date checked. Use community-maintained pages only as leads and confirm consequential facts (deadlines, requirements, contacts, registrations) on an official source.
 
+If a wrapper call throws, fails parsing, times out, or returns incomplete data,
+switch to the official website using an available browser/computer tool. Ask the
+user to sign in on that page when needed; do not request credentials in chat.
+Use Alma at
+`https://alma.uni-tuebingen.de/`, ILIAS at `https://ovidius.uni-tuebingen.de/`,
+Moodle at `https://moodle.zdv.uni-tuebingen.de/`, and university mail at
+`https://webmail.uni-tuebingen.de/`. Check the selected semester and account,
+retrieve only the missing data, and report its source and time checked. If no
+browser tool is available, provide the URL and navigation steps. After a failed
+write, inspect current service state before retrying; obtain final confirmation
+before another submission.
+
 ## Keep credentials and actions safe
 
 1. Use public methods before asking for access.

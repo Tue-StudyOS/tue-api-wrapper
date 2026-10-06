@@ -50,3 +50,8 @@ go/tue-*
 ios/TueAPI.xcodeproj/
 ios/build/
 ios/DerivedData/
+
+# Local account links and generated production submission artifacts
+chatgpt/data/
+chatgpt/release/
+chatgpt/.env

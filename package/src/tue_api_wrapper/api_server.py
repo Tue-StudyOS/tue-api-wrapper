@@ -85,11 +85,13 @@ def health() -> dict[str, str]:
 def dashboard(
     term: str = Query(DEFAULT_DASHBOARD_TERM),
     include_course_assignments: bool = Query(True),
+    limit: int = Query(8, ge=1, le=100),
 ) -> dict[str, object]:
     try:
         return portal_service.build_dashboard(
             term_label=term,
             include_course_assignments=include_course_assignments,
+            limit=limit,
         )
     except AlmaError as error:
         raise _translate_error(error) from error

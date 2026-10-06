@@ -3,8 +3,18 @@ from __future__ import annotations
 from dataclasses import asdict, is_dataclass
 from datetime import date, datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
-DEFAULT_DASHBOARD_TERM = "Sommer 2026"
+def current_dashboard_term(now: date | None = None) -> str:
+    """University semester boundaries: https://uni-tuebingen.de/en/843."""
+    today = now or datetime.now(ZoneInfo("Europe/Berlin")).date()
+    if 4 <= today.month <= 9:
+        return f"Sommer {today.year}"
+    start = today.year - 1 if today.month < 4 else today.year
+    return f"Winter {start}/{(start + 1) % 100:02d}"
+
+
+DEFAULT_DASHBOARD_TERM = current_dashboard_term()
 RELATIVE_DASHBOARD_TERMS = {
     "",
     "aktuell",
@@ -22,7 +32,7 @@ RELATIVE_DASHBOARD_TERMS = {
 def normalize_dashboard_term(term_label: str | None = None) -> str:
     raw = (term_label or "").strip()
     key = " ".join(raw.casefold().replace("_", " ").replace("-", " ").split())
-    return DEFAULT_DASHBOARD_TERM if key in RELATIVE_DASHBOARD_TERMS else raw
+    return current_dashboard_term() if key in RELATIVE_DASHBOARD_TERMS else raw
 
 
 def serialize(value: Any) -> Any:

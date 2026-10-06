@@ -12,6 +12,7 @@ from .alma_planner_models import AlmaStudyPlannerPage
 from .alma_studyservice_models import AlmaStudyServicePage
 from .client import AlmaClient
 from .config import AlmaError
+from .exam_summary import summarize_exam_records
 from .dashboard_talks import build_talks_panel
 from .ilias_client import IliasClient
 from .models import (
@@ -88,7 +89,7 @@ def _load_alma_dashboard(
     with ThreadPoolExecutor(max_workers=4, thread_name_prefix="dashboard-alma") as executor:
         timetable_future = executor.submit(alma.fetch_timetable_for_term, term_label)
         enrollments_future = executor.submit(alma.fetch_enrollment_page)
-        exams_future = executor.submit(lambda: tuple(alma.fetch_exam_overview()[:limit]))
+        exams_future = executor.submit(lambda: tuple(alma.fetch_exam_overview()))
         studyservice_future = executor.submit(alma.fetch_studyservice_contract)
         study_planner_future = executor.submit(alma.fetch_study_planner)
         portal_messages_future = executor.submit(_fetch_portal_messages_page, alma)
@@ -168,24 +169,14 @@ def _compose_dashboard(
 ) -> dict[str, Any]:
     documents = alma.studyservice_contract.reports[:limit]
     upcoming_occurrences = _upcoming_occurrences(alma.timetable.occurrences, today=today)
-    passed_exams = [
-        exam
-        for exam in alma.exams
-        if (exam.status or "").strip().upper() in {"BE", "PASSED", "BESTANDEN"}
-        or bool(exam.grade and exam.grade.strip() not in {"", "-", "5,0"})
-    ]
-    credit_values = [
-        float((exam.cp or "0").replace(",", "."))
-        for exam in alma.exams
-        if exam.cp and exam.cp.strip() not in {"", "-"}
-    ]
+    passed_exam_count, tracked_credits = summarize_exam_records(alma.exams)
     course_assignments = alma.course_assignments
 
     metrics = [
         {"label": "Upcoming events", "value": len(upcoming_occurrences)},
         {"label": "Open tasks", "value": len(ilias.tasks)},
         {"label": "Learning spaces", "value": len(ilias.memberships)},
-        {"label": "Passed exams", "value": len(passed_exams)},
+        {"label": "Passed exams", "value": passed_exam_count},
     ]
     if course_assignments is not None:
         metrics.insert(1, {"label": "Saved semester CP", "value": course_assignments.total_credits})
@@ -207,8 +198,8 @@ def _compose_dashboard(
         "study": {
             "selectedTerm": alma.enrollments.selected_term,
             "message": alma.enrollments.message,
-            "passedExamCount": len(passed_exams),
-            "trackedCredits": round(sum(credit_values), 1),
+            "passedExamCount": passed_exam_count,
+            "trackedCredits": tracked_credits,
             "currentSemesterCredits": course_assignments.total_credits if course_assignments is not None else None,
             "currentSemesterCreditCourses": (
                 course_assignments.resolved_credit_count if course_assignments is not None else 0
@@ -230,7 +221,7 @@ def _compose_dashboard(
             else None,
             "sourcePageUrl": alma.studyservice_url,
         },
-        "exams": serialize(alma.exams),
+        "exams": serialize(alma.exams[:limit]),
         "enrollment": serialize(alma.enrollments),
         "ilias": {
             "title": ilias.root.title,

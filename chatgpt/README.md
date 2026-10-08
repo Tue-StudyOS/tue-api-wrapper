@@ -53,8 +53,8 @@ Use Node 24 or newer:
 ```sh
 npm ci --workspaces=false
 npm run check
-npm test
 npm run build
+npm test
 npm run dev
 ```
 

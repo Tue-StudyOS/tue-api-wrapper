@@ -105,14 +105,14 @@ jobs:
       - name: Type check
         run: npm run check
 
+      - name: Production build
+        run: npm run build
+
       - name: Regression tests
         run: npm test
 
       - name: Dependency audit
         run: npm audit --workspaces=false --omit=dev
-
-      - name: Production build
-        run: npm run build
 
   ios:
     name: iOS app

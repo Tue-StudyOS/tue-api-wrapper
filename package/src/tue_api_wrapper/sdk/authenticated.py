@@ -180,6 +180,19 @@ class AuthenticatedIliasApi:
 
     def assignment_deadlines(self, *, course_limit: int = 20, assignment_limit: int = 50):
         return self.client.fetch_assignment_deadlines(course_limit=course_limit, assignment_limit=assignment_limit)
+
+    def quiz(self, target: str):
+        from ..ilias_quizzes import fetch_quiz
+        return fetch_quiz(self.client, target)
+
+    def course_quizzes(self, target: str):
+        from ..ilias_quizzes import fetch_course_quizzes
+        return fetch_course_quizzes(self.client, target)
+
+    def quiz_deadlines(self, *, course_limit: int = 20, quiz_limit: int = 50):
+        from ..ilias_quizzes import fetch_quiz_deadlines
+        return fetch_quiz_deadlines(self.client, course_limit=course_limit, quiz_limit=quiz_limit)
+
     def search_filters(self):
         return fetch_ilias_search_filters(self.client)
 

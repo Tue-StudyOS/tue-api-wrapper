@@ -148,6 +148,16 @@ def _register_alma_tools(server: Any, env_file: str | Path | None) -> None:
 
 def _register_ilias_tools(server: Any, env_file: str | Path | None) -> None:
     @server.tool()
+    def authenticated_ilias_quiz(target: str) -> dict[str, Any]:
+        """Read quiz opening/closing labels and completed attempts without starting a test."""
+        return _serialized(_authenticated(env_file).ilias.quiz(target))
+
+    @server.tool()
+    def authenticated_ilias_quiz_deadlines(course_limit: int = 20, quiz_limit: int = 50) -> dict[str, Any]:
+        """Discover quiz deadlines across enrolled courses; dates retain ILIAS display format."""
+        return _serialized(_authenticated(env_file).ilias.quiz_deadlines(course_limit=course_limit, quiz_limit=quiz_limit))
+
+    @server.tool()
     def authenticated_ilias_tasks() -> dict[str, Any]:
         """Load authenticated ILIAS task overview data."""
         return _serialized(_authenticated(env_file).ilias.tasks())

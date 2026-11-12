@@ -4,10 +4,38 @@ from fastapi import APIRouter, Query
 
 from .api_errors import translate_alma_error
 from .config import AlmaError
+from .ilias_quizzes import fetch_quiz, fetch_course_quizzes, fetch_quiz_deadlines
 from .portal_service import PortalService, serialize
 
 router = APIRouter()
 portal_service = PortalService()
+
+
+@router.get("/api/ilias/quiz")
+def ilias_quiz(target: str) -> dict[str, object]:
+    try:
+        return serialize(fetch_quiz(portal_service._ilias_client(), target))
+    except AlmaError as error:
+        raise _translate_error(error) from error
+
+
+@router.get("/api/ilias/course-quizzes")
+def ilias_course_quizzes(target: str) -> list[object]:
+    try:
+        return serialize(fetch_course_quizzes(portal_service._ilias_client(), target))
+    except AlmaError as error:
+        raise _translate_error(error) from error
+
+
+@router.get("/api/ilias/quiz-deadlines")
+def ilias_quiz_deadlines(
+    course_limit: int = Query(20, ge=1, le=100),
+    quiz_limit: int = Query(50, ge=1, le=200),
+) -> list[object]:
+    try:
+        return serialize(fetch_quiz_deadlines(portal_service._ilias_client(), course_limit=course_limit, quiz_limit=quiz_limit))
+    except AlmaError as error:
+        raise _translate_error(error) from error
 
 
 def _translate_error(error: AlmaError):

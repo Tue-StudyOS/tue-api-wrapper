@@ -47,7 +47,7 @@ def fake_mcp(monkeypatch: pytest.MonkeyPatch) -> None:
         ),
         ("discovery", {"course_discovery_search", "course_discovery_status", "course_discovery_refresh"}),
         ("alma", {"authenticated_alma_timetable"}),
-        ("ilias", {"authenticated_ilias_tasks"}),
+        ("ilias", {"authenticated_ilias_tasks", "authenticated_ilias_quiz", "authenticated_ilias_quiz_deadlines"}),
         ("moodle", {"authenticated_moodle_deadlines"}),
         ("mail", {"authenticated_mail_inbox"}),
     ],

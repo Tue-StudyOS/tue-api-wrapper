@@ -47,6 +47,11 @@ ilias-root = "tue_api_wrapper.ilias_cli:main"
 route-discovery = "tue_api_wrapper.route_discovery_cli:main"
 tue-api-server = "tue_api_wrapper.api_server:main"
 tue-mcp = "tue_api_wrapper.mcp_server:main"
+tue-study = "tue_api_wrapper.study_radar_cli:main"
+tue-register = "tue_api_wrapper.registration_cli:main"
+tue-submit = "tue_api_wrapper.moodle_submission_cli:main"
+tue-forum = "tue_api_wrapper.moodle_forum_cli:main"
+tue-quiz = "tue_api_wrapper.moodle_quiz_cli:main"
 
 [project.urls]
 Homepage = "https://github.com/SebastianBoehler/tue-api-wrapper"

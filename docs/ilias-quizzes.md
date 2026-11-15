@@ -1,5 +1,8 @@
 # ILIAS quizzes (read-only)
 
+For the separate, opt-in in-attempt tools and their limits, see the
+[forum and quiz guide](forum-and-quiz-access.md#quiz-reads-and-actions).
+
 - `GET /api/ilias/quiz?target=tst/5846588`: one quiz's Info metadata.
 - `GET /api/ilias/course-quizzes?target=crs/5743244`: quizzes directly listed in a course.
 - `GET /api/ilias/quiz-deadlines?course_limit=20&quiz_limit=50`: quiz metadata with course context across memberships.

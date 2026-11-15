@@ -38,6 +38,8 @@ def fake_mcp(monkeypatch: pytest.MonkeyPatch) -> None:
             "public",
             {
                 "public_alma_search_modules",
+                "public_alma_program_filters",
+                "public_alma_search_program",
                 "public_alma_current_lectures",
                 "public_campus_events",
                 "public_campus_canteens",
@@ -50,6 +52,13 @@ def fake_mcp(monkeypatch: pytest.MonkeyPatch) -> None:
         ("ilias", {"authenticated_ilias_tasks", "authenticated_ilias_quiz", "authenticated_ilias_quiz_deadlines"}),
         ("moodle", {"authenticated_moodle_deadlines"}),
         ("mail", {"authenticated_mail_inbox"}),
+        ("campus", {"campus_buildings", "campus_people_search", "campus_rooms_search", "campus_fitness_courses", "campus_connectivity"}),
+        ("raw", {"raw_course_page", "raw_alma_course_search", "raw_moodle_search", "raw_ilias_search", "raw_interaction_page"}),
+        ("forum-write", {"moodle_forum_review", "moodle_forum_publish", "ilias_forum_review", "ilias_forum_publish"}),
+        ("quiz-write", {"moodle_quiz_review_start", "moodle_quiz_start", "moodle_quiz_review_answers",
+                        "moodle_quiz_save_answers", "moodle_quiz_review_finish", "moodle_quiz_finish",
+                        "ilias_quiz_review_start", "ilias_quiz_start", "ilias_quiz_question",
+                        "ilias_quiz_review_answers", "ilias_quiz_save_answers", "ilias_quiz_review_finish", "ilias_quiz_finish"}),
     ],
 )
 def test_create_mcp_server_limits_tools_to_selected_service(service: str, expected_tools: set[str]) -> None:
@@ -61,3 +70,7 @@ def test_create_mcp_server_limits_tools_to_selected_service(service: str, expect
 def test_create_mcp_server_rejects_unknown_service() -> None:
     with pytest.raises(ValueError, match="Unknown MCP service"):
         create_mcp_server(services=("everything",))
+
+
+def test_raw_tools_are_opt_in() -> None:
+    assert "raw_course_page" not in create_mcp_server().tools

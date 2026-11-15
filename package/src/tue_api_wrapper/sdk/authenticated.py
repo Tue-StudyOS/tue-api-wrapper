@@ -172,6 +172,10 @@ class AuthenticatedIliasApi:
     def forum_topics(self, target: str):
         return self.client.fetch_forum_topics(target)
 
+    def forum_thread(self, target: str):
+        from ..ilias_forum_threads import fetch_thread
+        return fetch_thread(self.client, target)
+
     def exercise_assignments(self, target: str):
         return self.client.fetch_exercise_assignments(target)
 
@@ -192,6 +196,10 @@ class AuthenticatedIliasApi:
     def quiz_deadlines(self, *, course_limit: int = 20, quiz_limit: int = 50):
         from ..ilias_quizzes import fetch_quiz_deadlines
         return fetch_quiz_deadlines(self.client, course_limit=course_limit, quiz_limit=quiz_limit)
+
+    def quiz_question(self, quiz_id: int):
+        from ..ilias_quiz_attempt import fetch_question
+        return fetch_question(self.client, quiz_id)
 
     def search_filters(self):
         return fetch_ilias_search_filters(self.client)
@@ -243,11 +251,27 @@ class AuthenticatedMoodleApi:
     def courses(self, *, classification: str = "all", limit: int = 24, offset: int = 0):
         return self.client.fetch_enrolled_courses(classification=classification, limit=limit, offset=offset)
 
+    def search_courses(self, query: str, *, page: int = 0, per_page: int = 20):
+        from ..moodle_course_search import search_moodle_courses
+        return search_moodle_courses(self.client, query, page=page, per_page=per_page)
+
     def categories(self, *, category_id: int | None = None):
         return self.client.fetch_category_page(category_id)
 
     def course(self, course_id: int):
         return self.client.fetch_course_detail(course_id)
+
+    def course_content(self, course_id: int):
+        from ..moodle_course_content import fetch_course_content
+        return fetch_course_content(self.client, course_id)
+
+    def assignment(self, assignment_id: int):
+        from ..moodle_assignment import fetch_assignment
+        return fetch_assignment(self.client, assignment_id)
+
+    def inspect_submission(self, assignment_id: int):
+        from ..moodle_submission import inspect_submission
+        return inspect_submission(self.client, assignment_id)
 
     def enrol_in_course(self, course_id: int, *, enrolment_key: str | None = None):
         return self.client.enrol_in_course(course_id, enrolment_key=enrolment_key)
@@ -260,6 +284,22 @@ class AuthenticatedMoodleApi:
 
     def notifications(self):
         return self.client.fetch_notifications()
+
+    def forum(self, forum_id: int, *, page: int = 0):
+        from ..moodle_forums import fetch_forum
+        return fetch_forum(self.client, forum_id, page=page)
+
+    def discussion(self, discussion_id: int):
+        from ..moodle_forums import fetch_discussion
+        return fetch_discussion(self.client, discussion_id)
+
+    def quiz(self, quiz_id: int):
+        from ..moodle_quiz import fetch_quiz
+        return fetch_quiz(self.client, quiz_id)
+
+    def quiz_attempt(self, attempt_id: int, *, page: int = 0):
+        from ..moodle_quiz_attempt import fetch_attempt
+        return fetch_attempt(self.client, attempt_id, page=page)
 
 
 @dataclass(slots=True)

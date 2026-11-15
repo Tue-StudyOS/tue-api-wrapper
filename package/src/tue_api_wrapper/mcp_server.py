@@ -14,7 +14,7 @@ from .sdk import (
     UniversityCredentials,
 )
 
-MCP_SERVICES = frozenset({"public", "discovery", "alma", "ilias", "moodle", "mail"})
+MCP_SERVICES = frozenset({"public", "discovery", "alma", "ilias", "moodle", "mail", "study", "campus", "registration", "raw", "moodle-write", "forum-write", "quiz-write"})
 
 
 def create_mcp_server(
@@ -52,6 +52,27 @@ def create_mcp_server(
         _register_moodle_tools(server, env_file)
     if "mail" in enabled_services:
         _register_mail_tools(server, env_file)
+    if "study" in enabled_services:
+        from .mcp_study import register_study_tools
+        register_study_tools(server, env_file)
+    if "campus" in enabled_services:
+        from .mcp_campus import register_campus_tools
+        register_campus_tools(server)
+    if "registration" in enabled_services:
+        from .mcp_registration import register_registration_tools
+        register_registration_tools(server, env_file)
+    if "moodle-write" in enabled_services:
+        from .mcp_moodle_write import register_moodle_write_tools
+        register_moodle_write_tools(server, env_file)
+    if "forum-write" in enabled_services:
+        from .mcp_forum_write import register_forum_write_tools
+        register_forum_write_tools(server, env_file)
+    if "quiz-write" in enabled_services:
+        from .mcp_quiz_write import register_quiz_write_tools
+        register_quiz_write_tools(server, env_file)
+    if "raw" in enabled_services:
+        from .mcp_raw import register_raw_tools
+        register_raw_tools(server, env_file)
 
     return server
 
@@ -64,7 +85,7 @@ def main(argv: list[str] | None = None) -> None:
 
 def _enabled_services(services: Collection[str] | None) -> frozenset[str]:
     if services is None:
-        return MCP_SERVICES
+        return MCP_SERVICES - {"raw", "moodle-write", "forum-write", "quiz-write"}
     unknown = set(services) - MCP_SERVICES
     if unknown:
         raise ValueError(f"Unknown MCP service: {', '.join(sorted(unknown))}")
@@ -72,6 +93,20 @@ def _enabled_services(services: Collection[str] | None) -> frozenset[str]:
 
 
 def _register_public_tools(server: Any, client: TuebingenPublicClient) -> None:
+    @server.tool()
+    def public_alma_program_filters() -> dict[str, Any]:
+        """List Alma degree, subject, and element-type labels and values for module-description search."""
+        return _serialized(client.alma.module_search_filters())
+
+    @server.tool()
+    def public_alma_search_program(query: str = "", degrees: list[str] | None = None,
+                                   subjects: list[str] | None = None, element_types: list[str] | None = None,
+                                   max_results: int = 100) -> dict[str, Any]:
+        """Search Alma records by exact filter values; results can include courses, modules, or exams."""
+        return _serialized(client.alma.search_modules(query=query, degrees=tuple(degrees or ()),
+                           subjects=tuple(subjects or ()), element_types=tuple(element_types or ()),
+                           max_results=max_results))
+
     @server.tool()
     def public_alma_search_modules(query: str, max_results: int = 10) -> dict[str, Any]:
         """Search public Alma module descriptions."""

@@ -34,6 +34,7 @@ class CalendarOccurrence:
     location: str | None
     description: str | None
     room_details: CalendarRoomDetails | None = None
+    uid: str | None = None
 
 
 @dataclass(frozen=True)

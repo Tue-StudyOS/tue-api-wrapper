@@ -198,6 +198,7 @@ def expand_ics_events(events: Iterable[CalendarEvent], term_label: str) -> tuple
                         location=event.location,
                         description=event.description,
                         room_details=event.room_details,
+                        uid=event.uid,
                     )
                 )
             continue
@@ -211,6 +212,7 @@ def expand_ics_events(events: Iterable[CalendarEvent], term_label: str) -> tuple
                     location=event.location,
                     description=event.description,
                     room_details=event.room_details,
+                    uid=event.uid,
                 )
             )
 

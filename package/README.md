@@ -2,6 +2,16 @@
 
 Python SDK, FastAPI server, and local MCP server for University of Tübingen study systems.
 
+This is an independent project, not an official university or ZDV application.
+Direct login and scraping are intended for local use with your own account.
+The wrapper handles the password in process memory; it is not a password-free
+SSO integration. Do not collect other users' ZDV passwords in a hosted service.
+The standard API command refuses a non-loopback `HOST` when university login
+variables are set, including legacy `ALMA_*` and `ILIAS_*` variables. Direct ASGI
+launches bypass this startup check. Do not publicly proxy an authenticated local
+API or web frontend. A `.env` file stores secrets as plaintext on disk; keep it
+outside version control and restrict its file permissions.
+
 The package has three entry points:
 
 - `TuebingenPublicClient`: public data that does not need credentials

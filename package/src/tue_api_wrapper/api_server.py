@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse, Response
 import uvicorn
 
 from .alma_catalog_client import fetch_course_catalog_page
+from .api_bind_policy import validate_api_bind_host
 from .api_errors import alma_error_status_code, translate_alma_error
 from .api_routes_alma_assignments import router as alma_assignments_router
 from .api_routes_alma_exam_registration import router as alma_exam_registration_router
@@ -265,9 +266,11 @@ async def handle_alma_error(_request, error: AlmaError) -> JSONResponse:
 
 
 def main() -> None:
+    host = os.getenv("HOST", "127.0.0.1")
+    validate_api_bind_host(host)
     uvicorn.run(
         "tue_api_wrapper.api_server:app",
-        host=os.getenv("HOST", "127.0.0.1"),
+        host=host,
         port=int(os.getenv("PORT", "8000")),
         reload=False,
     )

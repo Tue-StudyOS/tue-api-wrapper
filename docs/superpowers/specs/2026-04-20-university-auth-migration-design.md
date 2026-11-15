@@ -1,5 +1,9 @@
 # University Auth Migration Design
 
+Historical design: its hosted credential-vault and Cloud Run prototype proposals
+are superseded by [authentication boundaries](../../authentication-boundaries.md).
+Do not use those proposals as authorization to collect ZDV passwords in a hosted service.
+
 ## Context
 
 The project currently has three credential surfaces:

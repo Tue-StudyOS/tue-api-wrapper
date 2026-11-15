@@ -4,6 +4,11 @@ Python SDK, local API server, MCP tools, and app clients for University of Tuebi
 
 The project wraps live university systems such as Alma, ILIAS, Moodle, university mail, TIMMS, campus pages, and public course data. It does not ship mock data or replace those upstream systems. Public features work without credentials; private student features require credentials in your local process.
 
+This is an independent project, not an official University of Tübingen or ZDV
+application. Direct login and scraping remain supported for local use with your
+own account. Do not deploy a hosted service that collects users' ZDV passwords.
+See [authentication and deployment boundaries](docs/authentication-boundaries.md).
+
 ![CI](https://github.com/Tue-StudyOS/tue-api-wrapper/actions/workflows/ci.yml/badge.svg)
 ![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-Apache--2.0-D22128.svg)
@@ -261,6 +266,13 @@ Public routes work without credentials. Authenticated university routes read
 `UNI_USERNAME` and `UNI_PASSWORD`. PPI routes instead require the independent
 `PPI_USERNAME` and `PPI_PASSWORD` values. The PPI surface includes signup,
 lecture listing, borrowing, downloads, and token requests below `/api/ppi/`.
+
+The standard server command rejects non-loopback `HOST` values when university
+credentials are present, including legacy `ALMA_*` and `ILIAS_*` login variables.
+This also affects the Docker image, which sets `HOST=0.0.0.0`.
+The check prevents accidental exposure; it is not HTTP authentication. Direct
+ASGI launches bypass it. Never expose the authenticated API through a public
+proxy, tunnel, or web frontend.
 
 ## Feedback Issue Creation
 

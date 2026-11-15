@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import os
 from pathlib import Path
 
@@ -8,7 +8,7 @@ from pathlib import Path
 @dataclass(frozen=True, slots=True)
 class UniversityCredentials:
     username: str
-    password: str
+    password: str = field(repr=False)
 
     @classmethod
     def from_env(cls, env_file: str | Path | None = ".env") -> "UniversityCredentials":

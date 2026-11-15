@@ -221,8 +221,6 @@ def extract_exam_registration_messages(html: str) -> tuple[str, ...]:
 
 def extract_exam_registration_status(html: str, messages: tuple[str, ...]) -> str | None:
     text = clean_text(" ".join((*messages, BeautifulSoup(html, "html.parser").get_text(" ", strip=True))))
-    if re.search(r"\b(bestätigung|aenderung|änderung)\b", text, re.IGNORECASE):
-        return "registered"
     text_without_negative = re.sub(r"\bnicht\s+angemeldet\b", "", text, flags=re.IGNORECASE)
     if re.search(r"\bangemeldet\b", text_without_negative, re.IGNORECASE):
         return "registered"

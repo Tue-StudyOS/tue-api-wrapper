@@ -82,6 +82,10 @@ def register_for_course(
     detail_url: str,
     *,
     planelement_id: str | None = None,
+    expected_option_label: str | None = None,
+    expected_title: str | None = None,
+    expected_number: str | None = None,
+    expected_action_name: str | None = None,
 ) -> AlmaCourseRegistrationResult:
     detail_url = _normalize_detail_url(client, detail_url)
     response = _get_authenticated_html(client, detail_url)
@@ -95,6 +99,8 @@ def register_for_course(
         confirm.url,
         planelement_id=planelement_id,
     )
+    if expected_option_label is not None and (request.selected_option.label != expected_option_label or start.title != expected_title or start.number != expected_number or start.action != "ANMELDUNG" or request.selected_option.action_name != expected_action_name):
+        raise AlmaParseError("The reviewed registration target or option changed; inspect it again.")
     final = client.session.post(
         request.action_url,
         data=request.payload,

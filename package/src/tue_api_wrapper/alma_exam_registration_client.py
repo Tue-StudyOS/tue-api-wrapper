@@ -92,13 +92,14 @@ def prepare_exam_registration(
     source_url: str | None = None,
     *,
     exam_unit_id: str | None = None,
+    allow_instruction_accept: bool = True,
 ) -> AlmaExamRegistrationOptions:
     page = _resolve_exam_page(client, source_url, exam_unit_id=exam_unit_id)
     start = extract_exam_registration_start_request(page.html, page.url)
     if start is None:
         raise AlmaParseError("This Alma page does not expose an exam-registration action.")
 
-    stage, accepted_instruction = _open_exam_registration(client, start)
+    stage, accepted_instruction = _open_exam_registration(client, start, allow_instruction_accept=allow_instruction_accept)
     options = extract_exam_registration_options(stage.text)
     if not options:
         raise AlmaParseError("Alma did not expose a selectable exam-registration path after opening registration.")
@@ -121,14 +122,23 @@ def register_for_exam(
     *,
     exam_unit_id: str | None = None,
     planelement_id: str | None = None,
+    expected_option_label: str | None = None,
+    expected_title: str | None = None,
+    expected_number: str | None = None,
+    expected_action_name: str | None = None,
+    allow_instruction_accept: bool = True,
 ) -> AlmaExamRegistrationResult:
     page = _resolve_exam_page(client, source_url, exam_unit_id=exam_unit_id)
     start = extract_exam_registration_start_request(page.html, page.url)
     if start is None:
         raise AlmaParseError("This Alma page does not expose an exam-registration action.")
 
-    stage, _ = _open_exam_registration(client, start)
+    if expected_option_label is not None and (start.exam_unit_id or page.exam_unit_id) != exam_unit_id:
+        raise AlmaParseError("The reviewed exam identifier changed; inspect it again.")
+    stage, _ = _open_exam_registration(client, start, allow_instruction_accept=allow_instruction_accept)
     request = build_exam_registration_confirm_request(stage.text, stage.url, planelement_id=planelement_id)
+    if expected_option_label is not None and (request.selected_option.label != expected_option_label or start.title != expected_title or start.number != expected_number or start.action != "ANMELDUNG" or request.selected_option.action_name != expected_action_name):
+        raise AlmaParseError("The reviewed registration target or option changed; inspect it again.")
     final = client.session.post(
         request.action_url,
         data=request.payload,
@@ -175,11 +185,13 @@ def _resolve_exam_page(client: "AlmaClient", source_url: str | None, *, exam_uni
     return _ExamPage(detail.text, detail.url, response.url, open_request.exam_unit_id)
 
 
-def _open_exam_registration(client: "AlmaClient", start) -> tuple["requests.Response", bool]:
+def _open_exam_registration(client: "AlmaClient", start, *, allow_instruction_accept: bool = True) -> tuple["requests.Response", bool]:
     stage = _post_form_request(client, start)
     accept = build_instruction_accept_request(stage.text, stage.url)
     if accept is None:
         return stage, False
+    if not allow_instruction_accept:
+        raise AlmaParseError("Alma requires accepting an instruction screen; review it in Alma before continuing.")
     return _post_form_request(client, accept), True
 
 

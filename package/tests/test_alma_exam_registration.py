@@ -167,7 +167,7 @@ class AlmaExamRegistrationTests(unittest.TestCase):
 
         result = register_for_exam(client, "https://alma.example/alma/pages/plan/individualTimetable.xhtml", exam_unit_id="63120")
 
-        self.assertEqual(result.status, "registered")
+        self.assertEqual(result.status, "not_registered")
         self.assertEqual(result.selected_option.planelement_id, "722795")
         self.assertIn("linkedExaminationsTab", session.posts[0]["data"]["detailViewData:_idcl"])
         self.assertEqual(session.posts[1]["data"]["linkedExamUnitId"], "63120")
@@ -182,6 +182,18 @@ class AlmaExamRegistrationTests(unittest.TestCase):
         self.assertTrue(support.supported)
         self.assertEqual(support.action, "ANMELDUNG")
         self.assertEqual(support.number, "INFO-THEO-1-9CP")
+
+    def test_confirmation_with_not_registered_does_not_claim_registration(self) -> None:
+        from tue_api_wrapper.alma_exam_registration_html import extract_exam_registration_status
+        self.assertNotEqual(extract_exam_registration_status(FINAL_HTML, ()), "registered")
+
+    def test_safe_preparation_does_not_accept_instruction_screen(self) -> None:
+        from tue_api_wrapper.config import AlmaParseError
+        session = _RecordingSession(get_text=DETAIL_HTML, post_responses=[_FakeResponse(url="https://alma.example/instructions", text=INSTRUCTION_HTML)])
+        client = AlmaClient(base_url="https://alma.example", session=session)
+        with self.assertRaisesRegex(AlmaParseError, "instruction"):
+            prepare_exam_registration(client, "https://alma.example/alma/pages/startFlow.xhtml", allow_instruction_accept=False)
+        self.assertEqual(len(session.posts), 1)
 
 
 if __name__ == "__main__":

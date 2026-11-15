@@ -194,6 +194,22 @@ class AlmaCourseRegistrationTests(unittest.TestCase):
         with self.assertRaisesRegex(AlmaParseError, "configured Alma host"):
             register_for_course(client, "https://example.invalid/not-alma")
 
+    def test_registration_rejects_changed_reviewed_option_before_final_post(self) -> None:
+        session = _RecordingSession(post_responses=[_FakeResponse(url="https://alma.example/register/options", text=CONFIRM_HTML)])
+        client = AlmaClient(base_url="https://alma.example", session=session)
+        with self.assertRaisesRegex(AlmaParseError, "changed"):
+            register_for_course(client, "https://alma.example/alma/pages/startFlow.xhtml", planelement_id="704036", expected_option_label="Different option")
+        self.assertEqual(len(session.posts), 1)
+
+    def test_registration_rejects_changed_reviewed_action_before_final_post(self) -> None:
+        session = _RecordingSession(post_responses=[_FakeResponse(url="https://alma.example/register/options", text=CONFIRM_HTML)])
+        client = AlmaClient(base_url="https://alma.example", session=session)
+        from tue_api_wrapper.alma_course_registration_html import extract_registration_options
+        option = extract_registration_options(CONFIRM_HTML)[0]
+        with self.assertRaisesRegex(AlmaParseError, "changed"):
+            register_for_course(client, "https://alma.example/alma/pages/startFlow.xhtml", planelement_id="704036", expected_option_label=option.label, expected_title="Neural Data Science", expected_number="ML5401", expected_action_name="different")
+        self.assertEqual(len(session.posts), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

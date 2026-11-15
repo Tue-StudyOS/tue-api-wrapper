@@ -341,6 +341,15 @@ class AlmaClient:
         max_results: int,
     ) -> AlmaModuleSearchResponse:
         contract = self._fetch_advanced_public_module_search_contract()
+        for name, value in (("title", title), ("number", number), ("element_type", element_type),
+                            ("language", language), ("degree", degree), ("subject", subject), ("faculty", faculty)):
+            if value and getattr(contract.fields, name) is None:
+                raise AlmaParseError(f"Alma did not expose the requested {name} filter")
+        for name, value, options in (("element_type", element_type, "element_types"), ("language", language, "languages"),
+                                     ("degree", degree, "degrees"), ("subject", subject, "subjects"),
+                                     ("faculty", faculty, "faculties")):
+            if value and value not in {option.value for option in getattr(contract.filters, options)}:
+                raise AlmaParseError(f"Unknown Alma {name} filter value: {value}")
         payload = dict(contract.payload)
         payload[contract.query_field_name] = query
         if contract.fields.title is not None:

@@ -37,6 +37,14 @@ class SdkFacadeTests(unittest.TestCase):
         self.assertEqual(credentials.username, "student")
         self.assertEqual(credentials.password, "secret")
 
+    def test_credentials_and_nested_facades_do_not_print_password(self) -> None:
+        credentials = UniversityCredentials("student", "private-test-password")
+
+        for value in (credentials, AuthenticatedAlmaApi(credentials), AuthenticatedIliasApi(credentials)):
+            with self.subTest(type=type(value).__name__):
+                self.assertNotIn("private-test-password", repr(value))
+                self.assertNotIn("private-test-password", str(value))
+
     def test_public_client_exposes_clear_module_search_method(self) -> None:
         fake_alma = _FakePublicAlmaClient()
         client = TuebingenPublicClient(alma=PublicAlmaApi(client=fake_alma))
@@ -68,7 +76,7 @@ class SdkFacadeTests(unittest.TestCase):
 
 
 class _FakePublicAlmaClient:
-    def search_public_module_descriptions(self, *, query: str, max_results: int):
+    def search_public_module_descriptions(self, *, query: str, max_results: int, degrees=(), subjects=(), element_types=()):
         return {"query": query, "max_results": max_results}
 
 

@@ -6,6 +6,7 @@ from .config import AlmaParseError
 from .ilias_client import IliasClient
 from .ilias_feature_html import ILIAS_SEARCH_URL, extract_ilias_search_form, parse_ilias_info_page, parse_ilias_search_page
 from .ilias_feature_models import IliasInfoPage, IliasSearchFilters, IliasSearchPage
+from .ilias_search_request import search_payload
 
 
 def fetch_ilias_search_filters(client: IliasClient) -> IliasSearchFilters:
@@ -34,7 +35,6 @@ def search_ilias(
         raise AlmaParseError("A non-empty ILIAS search term is required.")
 
     target_page = max(1, page)
-    normalized_content_types = tuple(dict.fromkeys(value.strip() for value in content_types if value.strip()))
     response = client.session.get(
         ILIAS_SEARCH_URL,
         timeout=client.timeout_seconds,
@@ -43,24 +43,8 @@ def search_ilias(
     response.raise_for_status()
 
     contract = extract_ilias_search_form(response.text, response.url)
-    payload = dict(contract.payload)
-    payload[contract.term_field_name] = normalized_term
-    if search_mode:
-        payload[contract.search_mode_field_name] = search_mode
-    for option in contract.filters.content_types:
-        key = f"filter_type[{option.value}]"
-        payload.pop(key, None)
-    for value in normalized_content_types:
-        payload[f"filter_type[{value}]"] = "1"
-    if created_enabled:
-        payload[contract.creation_enabled_field_name] = "1"
-        if created_mode:
-            payload[contract.creation_mode_field_name] = created_mode
-        if created_date:
-            payload[contract.creation_date_field_name] = created_date
-    else:
-        payload.pop(contract.creation_enabled_field_name, None)
-    payload[contract.search_button_name] = "Suche"
+    payload = search_payload(contract, normalized_term, search_mode=search_mode, content_types=content_types,
+                             created_enabled=created_enabled, created_mode=created_mode, created_date=created_date)
     response = client.session.post(
         contract.action_url,
         data=payload,

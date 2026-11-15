@@ -21,8 +21,10 @@ from .discovery import CourseDiscoveryApi
 class PublicAlmaApi:
     client: AlmaClient = field(default_factory=AlmaClient)
 
-    def search_modules(self, query: str, *, max_results: int = 20):
-        return self.client.search_public_module_descriptions(query=query, max_results=max_results)
+    def search_modules(self, query: str = "", *, degrees: tuple[str, ...] = (), subjects: tuple[str, ...] = (),
+                       element_types: tuple[str, ...] = (), max_results: int = 20):
+        return self.client.search_public_module_descriptions(query=query, degrees=degrees, subjects=subjects,
+                                                             element_types=element_types, max_results=max_results)
 
     def module_search_filters(self):
         return self.client.fetch_public_module_search_filters()

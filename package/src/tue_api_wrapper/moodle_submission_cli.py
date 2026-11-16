@@ -19,9 +19,12 @@ def main(argv=None) -> int:
     parser.add_argument('--review-sha256', help='Assignment review hash from review.')
     parser.add_argument('--confirmation-sha256', help='Moodle confirmation text hash from review-final.')
     parser.add_argument('--confirm', action='store_true', help='Explicitly authorize this write.')
+    parser.add_argument('--replace-existing', action='store_true', help='Replace only the saved file with the same name.')
     parser.add_argument('--accept-statement', action='store_true', help='Accept the reviewed Moodle statement.')
     parser.add_argument('--env-file', default='.env')
     args = parser.parse_args(argv)
+    if args.replace_existing and args.operation not in {'review', 'save'}:
+        parser.error('--replace-existing is supported only for review and save')
     if args.assignment_id < 1:
         parser.error('--assignment-id must be positive')
     if args.operation in {'save', 'submit'} and (not args.confirm or not args.sha256):
@@ -35,9 +38,10 @@ def main(argv=None) -> int:
         try:
             moodle = client.moodle.client
             if args.operation == 'review':
-                result = review_file(moodle, args.assignment_id, args.file)
+                result = review_file(moodle, args.assignment_id, args.file, replace_existing=args.replace_existing)
             elif args.operation == 'save':
-                result = save_file(moodle, args.assignment_id, args.file, args.sha256, args.review_sha256, confirm=True)
+                result = save_file(moodle, args.assignment_id, args.file, args.sha256, args.review_sha256,
+                                   confirm=True, replace_existing=args.replace_existing)
             elif args.operation == 'review-final':
                 result = review_final(moodle, args.assignment_id, args.file)
             elif args.operation == 'submit':

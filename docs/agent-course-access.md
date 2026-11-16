@@ -114,9 +114,10 @@ settings; upload, save and final confirmation must not be conflated.
 ## Moodle file submission workflow
 
 The `tue-submit` CLI and opt-in MCP `moodle-write` group support the observed
-file-manager form. The flow has only been tested using controlled responses;
-uploads and final submission have **not** been verified on the university
-server. Do not assume success until the returned receipt confirms the file and
+file-manager form. Same-name file replacement and byte verification were tested
+on a live university group assignment on 16 November 2026. Saving that assignment
+submitted for grading immediately. A separate final-submit confirmation flow has
+not been verified live. Do not assume success until the receipt confirms the file and
 the intended status, and check Moodle if the result is unknown.
 Reinstall the package after updating it to add the new `tue-submit` entry point.
 
@@ -128,6 +129,33 @@ tue-submit submit --assignment-id 12345 --file ./work.pdf --sha256 <file-hash> -
 tue-submit verify --assignment-id 12345 --file ./work.pdf
 ```
 
+To replace a saved file, use `--replace-existing` on both review and save:
+
+```bash
+tue-submit review --assignment-id 12345 --file ./work.pdf --replace-existing
+tue-submit save --assignment-id 12345 --file ./work.pdf --replace-existing --sha256 <file-hash> --review-sha256 <review-hash> --confirm
+```
+
+Replacement must target exactly one saved, root-level file with the same name.
+It is never enabled implicitly by a name collision or a full file manager.
+Review hashes the original files and checks that the editable draft matches them.
+Save removes only the reviewed target from the draft, uploads its replacement,
+checks the original saved files again, and saves the form. It verifies the new
+file and unchanged companion files afterward (`preserved_files_verified`).
+The draft delete request follows Moodle's
+[draft file endpoint](https://github.com/moodle/moodle/blob/MOODLE_405_STABLE/repository/draftfiles_ajax.php).
+An upload failure does not intentionally save the incomplete draft. Inspect both
+the saved submission and draft before retrying an unknown outcome.
+
+The review fingerprint excludes remaining-time text and normalizes only the
+generated `useridlistid` parameter in comment links. Status, comments, file links,
+limits, and original file bytes remain covered. This avoids falsely detecting a
+change on every page load without disabling the review guard.
+
+When the installed executable is unavailable, use
+`python -m tue_api_wrapper.moodle_submission_cli` instead of `tue-submit`.
+Credentials stay in the local runtime. Use `--env-file` to select their local file.
+
 Enable the tools with `tue-mcp --service moodle-write`; they are disabled by
 default. They are `moodle_submission_review`, `moodle_submission_save`,
 `moodle_submission_review_final`, `moodle_submission_submit`, and
@@ -135,6 +163,7 @@ default. They are `moodle_submission_review`, `moodle_submission_save`,
 Review returns a file SHA-256 and a hash of the reviewed assignment state;
 save requires both and an explicit `confirm`. Save uploads one file and sends
 the edit form. It may submit immediately or change a group submission.
+MCP review/save expose the same opt-in as `replace_existing=true`.
 
 If the verified result is a draft, review-final shows Moodle's final
 confirmation and a hash covering its text, the file, and the assignment state.

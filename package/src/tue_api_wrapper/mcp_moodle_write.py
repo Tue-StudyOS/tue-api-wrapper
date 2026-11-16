@@ -15,16 +15,18 @@ def register_moodle_write_tools(server, env_file):
             client.close()
 
     @server.tool()
-    def moodle_submission_review(assignment_id: int, file_path: str) -> dict:
+    def moodle_submission_review(assignment_id: int, file_path: str, replace_existing: bool = False) -> dict:
         """Review local file and assignment before upload; opening the form may initialize a draft area."""
-        return run(lambda client: review_file(client, assignment_id, file_path))
+        return run(lambda client: review_file(client, assignment_id, file_path, replace_existing=replace_existing))
 
     @server.tool()
-    def moodle_submission_save(assignment_id: int, file_path: str, sha256: str, review_sha256: str, confirm: bool = False) -> dict:
+    def moodle_submission_save(assignment_id: int, file_path: str, sha256: str, review_sha256: str,
+                               confirm: bool = False, replace_existing: bool = False) -> dict:
         """Upload and save the reviewed file. Saving may submit for grading or affect a group."""
         if not confirm:
             raise ValueError('Explicit confirmation is required')
-        return run(lambda client: save_file(client, assignment_id, file_path, sha256, review_sha256, confirm=confirm))
+        return run(lambda client: save_file(client, assignment_id, file_path, sha256, review_sha256,
+                                            confirm=confirm, replace_existing=replace_existing))
 
     @server.tool()
     def moodle_submission_review_final(assignment_id: int, file_path: str) -> dict:

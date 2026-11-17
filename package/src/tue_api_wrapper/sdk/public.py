@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from ..advising_client import AdvisingClient, DEFAULT_ADVISING_URL
+from ..advising_client import AdvisingClient
 from ..advising_discovery import AdvisingDiscovery
 from ..alma_feature_client import fetch_current_lectures
 from ..anny_client import AnnyClient
@@ -138,7 +138,7 @@ class PublicDirectoryApi:
     advising_client: AdvisingClient = field(default_factory=AdvisingClient)
     advising_discovery: AdvisingDiscovery = field(default_factory=AdvisingDiscovery)
 
-    def advising_page(self, url: str = DEFAULT_ADVISING_URL):
+    def advising_page(self, url: str):
         return self.advising_client.fetch(url)
 
     def discover_advising(self):

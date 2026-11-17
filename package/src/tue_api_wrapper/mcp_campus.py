@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from .advising_client import DEFAULT_ADVISING_URL
 from .portal_common import serialize
 from .sdk import TuebingenPublicClient
 from .connectivity import check_connectivity
@@ -28,7 +27,7 @@ def register_campus_tools(server: Any) -> None:
         return value if isinstance(value, dict) else {"items": value}
 
     @server.tool()
-    def campus_advising_page(url: str = DEFAULT_ADVISING_URL) -> dict[str, Any]:
+    def campus_advising_page(url: str) -> dict[str, Any]:
         """Read supported university advising responsibility tables and contact details."""
         return serialize(client.directory.advising_page(url))
 

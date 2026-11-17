@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
-from .advising_client import AdvisingClient, DEFAULT_ADVISING_URL
+from .advising_client import AdvisingClient
 from .campus_client import CampusClient
 from .directory_client import UniversityDirectoryClient
 from .directory_models import DirectoryAction, DirectoryForm
@@ -122,7 +122,7 @@ def people_search(query: str = Query(..., min_length=2, max_length=120)) -> dict
 
 
 @router.get("/api/people/advising")
-def people_advising(url: str = Query(DEFAULT_ADVISING_URL, max_length=2000)) -> dict[str, object]:
+def people_advising(url: str = Query(..., min_length=1, max_length=2000)) -> dict[str, object]:
     try:
         return serialize(advising_client.fetch(url))
     except Exception as error:

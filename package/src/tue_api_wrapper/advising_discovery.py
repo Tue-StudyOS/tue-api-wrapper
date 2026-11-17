@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from threading import Lock
 
-from .advising_client import AdvisingClient, DEFAULT_ADVISING_URL
+from .advising_client import AdvisingClient
 from .advising_crawler import crawl_advising
 from .advising_discovery_models import AdvisingIndex, AdvisingSearchResponse
 from .advising_index_cache import AdvisingIndexCache
@@ -15,7 +15,8 @@ SEEDS = (
     'https://uni-tuebingen.de/studium/beratung-und-info/anlaufstellen-nach-thema/',
     'https://uni-tuebingen.de/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/informatik/studium/studierende/personen-und-kontakte/studienberatung/',
     'https://uni-tuebingen.de/fakultaeten/wirtschafts-und-sozialwissenschaftliche-fakultaet/faecher/fachbereich-sozialwissenschaften/erziehungswissenschaft/studium/studienberatung-faq/ansprechpartnerinnen/',
-    DEFAULT_ADVISING_URL,
+    ('https://uni-tuebingen.de/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/'
+     'fachbereiche/informatik/lehrstuehle/kommunikationsnetze/staff/paul-stahl/'),
     'https://db.cs.uni-tuebingen.de/studienfachberatung/',
 )
 

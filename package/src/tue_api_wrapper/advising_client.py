@@ -9,18 +9,12 @@ from bs4 import BeautifulSoup, Tag
 from .advising_models import AdvisingField, AdvisingLink, AdvisingPage, AdvisingTopic
 from .config import AlmaParseError, DEFAULT_TIMEOUT_SECONDS
 
-DEFAULT_ADVISING_URL = (
-    'https://uni-tuebingen.de/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/'
-    'fachbereiche/informatik/lehrstuehle/kommunikationsnetze/staff/paul-stahl/'
-)
-
-
 class AdvisingClient:
     def __init__(self, *, timeout: int = DEFAULT_TIMEOUT_SECONDS, session: requests.Session | None = None) -> None:
         self.timeout = timeout
         self.session = session or requests.Session()
 
-    def fetch(self, url: str = DEFAULT_ADVISING_URL) -> AdvisingPage:
+    def fetch(self, url: str) -> AdvisingPage:
         html, final_url = self.fetch_html(url)
         return parse_advising_page(html, source_url=final_url)
 

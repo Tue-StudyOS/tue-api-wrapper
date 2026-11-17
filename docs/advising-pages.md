@@ -8,12 +8,12 @@ tue-study advising-refresh
 tue-study advising-discover
 tue-study advising-search --query 'Anerkennung' --limit 10
 tue-study advising-search --query 'Machine Learning' --limit 10
-tue-study advising
 tue-study advising --target 'https://uni-tuebingen.de/path/to/advising-page/'
 ```
 
 Python: `TuebingenPublicClient().directory.discover_advising()`,
-`search_advising('Anerkennung')`, `refresh_advising()`, or `advising_page()`.
+`search_advising('Anerkennung')`, `refresh_advising()`, or `advising_page(url)`.
+The individual-page reader requires an explicit page URL on every interface.
 HTTP: `POST /api/people/advising/refresh`, `GET /api/people/advising/discover`,
 `GET /api/people/advising/search?query=Anerkennung`, and
 `GET /api/people/advising?url=...`.

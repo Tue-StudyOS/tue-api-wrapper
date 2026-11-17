@@ -38,6 +38,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.days < 1 or args.limit < 1 or args.offset < 0:
         parser.error("--days and --limit must be positive and --offset nonnegative")
+    if args.resource == "advising" and not (args.target or "").strip():
+        parser.error("advising requires --target with a page URL")
     if args.resource in {"content", "mail-message", "ilias-forum", "ilias-thread"} and not args.target:
         parser.error(f"{args.resource} requires --target")
     if args.resource in {"moodle-content", "moodle-assignment", "moodle-submission-inspect", "moodle-forum", "moodle-discussion", "moodle-quiz", "moodle-attempt"} and (not args.target or not args.target.isascii() or not args.target.isdigit() or int(args.target) < 1):

@@ -27,7 +27,7 @@ def read_resource(client: Any, args: Any) -> Any:
         "advising-refresh": lambda: client.directory.refresh_advising(),
         "advising-discover": lambda: client.directory.discover_advising(),
         "advising-search": lambda: client.directory.search_advising(args.query, limit=args.limit),
-        "advising": lambda: client.directory.advising_page(args.target) if args.target else client.directory.advising_page(),
+        "advising": lambda: client.directory.advising_page(args.target),
         "rooms": lambda: client.anny.resources(query=args.query),
         "timetable": lambda: collect_timetable(client.alma, term=args.term, days=args.days, limit=args.limit),
         "exams": lambda: {"items": client.alma.exams()},

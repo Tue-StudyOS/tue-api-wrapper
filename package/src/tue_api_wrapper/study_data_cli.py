@@ -9,7 +9,7 @@ from .agent_course_search import search_courses_live
 from .connectivity import check_connectivity
 from .ilias_forum_threads import validate_forum_target
 
-PUBLIC_RESOURCES = {"buildings", "canteens", "seats", "people", "rooms", "connectivity", "alma-program-filters", "alma-program-search"}
+PUBLIC_RESOURCES = {"buildings", "canteens", "seats", "people", "advising", "advising-discover", "advising-refresh", "advising-search", "rooms", "connectivity", "alma-program-filters", "alma-program-search"}
 PRIVATE_RESOURCES = {"timetable", "exams", "enrollments", "notices", "memberships", "content",
                      "assignments", "moodle-courses", "moodle-content", "moodle-assignment", "moodle-submission-inspect", "moodle-forum", "moodle-discussion", "moodle-quiz", "moodle-attempt", "ilias-forum", "ilias-thread", "moodle-notifications", "mail-inbox", "mail-message", "course-search"}
 
@@ -24,6 +24,10 @@ def read_resource(client: Any, args: Any) -> Any:
         "canteens": lambda: client.campus.canteens(),
         "seats": lambda: client.campus.seat_availability(),
         "people": lambda: client.directory.search(args.query),
+        "advising-refresh": lambda: client.directory.refresh_advising(),
+        "advising-discover": lambda: client.directory.discover_advising(),
+        "advising-search": lambda: client.directory.search_advising(args.query, limit=args.limit),
+        "advising": lambda: client.directory.advising_page(args.target) if args.target else client.directory.advising_page(),
         "rooms": lambda: client.anny.resources(query=args.query),
         "timetable": lambda: collect_timetable(client.alma, term=args.term, days=args.days, limit=args.limit),
         "exams": lambda: {"items": client.alma.exams()},

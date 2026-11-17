@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from ..advising_client import AdvisingClient, DEFAULT_ADVISING_URL
+from ..advising_discovery import AdvisingDiscovery
 from ..alma_feature_client import fetch_current_lectures
 from ..anny_client import AnnyClient
 from ..campus_client import CampusClient
@@ -133,6 +135,20 @@ class PublicCampusApi:
 @dataclass(slots=True)
 class PublicDirectoryApi:
     client: UniversityDirectoryClient = field(default_factory=UniversityDirectoryClient)
+    advising_client: AdvisingClient = field(default_factory=AdvisingClient)
+    advising_discovery: AdvisingDiscovery = field(default_factory=AdvisingDiscovery)
+
+    def advising_page(self, url: str = DEFAULT_ADVISING_URL):
+        return self.advising_client.fetch(url)
+
+    def discover_advising(self):
+        return self.advising_discovery.discover()
+
+    def refresh_advising(self):
+        return self.advising_discovery.refresh()
+
+    def search_advising(self, query: str, *, limit: int = 20):
+        return self.advising_discovery.search(query, limit=limit)
 
     def search(self, query: str):
         return self.client.search(query)

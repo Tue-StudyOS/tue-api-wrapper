@@ -52,7 +52,7 @@ def fake_mcp(monkeypatch: pytest.MonkeyPatch) -> None:
         ("ilias", {"authenticated_ilias_tasks", "authenticated_ilias_quiz", "authenticated_ilias_quiz_deadlines"}),
         ("moodle", {"authenticated_moodle_deadlines"}),
         ("mail", {"authenticated_mail_inbox"}),
-        ("campus", {"campus_buildings", "campus_people_search", "campus_rooms_search", "campus_fitness_courses", "campus_connectivity"}),
+        ("campus", {"campus_buildings", "campus_people_search", "campus_advising_page", "campus_advising_discover", "campus_advising_refresh", "campus_advising_search", "campus_rooms_search", "campus_fitness_courses", "campus_connectivity"}),
         ("raw", {"raw_course_page", "raw_alma_course_search", "raw_moodle_search", "raw_ilias_search", "raw_interaction_page"}),
         ("forum-write", {"moodle_forum_review", "moodle_forum_publish", "ilias_forum_review", "ilias_forum_publish"}),
         ("quiz-write", {"moodle_quiz_review_start", "moodle_quiz_start", "moodle_quiz_review_answers",

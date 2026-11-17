@@ -284,6 +284,8 @@ The desktop, web, and iOS clients can create public GitHub feedback issues direc
 
 If the token is missing, the feedback UI shows that issue creation is unavailable.
 
+For adviser discovery and topic search across public university pages, see [advising pages](docs/advising-pages.md).
+
 ## Local MCP Server
 
 Install the MCP extra and start the server:

@@ -24,7 +24,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--env-file", default=".env", help="Local credential file.")
     parser.add_argument("--changes", action="store_true", help="Compare and update the local snapshot.")
     parser.add_argument("--term", help="Exact Alma timetable term label; defaults to the current term.")
-    parser.add_argument("--target", help="ILIAS target, Moodle course ID, or mail message UID.")
+    parser.add_argument("--target", help="ILIAS target, Moodle course ID, mail message UID, or advising page URL.")
     parser.add_argument("--mailbox", default="INBOX", help="Mailbox for a mail-message UID.")
     parser.add_argument("--query", default="", help="Search term for the selected resource.")
     parser.add_argument("--degree", action="append", default=[], help="Alma degree filter value; repeat for multiple values.")

@@ -9,7 +9,7 @@ struct TodayView: View {
     @State private var kufError: String?
     @State private var isLoadingKuf = false
 
-    private var nextLecture: LectureEvent? { model.events.first }
+    private var nextLecture: LectureEvent? { model.scheduledLectures.first }
 
     private var urgencyItems: [TodayUrgencyItem] {
         let deadlines = model.deadlines.prefix(2).map {

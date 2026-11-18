@@ -91,7 +91,7 @@ enum AlmaTimetableRoomHTMLParser {
         }
     }
 
-    private static func fieldText(_ token: String, in panel: String) -> String? {
+    static func fieldText(_ token: String, in panel: String) -> String? {
         let escaped = NSRegularExpression.escapedPattern(for: token)
         let pattern = "<([A-Za-z0-9]+)\\b[^>]*\\bid\\s*=\\s*(['\"])[^'\"]*:\(escaped)(?::[^'\"]*)?\\2[^>]*>(.*?)</\\1>"
         return HTMLRegex.firstCapture(pattern, in: panel, group: 3).map(HTMLText.stripTags)?.nilIfBlank
@@ -146,7 +146,7 @@ enum AlmaTimetableRoomHTMLParser {
         }
     }
 
-    private static func balancedDivBlock(
+    static func balancedDivBlock(
         in html: String,
         openingRange: Range<String.Index>
     ) -> String? {
@@ -170,14 +170,14 @@ enum AlmaTimetableRoomHTMLParser {
         return nil
     }
 
-    private static func textForTag(_ tag: String, className: String, in panel: String) -> String? {
+    static func textForTag(_ tag: String, className: String, in panel: String) -> String? {
         let escapedTag = NSRegularExpression.escapedPattern(for: tag)
         let escapedClass = NSRegularExpression.escapedPattern(for: className)
         let pattern = "<\(escapedTag)\\b[^>]*\\bclass\\s*=\\s*(['\"])[^'\"]*\\b\(escapedClass)\\b[^'\"]*\\1[^>]*>(.*?)</\(escapedTag)>"
         return HTMLRegex.firstCapture(pattern, in: panel, group: 2).map(HTMLText.stripTags)?.nilIfBlank
     }
 
-    private static func timeRange(_ value: String?) -> (start: String?, end: String?) {
+    static func timeRange(_ value: String?) -> (start: String?, end: String?) {
         guard let value else {
             return (nil, nil)
         }

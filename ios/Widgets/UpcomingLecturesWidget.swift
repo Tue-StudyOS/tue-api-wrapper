@@ -54,7 +54,7 @@ struct UpcomingLecturesWidgetView: View {
     }
 
     private var upcomingEvents: [LectureEvent] {
-        entry.snapshot?.events.filter { ($0.endDate ?? $0.startDate) >= Date() } ?? []
+        entry.snapshot?.events.filter { !$0.isCancelled && ($0.endDate ?? $0.startDate) >= Date() } ?? []
     }
 }
 
@@ -67,7 +67,7 @@ struct WidgetLectureListView: View {
             Text("TUE API")
                 .font(.headline)
 
-            let events = snapshot?.events.filter { ($0.endDate ?? $0.startDate) >= Date() } ?? []
+            let events = snapshot?.events.filter { !$0.isCancelled && ($0.endDate ?? $0.startDate) >= Date() } ?? []
             if let snapshot, let first = events.first {
                 WidgetLectureRow(event: first)
                 if !compact {

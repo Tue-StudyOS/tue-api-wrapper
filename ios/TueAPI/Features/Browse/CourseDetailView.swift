@@ -75,6 +75,12 @@ struct CourseDetailView: View {
             if let timeRange = course.timeRange {
                 Section("Schedule") {
                     LabeledContent("Time", value: timeRange)
+                    if course.scheduleStatus == .cancelled {
+                        Label("Canceled", systemImage: "calendar.badge.minus")
+                        if let reason = course.cancellationReason {
+                            Text(reason)
+                        }
+                    }
                 }
             }
 

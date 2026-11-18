@@ -68,7 +68,12 @@ struct StudyAssistantDataSource: Sendable {
             lines.append("- No upcoming Alma lectures were returned.")
         } else {
             for event in lectures.events.prefix(cappedLimit) {
-                lines.append("- \(event.title) | \(event.timeRangeText)\(studyAssistantFormattedLocation(event.location))")
+                var line = "- \(event.title) | \(event.timeRangeText)\(studyAssistantFormattedLocation(event.location))"
+                if event.isCancelled {
+                    line += " | Canceled"
+                    if let reason = event.cancellationReason { line += " (\(reason))" }
+                }
+                lines.append(line)
             }
         }
 

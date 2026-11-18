@@ -10,7 +10,7 @@ struct UpcomingLecturesView: View {
                 statusContent
             }
 
-            if let event = model.events.first {
+            if let event = model.scheduledLectures.first {
                 Section("Live Activity") {
                     Button("Start for next lecture") {
                         model.startLiveActivity(for: event)
@@ -61,7 +61,7 @@ struct UpcomingLecturesView: View {
     @ViewBuilder
     private var lecturesSection: some View {
         Section("Next lectures") {
-            if model.events.isEmpty {
+            if model.scheduledLectures.isEmpty {
                 if model.phase == .loading {
                     // Skeleton rows on first load
                     ForEach(0..<4, id: \.self) { _ in
@@ -76,7 +76,7 @@ struct UpcomingLecturesView: View {
                     )
                 }
             } else {
-                ForEach(model.events) { event in
+                ForEach(model.scheduledLectures) { event in
                     NavigationLink(value: event) {
                         LectureEventRow(event: event)
                     }

@@ -98,7 +98,7 @@ enum LectureReminderScheduler {
         now: Date
     ) -> UNNotificationRequest? {
         let triggerDate = event.startDate.addingTimeInterval(-leadTime)
-        guard triggerDate > now else {
+        guard !event.isCancelled, triggerDate > now else {
             return nil
         }
 

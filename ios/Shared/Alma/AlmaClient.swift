@@ -22,18 +22,18 @@ struct AlmaClient {
         limit: Int = 32
     ) async throws -> LectureSnapshot {
         try await login(credentials: credentials)
-        let page = try await loadText(timetableURL())
+        let page = try await loadAuthenticatedHTMLResponse(timetableURL(), pageName: "timetable page")
         let enrollment = try await loadAuthenticatedHTMLResponse(
             enrollmentURL(),
             pageName: "enrollment page"
         )
         let enrollmentState = try AlmaAcademicHTMLParser.parseEnrollment(enrollment.html)
-        let terms = try AlmaHTMLParser.extractTerms(from: page)
+        let terms = try AlmaHTMLParser.extractTerms(from: page.html)
         guard let term = terms.first(where: \.isSelected) ?? terms.first else {
             throw AlmaClientError.timetableMissing("Could not determine the selected Alma term.")
         }
 
-        let exportURL = try buildExportURL(from: AlmaHTMLParser.extractExportURL(from: page), termID: term.value)
+        let exportURL = try buildExportURL(from: AlmaHTMLParser.extractExportURL(from: page.html), termID: term.value)
         let rawICS = try await loadText(exportURL)
         guard rawICS.contains("BEGIN:VCALENDAR") else {
             throw AlmaClientError.timetableMissing("Expected an iCalendar export but received a different response.")
@@ -44,12 +44,16 @@ struct AlmaClient {
         let end = calendar.date(byAdding: .day, value: days, to: now) ?? now
         let events = try ICSEventParser.parse(rawICS)
         let lectures = try RecurrenceExpander.expand(events, from: now, to: end)
-        let enrichedLectures = AlmaTimetableRoomHTMLParser.enrich(lectures, html: page, pageURL: timetableURL())
+        let enrichedLectures = AlmaTimetableRoomHTMLParser.enrich(lectures, html: page.html, pageURL: page.url)
+        let dayStart = calendar.startOfDay(for: now)
+        let cancellations = try await timetableCancellations(from: dayStart, to: end, page: page)
+        let visibleCancellations = cancellations.filter { dayStart <= $0.startDate && $0.startDate <= end }
+        let timetable = AlmaTimetableCancellationHTMLParser.merge(enrichedLectures, with: visibleCancellations)
 
         return LectureSnapshot(
             refreshedAt: now,
             sourceTerm: term.label,
-            events: Array(enrichedLectures.prefix(limit)),
+            events: Array(timetable.prefix(limit)),
             semesterCredits: SemesterCreditCounter.summarize(events),
             personName: enrollmentState.personName
         )

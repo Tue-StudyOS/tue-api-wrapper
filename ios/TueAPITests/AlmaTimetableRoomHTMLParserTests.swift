@@ -48,6 +48,44 @@ final class AlmaTimetableRoomHTMLParserTests: XCTestCase {
         XCTAssertEqual(enriched.first?.roomDetails?.floorDefault, "EG")
     }
 
+    func testRestoresOnlyTheDatedCancelledOccurrence() throws {
+        let html = """
+        <div class="colhead"><h2>Mi., 18.11.2026</h2></div>
+        <li class="singleblock scheduleCancelled planelementchange">
+          <div class="errortextPlan">
+            <div class="fieldsetMessageText infoBox">Studieninfotag</div>
+          </div>
+          <h3 class="scheduleTitle">ML4103 Deep Learning</h3>
+          <span id="plan:schedule:scheduleItem:processingTimes">14:00 bis 16:00</span>
+          <span id="plan:schedule:scheduleItem:scheduleStartDate">14.10.2026</span>
+        </li>
+        """
+        let events = try ICSEventParser.parse("""
+        BEGIN:VCALENDAR
+        BEGIN:VEVENT
+        UID:deep-learning-lecture
+        SUMMARY:ML4103 Deep Learning
+        DTSTART;TZID=Europe/Berlin:20261111T140000
+        DTEND;TZID=Europe/Berlin:20261111T160000
+        RRULE:FREQ=WEEKLY;UNTIL=20261202T160000
+        EXDATE;TZID=Europe/Berlin:20261118T140000,20261202T140000
+        END:VEVENT
+        END:VCALENDAR
+        """)
+        let active = try RecurrenceExpander.expand(
+            events, from: Self.date("2026-11-18 00:00"), to: Self.date("2026-12-02 23:59")
+        )
+        let parser = AlmaTimetableCancellationHTMLParser.self
+        let merged = parser.merge(active, with: parser.cancellations(in: html))
+
+        XCTAssertEqual(merged.map(\.startDate), [
+            try Self.date("2026-11-18 14:00"), try Self.date("2026-11-25 14:00")
+        ])
+        XCTAssertEqual(merged.first?.endDate, try Self.date("2026-11-18 16:00"))
+        XCTAssertEqual(merged.map(\.status), [.cancelled, nil])
+        XCTAssertEqual(merged.first?.cancellationReason, "Studieninfotag")
+    }
+
     private static func date(_ value: String) throws -> Date {
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .gregorian)

@@ -1,5 +1,9 @@
 import Foundation
 
+enum LectureEventStatus: String, Codable {
+    case cancelled
+}
+
 struct LectureEvent: Codable, Identifiable, Hashable {
     var id: String
     var title: String
@@ -8,6 +12,10 @@ struct LectureEvent: Codable, Identifiable, Hashable {
     var location: String?
     var detail: String?
     var roomDetails: LectureRoomDetails? = nil
+    var status: LectureEventStatus? = nil
+    var cancellationReason: String? = nil
+
+    var isCancelled: Bool { status == .cancelled }
 
     var timeRangeText: String {
         guard let endDate else {

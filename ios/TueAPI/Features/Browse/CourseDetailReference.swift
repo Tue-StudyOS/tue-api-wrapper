@@ -14,6 +14,8 @@ struct CourseDetailReference: Hashable {
     var semester: String?
     var remark: String?
     var sourceDetail: String?
+    var scheduleStatus: LectureEventStatus?
+    var cancellationReason: String?
 
     init(lecture: AlmaCurrentLecture) {
         self.id = lecture.id
@@ -49,6 +51,8 @@ struct CourseDetailReference: Hashable {
         self.semester = nil
         self.remark = nil
         self.sourceDetail = event.detail?.nilIfBlank
+        self.scheduleStatus = event.status
+        self.cancellationReason = event.cancellationReason
     }
 }
 

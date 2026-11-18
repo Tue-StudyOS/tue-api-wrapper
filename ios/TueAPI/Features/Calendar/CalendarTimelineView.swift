@@ -27,12 +27,13 @@ struct CalendarTimelineView: View {
                     .padding(.vertical, 32)
                 }
             } else {
+                let firstScheduledID = events.first { !$0.isCancelled }?.id
                 VStack(spacing: 12) {
-                    ForEach(Array(events.enumerated()), id: \.element.id) { index, event in
+                    ForEach(events) { event in
                         NavigationLink(value: event) {
                             CalendarAgendaCard(
                                 event: event,
-                                isFirst: index == 0,
+                                isFirst: event.id == firstScheduledID,
                                 isHappeningNow: isHappeningNow(event)
                             )
                         }
@@ -44,20 +45,24 @@ struct CalendarTimelineView: View {
     }
 
     private var daySummary: String {
+        let cancellations = events.filter(\.isCancelled).count
+        if cancellations > 0 {
+            return "\(events.count - cancellations) scheduled · \(cancellations) canceled"
+        }
         switch events.count {
         case 0:
-            "No lectures scheduled"
+            return "No lectures scheduled"
         case 1:
-            "1 lecture"
+            return "1 lecture"
         default:
-            "\(events.count) lectures"
+            return "\(events.count) lectures"
         }
     }
 
     private func isHappeningNow(_ event: LectureEvent) -> Bool {
         let now = Date()
         let end = event.endDate ?? event.startDate.addingTimeInterval(50 * 60)
-        return event.startDate <= now && now <= end
+        return !event.isCancelled && event.startDate <= now && now <= end
     }
 }
 
@@ -86,6 +91,7 @@ private struct CalendarAgendaCard: View {
                 HStack(alignment: .top) {
                     Text(event.title)
                         .font(.headline)
+                        .strikethrough(event.isCancelled)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 8)
@@ -93,6 +99,16 @@ private struct CalendarAgendaCard: View {
                         CalendarStatusBadge(text: "Now", tint: event.calendarAccentColor)
                     } else if isFirst {
                         CalendarStatusBadge(text: "Next", tint: event.calendarAccentColor)
+                    }
+                }
+
+                if event.isCancelled {
+                    CalendarMetadataRow(systemImage: "calendar.badge.minus", text: "Canceled")
+                    if let reason = event.cancellationReason {
+                        Text(reason)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
 
@@ -117,10 +133,7 @@ private struct CalendarAgendaCard: View {
     }
 
     private var relativeStartText: String? {
-        if isHappeningNow {
-            return nil
-        }
-        guard event.startDate > Date() else {
+        guard !event.isCancelled, !isHappeningNow, event.startDate > Date() else {
             return nil
         }
         return RelativeDateTimeFormatter().localizedString(for: event.startDate, relativeTo: Date())
@@ -182,7 +195,7 @@ private enum CalendarEventPalette {
 
 extension LectureEvent {
     var calendarAccentColor: Color {
-        CalendarEventPalette.color(for: title)
+        isCancelled ? .secondary : CalendarEventPalette.color(for: title)
     }
 
     var compactTimeRangeText: String {

@@ -8,6 +8,7 @@ final class AppModel {
     static let reminderLeadTimeOptions = [5, 10, 15, 30, 60]
 
     var events: [LectureEvent]
+    var scheduledLectures: [LectureEvent] { events.filter { !$0.isCancelled } }
     var semesterCredits: SemesterCreditSummary?
     var timetableRefreshedAt: Date?
     var profileName: String?
@@ -207,7 +208,10 @@ final class AppModel {
 
     static func upcomingOnly(_ events: [LectureEvent]) -> [LectureEvent] {
         let now = Date()
-        return events.filter { ($0.endDate ?? $0.startDate) >= now }
+        let today = ICSDateParser.calendar().startOfDay(for: now)
+        return events.filter {
+            $0.isCancelled ? $0.startDate >= today : ($0.endDate ?? $0.startDate) >= now
+        }
     }
 
     private static func almaDateString(from date: Date) -> String {

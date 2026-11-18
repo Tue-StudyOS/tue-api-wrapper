@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tübingen student companion · Flow mockups</title>
+<style>
+  :root { color-scheme: light dark; font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  main { max-width: 960px; margin: auto; }
+  h1 { font-size: clamp(1.65rem, 4vw, 2.3rem); line-height: 1.12; letter-spacing: -.045em; margin: 8px 0; }
+  .intro { margin: 0 0 16px; color: var(--muted-foreground, #655e5b); font-size: .875rem; }
+  button { font: inherit; cursor: pointer; }
+  button:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+  .journeys { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .journeys button, .step, .pager button {
+    background: transparent; color: inherit; border: 1px solid var(--border, #c9c1bc);
+    border-radius: 10px; padding: 6px 10px; min-height: 36px; font-size: .8125rem;
+  }
+  .journeys [aria-pressed="true"], .step[aria-current="step"] {
+    background: var(--foreground, #24201e); color: var(--background, #fff); border-color: transparent;
+  }
+  .gallery { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: clamp(12px, 4vw, 32px); align-items: start; }
+  .guide h2 { margin: 0 0 4px; letter-spacing: -.03em; font-size: 1.2rem; }
+  .guide p { margin: 0 0 12px; font-size: .875rem; }
+  .steps { display: flex; flex-wrap: wrap; gap: 6px; }
+  .step { text-align: left; }
+  .phone {
+    --paper: #fff; --ink: #211c1c; --muted-ink: #665d59; --line: #e8e3e0;
+    --accent: #9e2037; --fill: #f6f2ef; --alert: #f9eef0; --alert-ink: #77273a;
+    background: var(--paper); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 24px; display: flex; flex-direction: column; min-height: 492px; overflow: hidden;
+  }
+  .glass { padding: 18px clamp(16px, 4vw, 22px) 20px; flex: 1; }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; min-height: 33px; margin-bottom: 16px; }
+  .toolbar button, .text-action { color: var(--accent); background: none; border: 0; padding: 0; font-size: .8125rem; font-weight: 650; min-height: 36px; }
+  .context, .meta { color: var(--muted-ink); font-size: .8125rem; }
+  .app-title { font-size: 1.95rem; font-weight: 730; letter-spacing: -.045em; line-height: 1.05; margin: 4px 0 8px; overflow-wrap: anywhere; }
+  .group { margin-top: 19px; margin-bottom: 5px; font-weight: 700; font-size: .875rem; }
+  .card { margin-top: 13px; border-radius: 14px; padding: 12px 14px; background: var(--fill); }
+  .card + .row, .card + button.row { border-top: 0; }
+  .card.hero { background: #9e2037; color: #fff; }
+  .card.alert { background: var(--alert); color: var(--alert-ink); }
+  .card .meta { color: inherit; margin-top: 3px; }
+  .card.hero .meta { color: #f8dce3; }
+  .row, .field {
+    display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+    background: none; color: inherit; border: 0; border-top: 1px solid var(--line);
+    padding: 10px 0; min-height: 47px; font-size: .875rem;
+  }
+  button.row:hover, .toolbar button:hover, .text-action:hover { color: var(--accent); }
+  .row .meta { display: block; margin-top: 2px; font-size: .75rem; }
+  .row .arrow { margin-left: auto; color: var(--muted-ink); flex: none; }
+  .cancelled strong { text-decoration: line-through; }
+  .primary { display: block; width: 100%; margin-top: 14px; padding: 10px 14px; min-height: 44px; border: 0; border-radius: 11px; background: #9e2037; color: white; font-size: .875rem; font-weight: 700; }
+  .text-action { margin-top: 6px; }
+  .field { display: block; border: 0; padding-bottom: 0; color: var(--muted-ink); font-size: .75rem; }
+  .field span { display: block; margin-top: 4px; border-radius: 9px; padding: 10px 12px; color: var(--ink); background: var(--fill); font-size: .875rem; }
+  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); }
+  .tabs button { padding: 11px 2px; min-height: 44px; border: 0; background: none; color: var(--muted-ink); font-size: .75rem; font-weight: 630; }
+  .tabs [aria-current="page"] { color: var(--accent); }
+  .pager { display: flex; justify-content: space-between; gap: 8px; margin-top: 9px; }
+  .pager button:disabled { opacity: .5; cursor: default; }
+  @media (max-width: 575px) { .gallery { grid-template-columns: 1fr; gap: 14px; } .guide { order: 1; } .phone { min-height: 430px; } }
+  @media (prefers-color-scheme: dark) {
+    .phone { --paper: #211e1d; --ink: #f4efed; --muted-ink: #c3b9b4; --line: #423b38;
+      --accent: #ffc0cc; --fill: #302a28; --alert: #46252c; --alert-ink: #f7c9d2; }
+    .intro { color: var(--muted-foreground, #c3b9b4); }
+    .journeys [aria-pressed="true"], .step[aria-current="step"] {
+      background: var(--foreground, #f4efed); color: var(--background, #211e1d);
+    }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Student companion</h1>
+  <p class="intro">Choose a journey or follow the controls inside the mockup. All examples are fictional.</p>
+  <nav class="journeys" id="journeys" aria-label="Student journeys"></nav>
+  <div class="gallery">
+    <aside class="guide">
+      <h2 id="flow-title"></h2>
+      <p id="flow-note"></p>
+      <nav class="steps" id="steps" aria-label="Screens in this journey"></nav>
+    </aside>
+    <div>
+      <article class="phone" id="phone" aria-label="Interactive screen mockup"></article>
+      <nav class="pager" aria-label="Screen sequence">
+        <button type="button" id="prev">← Previous</button>
+        <button type="button" id="next">Next →</button>
+      </nav>
+    </div>
+  </div>
+</main>
+<script>
+const flows = [
+  ["Today", "See your next commitment, a known change, and what is due. If a check fails, the affected source stays visible.", {
+    today: ["Today", "Tuesday, 24 November", "Today", "hero|Next · 10:15|Machine Learning · Hörsaal N6;cancel|Statistics|Tomorrow at 14:00 · Cancelled · Alma|cancelled;group|Deadlines;row|Exercise sheet 5|Today at 23:59 · Moodle|exercise;row|Project outline|Friday · ILIAS;row|Documents|Certificates and official reports|docs;link|Source status|partial"],
+    exercise: ["Exercise sheet 5", "Machine Learning · Moodle", "", "hero|Due today at 23:59|Submission required;row|Source status|No submission recorded · Checked 09:12;primary|Review submission|submission;link|Open course|course"],
+    partial: ["Source status", "Today", "", "alert|Moodle could not refresh|Showing deadlines last checked at 08:46.;row|Alma timetable|Checked 09:12;row|ILIAS exercises|Checked 09:11;primary|Show Today with saved results|saved"],
+    saved: ["Today · saved results", "Tuesday, 24 November", "Today", "alert|Moodle could not refresh|Showing deadlines from 08:46.;hero|Next · 10:15|Machine Learning · Hörsaal N6;row|Exercise sheet 5|Due 23:59 · Last checked 08:46|exercise;row|Documents|Official reports|docs"],
+    limited: ["Today · partial coverage", "Tuesday, 24 November", "Today", "alert|ILIAS sign-in failed|ILIAS deadlines may be missing.;hero|Next · 10:15|Machine Learning · Hörsaal N6;row|Exercise sheet 5|Due 23:59 · Moodle|exercise;link|Review connections|accounts"],
+    undated: ["Undated work", "Today", "", "row|Read chapters 3 and 4|Research Methods · ILIAS;alert|No due date supplied|Check the course for timing.;link|Open course list|courses"],
+    loading: ["Loading Today", "Tuesday, 24 November", "Today", "card|Checking your university services|Loading timetable and known deadlines.;link|Preview loaded results|today"],
+    clear: ["Today · no items", "Tuesday, 24 November", "Today", "card|No deadlines found today|Moodle and ILIAS checked at 09:12.;row|Tomorrow at 10:15|Machine Learning · Alma|schedule;row|Documents|Certificates and official reports|docs"]
+  }],
+  ["Getting started", "Public Campus is available immediately. During setup each service reports its sign-in result.", {
+    welcome: ["Welcome", "Tübingen student companion", "", "card|Your university day|See lectures, deadlines and documents together.;primary|Connect university account|signin;link|Explore campus without signing in|campus"],
+    signin: ["Connect account", "University of Tübingen", "", "field|University ID|student.example;field|Password|••••••••••;primary|Connect services|checking;link|Explore campus instead|campus"],
+    checking: ["Checking connections", "University account", "", "row|Alma|Checking timetable access…;row|Moodle|Waiting for sign-in result…;row|ILIAS|Waiting for sign-in result…;primary|View example results|connected"],
+    "signin-error": ["Account could not be saved", "University of Tübingen", "", "alert|Local save failed|Try again to connect this device.;primary|Return to sign-in|signin;link|Explore campus instead|campus"],
+    connected: ["Connections", "University account", "", "row|Alma|Connected · Timetable and documents;row|Moodle|Connected · Course work;alert|ILIAS needs attention|Sign-in failed. ILIAS deadlines may be missing.;primary|Go to Today|limited;link|Manage connections|accounts"]
+  }],
+  ["Schedule", "Keep cancellations in their original slots. Use the week view for dates beyond Today.", {
+    schedule: ["Schedule", "Tuesday, 24 November · Winter 2026/27", "Schedule", "link|Switch to week view|week;group|Tuesday;row|Machine Learning|10:15–11:45 · Hörsaal N6 · Alma|lecture;row|Exercise sheet 5|23:59 · Moodle|exercise;group|Wednesday;cancel|Statistics|14:00–15:30 · Cancelled · Alma|cancelled"],
+    week: ["Week view", "23–29 November · Winter 2026/27", "Schedule", "group|Tuesday 24;row|Machine Learning|10:15–11:45 · Hörsaal N6|lecture;group|Wednesday 25;cancel|Statistics|14:00–15:30 · Cancelled|cancelled;group|Friday 27;row|Project outline|17:00 · ILIAS;link|Switch to day view|schedule"],
+    "schedule-stale": ["Schedule · saved results", "Winter 2026/27", "Schedule", "alert|Alma could not refresh|Showing the schedule last checked Tuesday at 09:12.;row|Machine Learning|Tuesday at 10:15 · Hörsaal N6|lecture"],
+    "schedule-empty": ["No meetings found", "Sunday, 29 November · Winter 2026/27", "Schedule", "card|No events for this day|Alma checked at 09:12.;primary|View the whole week|week"],
+    lecture: ["Machine Learning lecture", "Tuesday, 24 November · Alma", "", "hero|10:15–11:45|Hörsaal N6 · Wilhelmstraße 56;row|Course workspace|Work and materials|course;primary|Preview lecture surfaces|surfaces"],
+    cancelled: ["Statistics cancelled", "Wednesday, 25 November · Alma", "", "alert|Reason from Alma|Studieninfotag;row|Original meeting|14:00–15:30 · Hörsaal N6;row|Alma cancellation check|Last checked Tuesday at 09:12;link|Back to week view|week"]
+  }],
+  ["Courses", "Bring work and materials into a course when the records can be linked. Keep unmatched records visible.", {
+    courses: ["Courses", "Winter 2026/27", "Courses", "group|Current courses;row|Machine Learning|Next lecture today at 10:15|course;row|Research Methods|ILIAS course · No timetable match|matches;row|Find courses by programme|Alma catalogue|programme"],
+    course: ["Machine Learning", "Winter 2026/27 · Computer Science", "", "hero|Next meeting · Today at 10:15|Hörsaal N6 · Alma;group|Work;row|Exercise sheet 5|Due today at 23:59 · Moodle|exercise;group|Materials;row|Lecture slides|Course folder · ILIAS|material;row|Course connections|Alma, Moodle and ILIAS|course-sources"],
+    "course-sources": ["Course connections", "Machine Learning · Winter 2026/27", "", "row|Alma offering|Timetable;row|Moodle course|Exercises · Source link;row|ILIAS course|Materials · Student confirmed;link|Back to Machine Learning|course"],
+    material: ["Lecture slides", "Machine Learning · ILIAS", "", "row|Week 5 · Regularisation|PDF · Course folder;row|Week 4 · Model selection|PDF · Course folder;link|Back to Machine Learning|course"],
+    matches: ["Course connections", "Research Methods · Winter 2026/27", "", "row|ILIAS · Research Methods|Available as its own course;card|Possible Alma match|Same course title and term. Check the offering before linking.;primary|Review Alma match|match-review"],
+    "match-review": ["Review course match", "Research Methods · Winter 2026/27", "", "row|Alma offering|Research Methods · Group 01;row|ILIAS course|Research Methods · Seminar;primary|Link these courses|matched;link|Keep courses separate|courses"],
+    matched: ["Course linked", "Research Methods · Winter 2026/27", "", "card|Alma and ILIAS connected|You confirmed the match.;row|Academic status|Linking records does not change enrollment.;link|Undo course link|matches"],
+    "course-archive": ["Past courses", "Summer 2026", "Courses", "row|Probability|Archived course · Moodle;alert|Materials unavailable|The source no longer grants access.;link|Show current courses|courses"],
+    programme: ["Find courses", "Alma catalogue", "", "field|Programme|M.Sc. Computer Science;field|Term|Winter 2026/27;primary|View offerings|offerings"],
+    offerings: ["Programme offerings", "M.Sc. Computer Science · Winter 2026/27", "", "row|Data Visualisation|Lecture · Wednesday at 10:00|offering;row|Research Methods|Seminar · Friday at 09:00;link|Change programme or term|programme"],
+    offering: ["Data Visualisation", "Lecture · Alma catalogue", "", "row|Group 01|Wednesday at 10:00;row|Registration|Check eligibility and current status in Alma;primary|Review registration|registration"]
+  }],
+  ["Documents", "Reach certificates from Today, Account, or search. The native download sequence represents a proposed integration.", {
+    docs: ["Documents", "Official records · Alma", "", "row|Certificate of enrollment|Choose a semester|doc-term;row|Transcript of records|Official Alma document|doc-error;link|Back to Today|today"],
+    "docs-locked": ["Connect to view documents", "Official records · Alma", "", "card|Alma account required|Connect to see your official reports.;primary|Connect university account|signin;link|Explore Campus|campus"],
+    "doc-term": ["Certificate of enrollment", "Official document · Alma", "", "group|Choose a semester;row|Winter 2026/27|Current semester|doc-ready;row|Summer 2026|Previous semester|doc-previous"],
+    "doc-ready": ["Download certificate", "Official document · Alma", "", "row|Certificate of enrollment|Winter 2026/27 · PDF;primary|Download PDF|doc-loading;link|Change semester|doc-term"],
+    "doc-previous": ["Download certificate", "Official document · Alma", "", "row|Certificate of enrollment|Summer 2026 · PDF;primary|Download PDF|doc-previous-preview;link|Change semester|doc-term"],
+    "doc-loading": ["Preparing certificate", "Official document · Alma", "", "card|Requesting PDF|Certificate of enrollment · Winter 2026/27;primary|Preview verified result|doc-preview"],
+    "doc-preview": ["Certificate ready", "PDF verified · Alma", "", "card|Certificate of enrollment|Winter 2026/27;primary|Share or save PDF|doc-share"],
+    "doc-previous-preview": ["Certificate ready", "PDF verified · Alma", "", "card|Certificate of enrollment|Summer 2026;primary|Share or save PDF|doc-share"],
+    "doc-share": ["Share or save", "System share sheet preview", "", "row|Save to Files|Choose a folder on your device;row|AirDrop|Share with a nearby device;link|Back to documents|docs"],
+    "doc-error": ["Transcript unavailable", "Official document · Alma", "", "alert|Alma requires another step|Open study services to check which reports are available.;row|Alma study services|Continues on the university website;link|Back to documents|docs"]
+  }],
+  ["Campus & search", "Start from a task, then open a focused list or an official destination. Search can also find academic services.", {
+    campus: ["Campus", "Tübingen", "Campus", "primary|Search courses, places and services|search;row|KuF pass|Show or scan your entry barcode|kuf;group|Everyday;row|Food and study spaces|Canteens, libraries and seats|places;group|University life;row|People and support|Contacts, advice and settling in|support;row|Events and opportunities|Sports, talks, recordings and careers|opportunities"],
+    kuf: ["KuF pass", "Hochschulsport", "", "card|Saved entry barcode|Show the original format at the Kraft und Fitnesshalle entrance.;row|Barcode format|Saved from your confirmation · On this device;primary|Scan or replace barcode|kuf-scan;link|Preview widget shortcut|kuf-widget"],
+    "kuf-scan": ["Scan KuF barcode", "Hochschulsport", "", "card|Scan your confirmation|Hold the original barcode or QR code inside the camera frame.;link|Return to KuF pass|kuf"],
+    "kuf-widget": ["KuF Pass widget", "Home Screen and Lock Screen", "", "card|Open KuF pass|Tap to open your saved barcode in the app.;primary|Open pass|kuf"],
+    places: ["Food and study spaces", "Everyday · Campus", "", "row|Mensa Wilhelmstraße|Menus and opening hours|mensa;row|Library study spaces|Availability and access|seats;row|Campus map|Buildings and directions|building"],
+    mensa: ["Mensa Wilhelmstraße", "Canteen · Campus", "", "card|Today's lunch|12:00–14:00 · Example menu;row|Lentil stew|Vegetarian · Menu checked 10:10;row|Directions|Wilhelmstraße"],
+    seats: ["Library study spaces", "Campus", "", "alert|Availability could not refresh|Last checked at 10:05. Check the source before travelling.;row|University Library|Opening hours and access information"],
+    building: ["Hörsaal N6", "Wilhelmstraße 56 · Campus map", "", "card|Lecture venue|Check the building entrance and current accessibility information.;row|Address|Wilhelmstraße 56, Tübingen;row|Directions|Continues in Maps;link|Back to campus places|places"],
+    support: ["People and support", "Campus", "", "row|University directory|Find people and departments|directory;row|Academic advising|Find the right contact|advising;row|Settling in|International students, housing and city services|settling"],
+    directory: ["University directory", "People and support", "", "field|Example search|Computer Science;row|Department office|Official university contact page;link|Find academic advising|advising"],
+    advising: ["Academic advising", "People and support", "", "row|Programme questions|Computer Science advising;row|General study questions|Central Student Advisory Service;link|Settling in and international support|settling"],
+    settling: ["Settling in", "People and support", "", "row|International student support|University website;row|Student housing|Studierendenwerk website;row|City registration|City of Tübingen website"],
+    opportunities: ["Events and opportunities", "Campus", "", "row|University sports|Browse activities and courses|sport;row|Talks and events|Browse the calendar|talks;row|Lecture recordings|Find a recording in TIMMS|recordings;row|Career opportunities|Browse Praxisportal|careers"],
+    sport: ["University sports", "Events and opportunities", "", "row|Volleyball · Beginners|Wednesday at 18:30;row|Registration and availability|Continues on the University Sports website"],
+    talks: ["Talks and events", "Events and opportunities", "", "row|Research colloquium|Thursday at 17:00 · Public talk;row|Event details|Check the university event listing"],
+    recordings: ["Lecture recordings", "TIMMS", "", "field|Example query|Machine Learning;row|Model selection|Lecture recording · TIMMS"],
+    careers: ["Career opportunities", "Praxisportal", "", "row|Student research assistant|Part-time · Tübingen;row|Full listing and application|Continues in Praxisportal"],
+    search: ["Search", "Courses, places and services", "", "field|Example query|certificate;group|Services;row|Certificate of enrollment|Documents · Alma|doc-term;row|Documents|Official university reports|docs;link|Preview a query without results|no-results"],
+    "no-results": ["No results", "Search", "", "field|Example query|certficate;card|No results in courses or services|Check the spelling or browse Documents.;primary|Open Documents|docs"]
+  }],
+  ["Submissions & registration", "Review the target and consequences before sending. If the result is uncertain, check the source first.", {
+    submission: ["Review submission", "Exercise sheet 5 · Moodle", "", "row|File|exercise-05.pdf;row|Deadline|Today at 23:59;card|Final submission|Moodle may prevent further edits.;primary|Submit exercise sheet|submission-progress;link|Back to exercise|exercise"],
+    submitted: ["Submission confirmed", "Exercise sheet 5 · Moodle", "", "card|Submitted for grading|Moodle confirmed at 19:43.;row|File|exercise-05.pdf;link|Back to course|course"],
+    unknown: ["Submission status unknown", "Exercise sheet 5 · Moodle", "", "alert|Moodle stopped responding|The file may already have been submitted.;primary|Inspect submission status|submission-check"],
+    "submission-check": ["Check in Moodle", "Exercise sheet 5", "", "card|Confirm the current submission state|Open the assignment in Moodle and check its submission status before sending another file.;row|Moodle assignment|Continues on the university website"],
+    "submission-progress": ["Sending submission", "Exercise sheet 5 · Moodle", "", "card|Waiting for Moodle confirmation|exercise-05.pdf;link|Preview confirmation|submitted;link|Preview unknown result|unknown"],
+    "submission-failed": ["Submission rejected", "Exercise sheet 5 · Moodle", "", "alert|Moodle rejected the file|The file exceeds the size limit. No new submission was accepted.;primary|Return to review|submission"],
+    registration: ["Review registration", "Data Visualisation · Alma", "", "row|Target|Lecture · Group 01 · Winter 2026/27;row|Status before request|Eligible to request a place;primary|Send registration request|requested;link|Back to offering|offering"],
+    requested: ["Request received", "Data Visualisation · Alma", "", "card|Registration pending|Alma received your request. A place has yet to be confirmed.;link|Back to offering|offering"]
+  }],
+  ["Account & native surfaces", "Manage what connects to the app and what can appear outside it, with minimal Lock Screen detail by default.", {
+    account: ["Account", "University of Tübingen", "", "row|Documents|Official records|docs;row|Academic records|Grades and exam registrations|records;row|University messages|Alma notices and university mail|messages;row|University connections|Connection status by service|accounts;row|Notifications and widgets|Reminders, privacy and Live Activity|surfaces"],
+    records: ["Academic records", "University account", "", "row|Alma exam records|Official registrations and recorded results|exams;row|Moodle grades|Course feedback and provisional grades|grades;row|Official transcript|Open Documents|docs"],
+    exams: ["Exam records", "Alma · Winter 2026/27", "", "row|Machine Learning exam|Registered · 15 February at 09:00;row|Probability exam|Recorded result · Summer 2026;link|Open official documents|docs"],
+    grades: ["Course grades", "Moodle", "", "row|Exercise sheet 4|Feedback available · Machine Learning;card|Course feedback|Official results are available in Alma.;link|Open Alma exam records|exams"],
+    messages: ["University messages", "Account", "", "row|Enrollment notice|Alma · Today at 08:20;row|Library account notice|University mail · Yesterday;row|Course announcement|Moodle · Monday"],
+    accounts: ["University connections", "Account", "", "row|Alma|Connected · Last checked 09:12;row|Moodle|Connected · Last checked 08:46;row|ILIAS|Sign-in required|signin;link|Disconnect account|disconnect"],
+    disconnect: ["Disconnect account?", "University connections", "", "card|Remove local university data|Saved credentials and cached private data will be removed from this device.;primary|Disconnect and explore Campus|campus;link|Keep account connected|accounts"],
+    surfaces: ["Notifications and widgets", "Account", "", "row|Home Screen widget|Next lecture and room|widget;row|Lock Screen widget|Time only by default|lock;row|Lecture Live Activity|Start from the lecture detail|activity;row|Lecture reminders|Off · Choose a reminder before enabling|reminder"],
+    widget: ["Home Screen widget", "Lecture preview", "", "hero|10:15 · Machine Learning|Hörsaal N6 · Cached at 09:12;row|Wednesday at 14:00|Statistics · Cancelled|cancelled;alert|Schedule update delayed|Open the app to check Alma.;link|Open timetable|schedule;link|Preview without saved data|widget-empty"],
+    "widget-empty": ["Home Screen widget", "No saved timetable", "", "card|No lecture to show|Open the app to check your schedule.;primary|Open timetable|schedule"],
+    lock: ["Lock Screen privacy", "Lecture widget", "", "card|Next lecture · 10:15|Time only · Default;row|Show course and room|Optional on your Lock Screen|lock-detail;link|Back to widget settings|surfaces"],
+    "lock-detail": ["Lock Screen details", "Lecture widget", "", "card|10:15 · Machine Learning|Hörsaal N6;row|Visible while locked|Course title and room;link|Preview time only|lock"],
+    activity: ["Lecture Live Activity", "Machine Learning · Tuesday", "", "row|Lecture|10:15–11:45 · Hörsaal N6;primary|Start Live Activity|live"],
+    live: ["Live Activity preview", "Machine Learning", "", "hero|Starts at 10:15|Hörsaal N6;link|End Live Activity|activity"],
+    reminder: ["Lecture reminder", "Machine Learning · Tuesday at 10:15", "", "field|Remind me|15 minutes before;primary|Continue to notification permission|permission"],
+    permission: ["Allow notifications?", "System permission preview", "", "card|Lecture reminders|You can change notification access in Settings.;row|Allow|Schedule the selected reminder;row|Don't Allow|Continue without a reminder"]
+  }]
+];
+
+const entries = new Map(flows.flatMap(([, , screens], flow) =>
+  Object.entries(screens).map(([id, screen]) => [id, { flow, screen }])));
+const tabs = [["Today", "today"], ["Schedule", "schedule"], ["Courses", "courses"], ["Campus", "campus"]];
+const byId = id => document.getElementById(id);
+const go = (label, target, attrs = "") => `<button type="button" data-go="${target}" ${attrs}>${label}</button>`;
+
+function component(line) {
+  const [kind, title, detail, target] = line.split("|");
+  if (kind === "group") return `<div class="group">${title}</div>`;
+  if (kind === "field") return `<div class="field">${title}<span>${detail}</span></div>`;
+  if (kind === "link") return go(title, detail, 'class="text-action"');
+  if (kind === "primary") return go(title, detail, 'class="primary"');
+  const copy = `<span><strong>${title}</strong>${detail ? `<span class="meta">${detail}</span>` : ""}</span>`;
+  if (kind === "row" || kind === "cancel") {
+    const classes = kind === "cancel" ? "row cancelled" : "row";
+    return target
+      ? go(copy + '<span class="arrow" aria-hidden="true">›</span>', target, `class="${classes}"`)
+      : `<div class="${classes}">${copy}</div>`;
+  }
+  return `<div class="card ${kind}"><strong>${title}</strong><div class="meta">${detail}</div></div>`;
+}
+
+let current;
+const history = [];
+function show(id, focus = false, remember = true) {
+  if (!entries.has(id)) return;
+  if (remember && current && current !== id) history.push(current);
+  current = id;
+  const { flow, screen: [title, context, tab, content] } = entries.get(id);
+  const [name, note, screens] = flows[flow];
+  const ids = Object.keys(screens);
+  const position = ids.indexOf(id);
+  byId("journeys").innerHTML = flows.map(([label, , states], index) =>
+    go(label, Object.keys(states)[0], `aria-pressed="${flow === index}"`)).join("");
+  byId("flow-title").textContent = name;
+  byId("flow-note").textContent = note;
+  byId("steps").innerHTML = ids.map(key => go(screens[key][0], key,
+    `class="step"${key === id ? ' aria-current="step"' : ""}`)).join("");
+  const toolbar = `<div class="toolbar">${history.length ? go("‹ Back", "back") : "<span></span>"}${id !== "account" ? go("Account", "account") : ""}</div>`;
+  const navigation = tab
+    ? `<nav class="tabs" aria-label="App tabs">${tabs.map(([label, key]) =>
+      go(label, key, label === tab ? 'aria-current="page"' : "")).join("")}</nav>` : "";
+  byId("phone").innerHTML = `<div class="glass">${toolbar}<div class="context">${context}</div>
+    <div class="app-title" id="app-title" role="heading" aria-level="3" tabindex="-1">${title}</div>
+    ${content.split(";").map(component).join("")}</div>${navigation}`;
+  for (const [button, target] of [["prev", ids[position - 1]], ["next", ids[position + 1]]]) {
+    byId(button).disabled = !target;
+    byId(button).onclick = () => show(target, true);
+  }
+  if (focus) byId("app-title").focus({ preventScroll: true });
+}
+
+document.addEventListener("click", event => {
+  const control = event.target.closest("[data-go]");
+  if (control?.dataset.go === "back") show(history.pop(), true, false);
+  else if (control) show(control.dataset.go, true);
+});
+show("today");
+</script>
+</body>
+</html>

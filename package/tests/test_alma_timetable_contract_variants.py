@@ -16,6 +16,7 @@ from tue_api_wrapper.alma_timetable_rooms import enrich_calendar_occurrences, ex
 from tue_api_wrapper.client import AlmaClient
 from tue_api_wrapper.html_contract import extract_timetable_export_url, extract_timetable_terms
 from tue_api_wrapper.models import CalendarOccurrence
+from tue_api_wrapper.portal_common import serialize
 from tue_api_wrapper.portal_service import DEFAULT_DASHBOARD_TERM, normalize_dashboard_term
 
 
@@ -162,6 +163,54 @@ class AlmaTimetableContractVariantTests(unittest.TestCase):
         self.assertEqual(timetable.export_url, export_url)
         self.assertEqual(timetable.available_terms, {})
         self.assertEqual(session.urls[-1], export_url)
+
+    def test_client_restores_cancelled_occurrences_excluded_from_the_feed(self) -> None:
+        blocks = []
+        for index, hour in enumerate((14, 16)):
+            prefix = f"plan:schedule:scheduleColumn:2:termin:{index}:scheduleItem"
+            blocks.append(f"""
+                <li class="singleblock scheduleCancelled planelementchange">
+                  <div id="{prefix}:schedulePanelGroup">
+                    <div class="errortextPlan">
+                      <p>Fällt aus</p><div class="fieldsetMessageText infoBox">Studieninfotag</div>
+                    </div>
+                    <h3 class="scheduleTitle">ML4103 Deep Learning</h3>
+                    <span id="{prefix}:processingTimes">{hour}:00 bis {hour + 2}:00</span>
+                    <span id="{prefix}:scheduleStartDate">14.10.2026</span>
+                  </div>
+                </li>
+            """)
+        page = TERM_SELECTOR_FREE_TIMETABLE_HTML + f"""
+            <div class="planFrame"><ul class="plan"><li class="column">
+              <div class="colhead"><h2>Mi., 18.11.2026</h2></div>
+              <ul class="plan">{"".join(blocks)}</ul>
+            </li></ul></div>
+        """
+        feed = "\r\n".join([
+            "BEGIN:VCALENDAR",
+            "BEGIN:VEVENT",
+            "UID:deep-learning-lecture",
+            "SUMMARY:ML4103 Deep Learning",
+            "DTSTART;TZID=Europe/Berlin:20261111T140000",
+            "DTEND;TZID=Europe/Berlin:20261111T160000",
+            "RRULE:FREQ=WEEKLY;COUNT=5",
+            "EXDATE;TZID=Europe/Berlin:20261118T140000,20261202T140000",
+            "END:VEVENT",
+            "END:VCALENDAR",
+        ])
+        session = _FakeSession([_response("https://alma.example/timetable", page), _response("https://alma.example/export", feed)])
+        result = AlmaClient(base_url="https://alma.example", session=session).fetch_timetable_for_term("Winter 2026/27")
+
+        cancelled = [item for item in serialize(result.occurrences) if item.get("status") == "cancelled"]
+        self.assertEqual(
+            [(item["start"], item["end"], item["cancellation_reason"]) for item in cancelled],
+            [
+                ("2026-11-18T14:00:00+01:00", "2026-11-18T16:00:00+01:00", "Studieninfotag"),
+                ("2026-11-18T16:00:00+01:00", "2026-11-18T18:00:00+01:00", "Studieninfotag"),
+            ],
+        )
+        self.assertEqual([item.start.day for item in result.occurrences], [11, 18, 18, 25, 9])
+        self.assertEqual(cancelled[0]["uid"], "deep-learning-lecture")
 
     def test_timetable_room_entries_include_detailed_room_fields(self) -> None:
         entries = extract_timetable_room_entries(ROOM_DETAIL_TIMETABLE_HTML, "https://alma.example/timetable")

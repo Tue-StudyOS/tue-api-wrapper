@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime
+from typing import Literal
 
 from .calendar_room_models import CalendarRoomDetails
 from .alma_enrollment_models import AlmaEnrollmentEntry
@@ -35,6 +36,8 @@ class CalendarOccurrence:
     description: str | None
     room_details: CalendarRoomDetails | None = None
     uid: str | None = None
+    status: Literal["cancelled"] | None = None
+    cancellation_reason: str | None = None
 
 
 @dataclass(frozen=True)

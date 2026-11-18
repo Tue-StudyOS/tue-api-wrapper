@@ -243,7 +243,7 @@ def _upcoming_occurrences(
     today: date | None,
 ) -> tuple[Any, ...]:
     cutoff = today or datetime.now().date()
-    return tuple(item for item in occurrences if (item.end or item.start).date() >= cutoff)
+    return tuple(item for item in occurrences if item.status != "cancelled" and (item.end or item.start).date() >= cutoff)
 
 
 def _quick_links() -> list[dict[str, str]]:

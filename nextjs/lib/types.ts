@@ -29,6 +29,8 @@ export interface AgendaItem {
   location: string | null;
   description: string | null;
   room_details?: CalendarRoomDetails | null;
+  status?: "cancelled" | null;
+  cancellation_reason?: string | null;
 }
 
 export interface DocumentReport {

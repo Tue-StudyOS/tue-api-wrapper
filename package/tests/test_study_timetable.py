@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
@@ -24,6 +25,14 @@ def test_timetable_room_and_time_change_is_detected(tmp_path):
     data = collect_timetable(alma, term="Winter 2026/27", days=7, limit=10, now=now)
     changes = compare_and_save({"sources": {"alma_timetable": data}}, path)["sources"]["alma_timetable"]
     assert changes["changed"][0]["after"]["location"] == "B"
+    assert changes["added"] == []
+
+    cancelled = replace(second, status="cancelled", cancellation_reason="Studieninfotag")
+    alma.timetable = lambda term: SimpleNamespace(term_label=term, occurrences=[cancelled])
+    data = collect_timetable(alma, term="Winter 2026/27", days=7, limit=10, now=now)
+    changes = compare_and_save({"sources": {"alma_timetable": data}}, path)["sources"]["alma_timetable"]
+    assert changes["changed"][0]["after"]["status"] == "cancelled"
+    assert changes["changed"][0]["after"]["cancellation_reason"] == "Studieninfotag"
     assert changes["added"] == []
 
 

@@ -38,7 +38,10 @@ def register_study_tools(server: Any, env_file: str | Path | None) -> None:
 
     @server.tool()
     def study_timetable(days: int = 30, limit: int = 50, term: str | None = None) -> dict[str, Any]:
-        """Read upcoming Alma timetable occurrences, including coverage and identity warnings."""
+        """Read upcoming Alma timetable occurrences, including coverage and identity warnings.
+
+        Cancellations confirmed by Alma's dated view include status and cancellation_reason.
+        """
         return run(lambda client, _: collect_timetable(client.alma, term=term, days=days, limit=limit))
 
     @server.tool()

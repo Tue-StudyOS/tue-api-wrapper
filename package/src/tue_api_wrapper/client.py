@@ -33,6 +33,7 @@ from .config import (
     STUDYSERVICE_PATH,
     TIMETABLE_PATH,
 )
+from .alma_timetable_cancellations import apply_timetable_cancellations
 from .alma_timetable_html import parse_timetable_contract
 from .alma_timetable_rooms import (
     enrich_calendar_events,
@@ -154,6 +155,8 @@ class AlmaClient:
         room_entries = extract_timetable_room_entries(timetable_html, self.timetable_url)
         events = enrich_calendar_events(parse_ics_events(raw_ics), room_entries)
         occurrences = enrich_calendar_occurrences(expand_ics_events(events, resolved_term_label), room_entries)
+        if contract.selected_term_value in (None, term_id):
+            occurrences = apply_timetable_cancellations(occurrences, timetable_html, events)
         return TimetableResult(
             term_label=resolved_term_label,
             term_id=term_id,

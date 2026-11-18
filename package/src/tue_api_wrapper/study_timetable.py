@@ -28,12 +28,15 @@ def collect_timetable(alma: Any, *, term: str | None, days: int, limit: int,
     items = []
     for event, identity in list(zip(events, identities))[:limit]:
         ambiguous = counts[identity] > 1
-        items.append({
+        item = {
             "id": _key(timetable.term_label, *identity, event.start.isoformat() if ambiguous else ""),
             "title": event.summary, "start": event.start.isoformat(),
             "end": event.end.isoformat() if event.end else None,
             "location": event.location, "description": event.description,
-        })
+        }
+        if event.status is not None:
+            item.update(status=event.status, cancellation_reason=event.cancellation_reason)
+        items.append(item)
     if len({item["id"] for item in items}) != len(items):
         raise ValueError("Timetable has indistinguishable occurrences")
     return {"status": "ok", "items": items, "coverage": "bounded", "term": timetable.term_label,

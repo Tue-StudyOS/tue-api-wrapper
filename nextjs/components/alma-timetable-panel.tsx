@@ -28,6 +28,7 @@ export function AlmaTimetablePanel({
   };
   creditSummary?: AlmaTimetableCourseAssignmentsPage | null;
 }) {
+  const scheduledOccurrences = view.occurrences.filter((item) => item.status !== "cancelled");
   const pdfParams = new URLSearchParams();
   if (view.selected_term_value) {
     pdfParams.set("term", view.selected_term_value);
@@ -110,7 +111,7 @@ export function AlmaTimetablePanel({
             {view.selected_term_label ? <Badge variant="secondary">{view.selected_term_label}</Badge> : null}
             {view.selected_week_label ? <Badge variant="outline">{view.selected_week_label}</Badge> : null}
             {view.visible_range_start ? <span>{formatTimetableDateLabel(view.visible_range_start)} to {formatTimetableDateLabel(view.visible_range_end ?? view.visible_range_start)}</span> : null}
-            <span>· {view.occurrences.length} items</span>
+            <span>· {scheduledOccurrences.length} items</span>
             {creditSummary ? <span>· Saved semester {formatCredits(creditSummary.total_credits)} CP</span> : null}
           </div>
           {creditSummary?.unresolved_credit_count ? (
@@ -137,7 +138,7 @@ export function AlmaTimetablePanel({
         <CardContent>
           <AlmaTimetableGrid
             days={view.days}
-            occurrences={view.occurrences}
+            occurrences={scheduledOccurrences}
             selectedTermValue={view.selected_term_value}
           />
         </CardContent>

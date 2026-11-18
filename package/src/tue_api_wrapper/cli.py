@@ -33,6 +33,9 @@ def _format_occurrence_line(index: int, occurrence) -> str:
     start = occurrence.start.strftime("%Y-%m-%d %H:%M")
     end = occurrence.end.strftime("%Y-%m-%d %H:%M") if occurrence.end else "?"
     location = occurrence.location or "-"
+    if occurrence.status == "cancelled":
+        reason = f" | {occurrence.cancellation_reason}" if occurrence.cancellation_reason else ""
+        return f"{index:02d}. {start} - {end} | {occurrence.summary} | Canceled{reason}"
     return f"{index:02d}. {start} - {end} | {occurrence.summary} | {location}"
 
 

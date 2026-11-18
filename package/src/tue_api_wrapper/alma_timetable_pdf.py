@@ -41,7 +41,7 @@ def render_timetable_pdf(
     pdf = SimplePdf()
     cursor = _draw_header(pdf, title, subtitle)
 
-    occurrences = sorted(view.occurrences, key=lambda item: item.start)
+    occurrences = sorted((item for item in view.occurrences if item.status != "cancelled"), key=lambda item: item.start)
     current_day: date | None = None
     if not occurrences:
         pdf.text(42, cursor, "No timetable events found for this selection.", size=11, color=(0.15, 0.15, 0.15))

@@ -3,103 +3,66 @@ import SwiftUI
 struct TodayView: View {
     var model: AppModel
     var mailBadgeStore: MailBadgeStore
-    private let kufHistoryStore: KufOccupancyHistoryStore?
-
-    @State private var kufOccupancy: KufTrainingOccupancy?
-    @State private var kufError: String?
-    @State private var isLoadingKuf = false
 
     private var nextLecture: LectureEvent? { model.scheduledLectures.first }
 
     private var urgencyItems: [TodayUrgencyItem] {
-        let deadlines = model.deadlines.prefix(2).map {
-            TodayUrgencyItem(
-                title: $0.title,
-                subtitle: $0.courseName ?? "Moodle deadline",
-                detail: deadlineDetailText(for: $0),
-                systemImage: "calendar.badge.clock",
-                tint: .orange
-            )
-        }
-        let assignments = model.iliasAssignments.prefix(max(0, 3 - deadlines.count)).map {
-            TodayUrgencyItem(
-                title: $0.assignment.title,
-                subtitle: $0.courseTitle,
-                detail: iliasAssignmentDetailText(for: $0),
-                systemImage: "tray.and.arrow.up",
-                tint: .accentColor
-            )
-        }
-        let remaining = max(0, 3 - deadlines.count - assignments.count)
-        let tasks = model.tasks.prefix(remaining).map {
-            TodayUrgencyItem(
-                title: $0.title,
-                subtitle: $0.itemType ?? "ILIAS task",
-                detail: $0.end ?? "No deadline exposed",
-                systemImage: "checklist",
-                tint: .accentColor
-            )
-        }
-        return Array(deadlines + assignments + tasks)
+        let items = model.studyWorkItems
+        return Array(items.filter { $0.dueDate != nil }.prefix(3))
+            + Array(items.filter { $0.dueDate == nil }.prefix(1))
     }
 
-    private var topStatusLine: TodayStatusLine? {
+    private var statusLines: [TodayStatusLine] {
         if !model.hasCredentials {
-            return TodayStatusLine(
-                text: "Connect your university account in Settings to load Alma, Moodle, and ILIAS.",
+            return [TodayStatusLine(
+                text: "Connect your university account in Account to check Alma, Moodle and ILIAS.",
                 systemImage: "lock",
                 tint: .secondary
-            )
+            )]
         }
-        if model.phase == .loading || isLoadingKuf || (model.tasksPhase == .loading && urgencyItems.isEmpty) {
-            return TodayStatusLine(
-                text: "Refreshing your university data.",
-                tint: .accentColor,
-                isLoading: true
-            )
+        var lines: [TodayStatusLine] = []
+        if model.phase == .loading || (model.tasksPhase == .loading && urgencyItems.isEmpty) {
+            lines.append(TodayStatusLine(text: "Refreshing university data.", tint: .accentColor, isLoading: true))
         }
         if case .failed(let message) = model.phase {
-            return TodayStatusLine(text: message, systemImage: "exclamationmark.triangle", tint: .orange)
+            lines.append(TodayStatusLine(text: "Alma timetable: \(message)", systemImage: "exclamationmark.triangle", tint: .orange))
+        }
+        if case .loaded = model.tasksPhase, let warning = model.tasksWarning {
+            lines.append(TodayStatusLine(text: warning, systemImage: "exclamationmark.triangle", tint: .orange))
         }
         if case .failed(let message) = model.tasksPhase {
-            return TodayStatusLine(text: message, systemImage: "exclamationmark.triangle", tint: .orange)
+            lines.append(TodayStatusLine(text: "Deadlines: \(message)", systemImage: "exclamationmark.triangle", tint: .orange))
         }
-        return nil
+        return lines
     }
 
     private var footerTimestamp: String? {
-        guard topStatusLine == nil, let refreshedAt = model.timetableRefreshedAt else {
-            return nil
-        }
-        return "Last updated \(refreshedAt.formatted(date: .abbreviated, time: .shortened))"
+        guard let refreshedAt = model.timetableRefreshedAt else { return nil }
+        return "Alma timetable checked \(refreshedAt.formatted(date: .abbreviated, time: .shortened))"
     }
 
     init(
         model: AppModel,
-        mailBadgeStore: MailBadgeStore,
-        kufHistoryStore: KufOccupancyHistoryStore? = KufOccupancyHistoryStore()
+        mailBadgeStore: MailBadgeStore
     ) {
         self.model = model
         self.mailBadgeStore = mailBadgeStore
-        self.kufHistoryStore = kufHistoryStore
     }
 
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 18) {
                 TodayIdentityHeader(
-                    profileName: model.profileName,
                     termLabel: model.currentTermLabel,
-                    hasCredentials: model.hasCredentials,
                     unreadMailText: mailBadgeStore.unreadSummaryText
                 )
 
-                if let topStatusLine {
+                ForEach(statusLines, id: \.text) { status in
                     AppInlineStatusLine(
-                        text: topStatusLine.text,
-                        systemImage: topStatusLine.systemImage,
-                        tint: topStatusLine.tint,
-                        isLoading: topStatusLine.isLoading
+                        text: status.text,
+                        systemImage: status.systemImage,
+                        tint: status.tint,
+                        isLoading: status.isLoading
                     )
                 }
 
@@ -109,6 +72,8 @@ struct TodayView: View {
                     hasCredentials: model.hasCredentials
                 )
 
+                TodayCancellationsCard(events: model.events.filter(\.isCancelled), model: model)
+
                 TodayUrgencyCard(
                     items: urgencyItems,
                     isLoading: model.tasksPhase == .loading && urgencyItems.isEmpty,
@@ -116,15 +81,7 @@ struct TodayView: View {
                     model: model
                 )
 
-                TodayPortalMessagesCard(model: model)
-
-                TodayStudySnapshotCard(model: model)
-
-                TodayCampusPulseCard(
-                    occupancy: kufOccupancy,
-                    errorMessage: kufError,
-                    isLoading: isLoadingKuf
-                )
+                TodayDocumentsLink(model: model)
 
                 if let footerTimestamp {
                     Text(footerTimestamp)
@@ -147,7 +104,7 @@ struct TodayView: View {
                 Button(action: refreshButtonTapped) {
                     Label("Refresh", systemImage: "arrow.clockwise")
                 }
-                .disabled(model.phase == .loading || isLoadingKuf)
+                .disabled(model.phase == .loading)
             }
         }
         .task {
@@ -171,66 +128,15 @@ private extension TodayView {
         if model.shouldRefreshTasks() {
             await model.refreshTasks()
         }
-        if kufOccupancy == nil && kufError == nil {
-            await refreshKuf()
-        }
     }
 
     func refreshToday() async {
         await model.refreshUpcomingLectures()
         await model.refreshTasks()
         await mailBadgeStore.refreshIfNeeded(hasCredentials: model.hasCredentials, force: true)
-        await refreshKuf()
     }
 
-    func refreshKuf() async {
-        isLoadingKuf = true
-        defer { isLoadingKuf = false }
 
-        guard let client = KufOccupancyClient() else {
-            kufError = "Backend unavailable"
-            return
-        }
-
-        do {
-            let occupancy = try await client.fetchOccupancy()
-            kufOccupancy = occupancy
-            kufHistoryStore?.record(occupancy)
-            kufError = nil
-        } catch {
-            kufError = error.localizedDescription
-        }
-    }
-
-    func deadlineDetailText(for deadline: MoodleDeadline) -> String {
-        if let formattedTime = deadline.formattedTime {
-            let cleaned = HTMLText.stripTags(formattedTime)
-            if !cleaned.isEmpty {
-                return cleaned
-            }
-        }
-
-        if let dueAt = deadline.dueAt {
-            let cleaned = HTMLText.stripTags(dueAt)
-            if !cleaned.isEmpty {
-                return cleaned
-            }
-        }
-
-        return "Due date unavailable"
-    }
-
-    func iliasAssignmentDetailText(for deadline: IliasAssignmentDeadline) -> String {
-        if let dueAt = deadline.assignment.dueAt?.trimmingCharacters(in: .whitespacesAndNewlines),
-           !dueAt.isEmpty {
-            return dueAt
-        }
-        if let dueHint = deadline.assignment.dueHint?.trimmingCharacters(in: .whitespacesAndNewlines),
-           !dueHint.isEmpty {
-            return dueHint
-        }
-        return deadline.exerciseTitle
-    }
 }
 
 private struct TodayStatusLine {

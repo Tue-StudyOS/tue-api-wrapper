@@ -3,6 +3,7 @@ import SwiftUI
 struct CalendarTimelineView: View {
     var day: Date
     var events: [LectureEvent]
+    var workItems: [TodayUrgencyItem] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -16,7 +17,7 @@ struct CalendarTimelineView: View {
                 }
             }
 
-            if events.isEmpty {
+            if events.isEmpty && workItems.isEmpty {
                 AppSurfaceCard {
                     ContentUnavailableView(
                         "No lectures this day",
@@ -38,6 +39,22 @@ struct CalendarTimelineView: View {
                             )
                         }
                         .buttonStyle(.plain)
+                    }
+                }
+            }
+
+            if !workItems.isEmpty {
+                AppSurfaceCard {
+                    Text("Deadlines").font(.headline)
+                    ForEach(workItems) { item in
+                        NavigationLink {
+                            TodayWorkDetail(item: item)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(item.title).font(.subheadline.weight(.semibold))
+                                Text("\(item.detail) · \(item.source)").font(.footnote).foregroundStyle(.secondary)
+                            }
+                        }
                     }
                 }
             }

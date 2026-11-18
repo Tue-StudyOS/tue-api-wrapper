@@ -3,6 +3,8 @@ import SwiftUI
 struct CourseDetailView: View {
     var model: AppModel
     var course: CourseDetailReference
+    var event: LectureEvent?
+    @AppStorage(StudentCourseLinks.storageKey) private var linksData = Data()
     @State private var portalStatusPhase: PortalStatusPhase = .idle
 
     init(lecture: AlmaCurrentLecture, model: AppModel) {
@@ -13,6 +15,7 @@ struct CourseDetailView: View {
     init(event: LectureEvent, model: AppModel) {
         self.model = model
         self.course = CourseDetailReference(event: event)
+        self.event = event
     }
 
     var body: some View {
@@ -35,6 +38,24 @@ struct CourseDetailView: View {
                 }
             }
 
+            if let timeRange = course.timeRange {
+                Section("Schedule") {
+                    LabeledContent("Time", value: timeRange)
+                    if let event, !event.isCancelled, (event.endDate ?? event.startDate) > Date() {
+                        Button("Start lecture Live Activity") { model.startLiveActivity(for: event) }
+                        if let message = model.liveActivityMessage {
+                            Text(message).font(.footnote).foregroundStyle(.secondary)
+                        }
+                    }
+                    if course.scheduleStatus == .cancelled {
+                        Label("Canceled", systemImage: "calendar.badge.minus")
+                        if let reason = course.cancellationReason {
+                            Text(reason)
+                        }
+                    }
+                }
+            }
+
             Section("Alma signup status") {
                 portalStatusContent
             }
@@ -47,7 +68,7 @@ struct CourseDetailView: View {
                 }
             }
 
-            Section("Portals") {
+            Section("Materials and course pages") {
                 if let detailURL = course.detailURL {
                     Link(destination: detailURL) {
                         Label("Open Alma detail", systemImage: "rectangle.portrait.and.arrow.right")
@@ -68,20 +89,12 @@ struct CourseDetailView: View {
                 }
             }
 
-            if let iliasURL = course.iliasURL {
-                CourseIliasAssignmentsSection(target: iliasURL, credentialsLoader: model.keychain)
+            if let detailURL = course.detailURL, model.hasCredentials {
+                StudentCourseLinks(almaURL: detailURL, sourceCourse: course.iliasURL, candidates: model.iliasAssignments)
             }
-
-            if let timeRange = course.timeRange {
-                Section("Schedule") {
-                    LabeledContent("Time", value: timeRange)
-                    if course.scheduleStatus == .cancelled {
-                        Label("Canceled", systemImage: "calendar.badge.minus")
-                        if let reason = course.cancellationReason {
-                            Text(reason)
-                        }
-                    }
-                }
+            if let iliasURL = effectiveIliasURL {
+                CourseIliasAssignmentsSection(target: iliasURL, credentialsLoader: model.keychain)
+                    .id(iliasURL)
             }
 
             Section("Teaching") {
@@ -116,6 +129,14 @@ struct CourseDetailView: View {
         .task(id: statusLookupID) {
             await loadPortalStatuses()
         }
+    }
+
+    private var effectiveIliasURL: URL? {
+        if let sourceURL = course.iliasURL { return sourceURL }
+        guard model.hasCredentials, let detailURL = course.detailURL,
+              let links = try? JSONDecoder().decode([String: String].self, from: linksData),
+              let value = links[detailURL.absoluteString] else { return nil }
+        return URL(string: value)
     }
 
     private var subtitle: String? {

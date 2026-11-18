@@ -25,7 +25,7 @@ struct KufOccupancyHistoryView: View {
                     ContentUnavailableView(
                         "No KuF history yet",
                         systemImage: "chart.bar.xaxis",
-                        description: Text("Open the app or keep the widget active to record one local sample per hour.")
+                        description: Text("Keep the KuF widget active to record up to one local sample per hour.")
                     )
                 } else {
                     Chart(chartPoints) { point in

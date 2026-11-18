@@ -50,6 +50,10 @@ targets:
       path: TueAPI/Info.plist
       properties:
         CFBundleDisplayName: TUE API
+        CFBundleURLTypes:
+          - CFBundleURLName: dev.sebastianboehler.tueapi.shortcut
+            CFBundleURLSchemes:
+              - tueapi
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         BGTaskSchedulerPermittedIdentifiers:

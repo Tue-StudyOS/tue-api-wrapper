@@ -4,6 +4,7 @@ import SwiftUI
 struct UpcomingLecturesEntry: TimelineEntry {
     let date: Date
     let snapshot: LectureSnapshot?
+    var showLockScreenDetails = LectureWidgetPrivacy.showsDetails
 }
 
 struct UpcomingLecturesProvider: TimelineProvider {
@@ -11,14 +12,17 @@ struct UpcomingLecturesProvider: TimelineProvider {
         UpcomingLecturesEntry(date: Date(), snapshot: nil)
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (UpcomingLecturesEntry) -> Void) {
+    func getSnapshot(in context: Context, completion: @escaping @Sendable (UpcomingLecturesEntry) -> Void) {
         completion(UpcomingLecturesEntry(date: Date(), snapshot: UpcomingLectureCache.load()))
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<UpcomingLecturesEntry>) -> Void) {
-        let entry = UpcomingLecturesEntry(date: Date(), snapshot: UpcomingLectureCache.load())
-        let next = Calendar.current.date(byAdding: .minute, value: 30, to: Date()) ?? Date().addingTimeInterval(1800)
-        completion(Timeline(entries: [entry], policy: .after(next)))
+    func getTimeline(in context: Context, completion: @escaping @Sendable (Timeline<UpcomingLecturesEntry>) -> Void) {
+        let now = Date()
+        let snapshot = UpcomingLectureCache.load()
+        let refresh = now.addingTimeInterval(1800)
+        let dates = LectureWidgetSchedule.entryDates(snapshot?.events ?? [], from: now, until: refresh)
+        let entries = dates.map { UpcomingLecturesEntry(date: $0, snapshot: snapshot) }
+        completion(Timeline(entries: entries, policy: .after(refresh)))
     }
 }
 
@@ -31,7 +35,7 @@ struct UpcomingLecturesWidget: Widget {
         }
         .configurationDisplayName("Upcoming Lectures")
         .description("Shows cached Alma lectures refreshed by the TUE API app.")
-        .supportedFamilies([.systemSmall, .systemMedium, .accessoryRectangular])
+        .supportedFamilies([.systemSmall, .systemMedium, .accessoryRectangular, .accessoryInline, .accessoryCircular])
     }
 }
 
@@ -42,9 +46,28 @@ struct UpcomingLecturesWidgetView: View {
     var body: some View {
         switch family {
         case .accessoryRectangular:
-            AccessoryLectureView(event: nextEvent)
+            AccessoryLectureView(event: nextEvent, showsDetails: entry.showLockScreenDetails)
+                .containerBackground(.clear, for: .widget)
+        case .accessoryInline:
+            if let nextEvent {
+                let time = nextEvent.startDate.formatted(date: .omitted, time: .shortened)
+                Text(entry.showLockScreenDetails ? "\(nextEvent.title) · \(time)" : "Next lecture · \(time)")
+                    .containerBackground(.clear, for: .widget)
+            } else {
+                Text("No upcoming lectures").containerBackground(.clear, for: .widget)
+            }
+        case .accessoryCircular:
+            if let nextEvent {
+                VStack {
+                    Image(systemName: "calendar")
+                    Text(nextEvent.startDate, style: .time).font(.caption2)
+                }
+                .containerBackground(.clear, for: .widget)
+            } else {
+                Image(systemName: "calendar").containerBackground(.clear, for: .widget)
+            }
         default:
-            WidgetLectureListView(snapshot: entry.snapshot, compact: family == .systemSmall)
+            WidgetLectureListView(snapshot: entry.snapshot, events: upcomingEvents, compact: family == .systemSmall)
                 .containerBackground(.background, for: .widget)
         }
     }
@@ -54,12 +77,13 @@ struct UpcomingLecturesWidgetView: View {
     }
 
     private var upcomingEvents: [LectureEvent] {
-        entry.snapshot?.events.filter { !$0.isCancelled && ($0.endDate ?? $0.startDate) >= Date() } ?? []
+        LectureWidgetSchedule.upcoming(entry.snapshot?.events ?? [], at: entry.date)
     }
 }
 
 struct WidgetLectureListView: View {
     let snapshot: LectureSnapshot?
+    let events: [LectureEvent]
     let compact: Bool
 
     var body: some View {
@@ -67,7 +91,6 @@ struct WidgetLectureListView: View {
             Text("TUE API")
                 .font(.headline)
 
-            let events = snapshot?.events.filter { !$0.isCancelled && ($0.endDate ?? $0.startDate) >= Date() } ?? []
             if let snapshot, let first = events.first {
                 WidgetLectureRow(event: first)
                 if !compact {
@@ -76,7 +99,7 @@ struct WidgetLectureListView: View {
                         WidgetLectureRow(event: event)
                     }
                 }
-                Text(snapshot.sourceTerm)
+                Text("Checked \(snapshot.refreshedAt.formatted(date: .abbreviated, time: .shortened))")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                 if let semesterCredits = snapshot.semesterCredits, !compact {
@@ -85,7 +108,7 @@ struct WidgetLectureListView: View {
                         .foregroundStyle(.secondary)
                 }
             } else {
-                Text("No cached lectures")
+                Text(snapshot == nil ? "No cached lectures" : "No upcoming lectures")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 Text("Open the app and refresh Alma.")
@@ -114,15 +137,18 @@ struct WidgetLectureRow: View {
 
 struct AccessoryLectureView: View {
     let event: LectureEvent?
+    let showsDetails: Bool
 
     var body: some View {
         if let event {
             VStack(alignment: .leading) {
-                Text(event.title)
+                Text(showsDetails ? event.title : "Next lecture")
                     .lineLimit(1)
-                Text(event.timeRangeText)
+                Text(event.startDate, style: .time)
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                if showsDetails, let location = event.location {
+                    Text(location).font(.caption2).lineLimit(1)
+                }
             }
         } else {
             Text("No cached lectures")

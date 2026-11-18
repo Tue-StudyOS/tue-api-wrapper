@@ -4,48 +4,49 @@ struct AppView: View {
     var model: AppModel
     @Environment(\.scenePhase) private var scenePhase
     @State private var mailBadgeStore = MailBadgeStore()
+    @State private var selectedTab: StudentTab
+
+    init(model: AppModel) {
+        self.model = model
+        _selectedTab = State(initialValue: model.hasCredentials ? .today : .campus)
+    }
 
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             NavigationStack {
                 TodayView(model: model, mailBadgeStore: mailBadgeStore)
-                    .settingsToolbar(model: model)
+                    .accountToolbar(model: model, mailBadgeStore: mailBadgeStore)
             }
+            .tag(StudentTab.today)
             .tabItem {
                 Label("Today", systemImage: "sun.max")
             }
 
             NavigationStack {
                 CalendarScheduleView(model: model)
-                    .settingsToolbar(model: model)
+                    .accountToolbar(model: model, mailBadgeStore: mailBadgeStore)
             }
+            .tag(StudentTab.schedule)
             .tabItem {
                 Label("Schedule", systemImage: "calendar.day.timeline.left")
             }
 
             NavigationStack {
-                StudyView(model: model)
-                    .settingsToolbar(model: model)
+                CoursesView(model: model)
+                    .accountToolbar(model: model, mailBadgeStore: mailBadgeStore)
             }
+            .tag(StudentTab.courses)
             .tabItem {
-                Label("Study", systemImage: "graduationcap")
+                Label("Courses", systemImage: "graduationcap")
             }
-
-            NavigationStack {
-                MailView(model: model, mailBadgeStore: mailBadgeStore)
-                    .settingsToolbar(model: model)
-            }
-            .tabItem {
-                Label("Inbox", systemImage: "envelope")
-            }
-            .badge(mailBadgeStore.tabBadgeCount)
 
             NavigationStack {
                 DiscoverView(model: model)
-                    .settingsToolbar(model: model)
+                    .accountToolbar(model: model, mailBadgeStore: mailBadgeStore)
             }
+            .tag(StudentTab.campus)
             .tabItem {
-                Label("Discover", systemImage: "sparkle.magnifyingglass")
+                Label("Campus", systemImage: "map")
             }
         }
         .task {
@@ -79,4 +80,8 @@ struct AppView: View {
             }
         }
     }
+}
+
+private enum StudentTab: Hashable {
+    case today, schedule, courses, campus
 }

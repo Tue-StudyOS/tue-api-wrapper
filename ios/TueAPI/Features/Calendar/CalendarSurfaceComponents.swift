@@ -6,7 +6,7 @@ struct CalendarHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Calendar")
-                .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                .font(.largeTitle.weight(.bold))
             Text(subtitle)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)

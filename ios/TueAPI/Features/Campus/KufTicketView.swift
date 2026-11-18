@@ -3,22 +3,22 @@ import SwiftUI
 struct KufTicketView: View {
     var model: AppModel
 
+    private let onClose: (() -> Void)?
     private let store: KufTicketStore?
     @State private var tickets: [KufTicket]
     @State private var isScannerPresented = false
     @State private var errorMessage: String?
 
-    init(model: AppModel, store: KufTicketStore? = KufTicketStore()) {
+    init(model: AppModel, store: KufTicketStore? = KufTicketStore(), onClose: (() -> Void)? = nil) {
         self.model = model
         self.store = store
+        self.onClose = onClose
         self._tickets = State(initialValue: store?.loadTickets() ?? [])
     }
 
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
-                header
-
                 if tickets.isEmpty {
                     emptyTicketState
                 } else {
@@ -31,12 +31,21 @@ struct KufTicketView: View {
             .padding(.bottom, 124)
         }
         .background(Color(uiColor: .systemGroupedBackground))
+        .navigationTitle("KuF pass")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    isScannerPresented = true
-                } label: {
-                    Label(tickets.isEmpty ? "Scan" : "Add", systemImage: "barcode.viewfinder")
+            if let onClose {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done", action: onClose)
+                }
+            }
+            if !tickets.isEmpty {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        isScannerPresented = true
+                    } label: {
+                        Label("Add barcode", systemImage: "barcode.viewfinder")
+                    }
                 }
             }
         }
@@ -47,20 +56,11 @@ struct KufTicketView: View {
             )
             .ignoresSafeArea()
         }
-        .alert("KuF card", isPresented: errorBinding) {
+        .privacySensitive()
+        .alert("KuF pass", isPresented: errorBinding) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(errorMessage ?? "")
-        }
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("KuF tickets")
-                .font(.system(.largeTitle, design: .rounded, weight: .bold))
-            Text("Local barcode passes for the Kraft und Fitnesshalle entry scanner.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
         }
     }
 

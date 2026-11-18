@@ -14,11 +14,14 @@ extension AppModel {
     }
 
     func refreshUpcomingLectures() async {
+        guard phase != .loading else { return }
         phase = .loading
+        let revision = credentialRevision
 
         do {
             let (client, credentials) = try almaAccessContext(for: "refresh Alma")
             let snapshot = try await client.fetchUpcomingLectures(credentials: credentials)
+            guard revision == credentialRevision else { return }
             try UpcomingLectureCache.save(snapshot)
             events = Self.upcomingOnly(snapshot.events)
             semesterCredits = snapshot.semesterCredits
@@ -26,9 +29,10 @@ extension AppModel {
             profileName = snapshot.personName
             almaSourceTerm = snapshot.sourceTerm
             phase = .loaded(snapshot.refreshedAt, snapshot.sourceTerm)
-            WidgetCenter.shared.reloadAllTimelines()
+            WidgetCenter.shared.reloadTimelines(ofKind: "UpcomingLecturesWidget")
             await rescheduleRemindersIfEnabled()
         } catch {
+            guard revision == credentialRevision else { return }
             phase = .failed(error.localizedDescription)
         }
     }

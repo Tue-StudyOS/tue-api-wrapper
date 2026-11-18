@@ -35,6 +35,7 @@ enum StudyBackgroundRefreshService {
         return refreshed
     }
 
+    @MainActor
     private static func refreshUpcomingLectures() async -> Bool {
         do {
             let keychain = KeychainCredentialsStore()
@@ -45,6 +46,7 @@ enum StudyBackgroundRefreshService {
 
             let snapshot = try await AlmaClient(baseURL: baseURL)
                 .fetchUpcomingLectures(credentials: credentials)
+            guard try keychain.load() == credentials else { return false }
             try UpcomingLectureCache.save(snapshot)
             return true
         } catch {
@@ -52,10 +54,13 @@ enum StudyBackgroundRefreshService {
         }
     }
 
+    @MainActor
     private static func refreshTasks() async -> Bool {
         do {
-            let snapshot = try await UniversityPortalClient(credentialsLoader: KeychainCredentialsStore())
-                .fetchTasksAndDeadlines()
+            let keychain = KeychainCredentialsStore()
+            guard let credentials = try keychain.load() else { return false }
+            let snapshot = try await UniversityPortalClient(credentialsLoader: keychain).fetchTasksAndDeadlines()
+            guard try keychain.load() == credentials else { return false }
             let visibleSnapshot = StudyTaskCache.visibleSnapshot(from: snapshot)
             try StudyTaskCache.save(visibleSnapshot)
             if UserDefaults.standard.bool(forKey: AppConfig.submissionRemindersEnabledKey) {

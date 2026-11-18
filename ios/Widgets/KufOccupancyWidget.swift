@@ -12,13 +12,13 @@ struct KufOccupancyProvider: TimelineProvider {
         KufOccupancyEntry(date: Date(), occupancy: nil, errorMessage: nil)
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (KufOccupancyEntry) -> Void) {
+    func getSnapshot(in context: Context, completion: @escaping @Sendable (KufOccupancyEntry) -> Void) {
         Task {
             completion(await loadEntry())
         }
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<KufOccupancyEntry>) -> Void) {
+    func getTimeline(in context: Context, completion: @escaping @Sendable (Timeline<KufOccupancyEntry>) -> Void) {
         Task {
             let entry = await loadEntry()
             let refreshSeconds = entry.occupancy?.refreshAfterSeconds ?? 900

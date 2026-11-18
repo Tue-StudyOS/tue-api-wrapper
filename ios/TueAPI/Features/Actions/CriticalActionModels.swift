@@ -23,6 +23,7 @@ enum CriticalActionLoadPhase: Equatable {
     case preparing
     case ready
     case submitting
+    case unknown
     case completed(String)
     case failed(String)
 

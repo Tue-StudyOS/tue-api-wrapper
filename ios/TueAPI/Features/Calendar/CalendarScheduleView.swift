@@ -3,9 +3,14 @@ import SwiftUI
 struct CalendarScheduleView: View {
     var model: AppModel
     @State private var selectedDay: Date?
+    @State private var showsWeek = false
 
     private var days: [Date] {
-        CalendarSchedule.days(from: model.events)
+        CalendarSchedule.days(from: model.events, additionalDates: workItems.compactMap(\.dueDate))
+    }
+
+    private var workItems: [TodayUrgencyItem] {
+        model.studyWorkItems.filter { $0.dueDate != nil }
     }
 
     private var visibleDay: Date? {
@@ -39,7 +44,7 @@ struct CalendarScheduleView: View {
     }
 
     private var footerTimestamp: String? {
-        guard topStatusLine == nil, let refreshedAt = model.timetableRefreshedAt else {
+        guard let refreshedAt = model.timetableRefreshedAt else {
             return nil
         }
         return "Last updated \(refreshedAt.formatted(date: .abbreviated, time: .shortened))"
@@ -62,6 +67,11 @@ struct CalendarScheduleView: View {
                 if days.isEmpty {
                     emptyState
                 } else {
+                    Picker("Schedule view", selection: $showsWeek) {
+                        Text("Day").tag(false)
+                        Text("Week").tag(true)
+                    }
+                    .pickerStyle(.segmented)
                     CalendarDayStrip(
                         days: days,
                         selectedDay: visibleDay ?? days[0],
@@ -70,11 +80,21 @@ struct CalendarScheduleView: View {
                     )
 
                     if let visibleDay {
-                        CalendarTimelineView(
-                            day: visibleDay,
-                            events: CalendarSchedule.events(on: visibleDay, from: model.events)
-                        )
+                        if showsWeek {
+                            let week = CalendarSchedule.calendar.dateInterval(of: .weekOfYear, for: visibleDay)
+                            ForEach(days.filter { week?.contains($0) == true }, id: \.self) { day in
+                                scheduleDay(day)
+                            }
+                        } else {
+                            scheduleDay(visibleDay)
+                        }
                     }
+                }
+
+                if let warning = model.tasksWarning {
+                    AppInlineStatusLine(text: warning, systemImage: "exclamationmark.triangle", tint: .orange)
+                } else if case .failed(let message) = model.tasksPhase {
+                    AppInlineStatusLine(text: message, systemImage: "exclamationmark.triangle", tint: .orange)
                 }
 
                 if let footerTimestamp {
@@ -116,6 +136,16 @@ struct CalendarScheduleView: View {
         .onChange(of: model.events) { _, _ in
             syncSelectedDay()
         }
+    }
+
+    private func scheduleDay(_ day: Date) -> some View {
+        CalendarTimelineView(
+            day: day,
+            events: CalendarSchedule.events(on: day, from: model.events),
+            workItems: workItems.filter { item in
+                item.dueDate.map { CalendarSchedule.isSameDay($0, day) } ?? false
+            }
+        )
     }
 
     private var headerSubtitle: String {
@@ -171,8 +201,9 @@ enum CalendarSchedule {
         return calendar
     }()
 
-    static func days(from events: [LectureEvent]) -> [Date] {
-        let starts = Array(Set(events.map { calendar.startOfDay(for: $0.startDate) })).sorted()
+    static func days(from events: [LectureEvent], additionalDates: [Date] = []) -> [Date] {
+        let dates = events.map(\.startDate) + additionalDates
+        let starts = Array(Set(dates.map { calendar.startOfDay(for: $0) })).sorted()
         guard let firstDay = starts.first, let lastDay = starts.last else {
             return []
         }

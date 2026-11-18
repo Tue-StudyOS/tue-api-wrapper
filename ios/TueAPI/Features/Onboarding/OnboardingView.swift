@@ -1,178 +1,129 @@
 import SwiftUI
 
 struct OnboardingView: View {
-    @Bindable var model: AppModel
-    @State private var username = ""
-    @State private var password = ""
-
-    private var canContinue: Bool {
-        username.trimmedOrNil != nil && !password.isEmpty
-    }
-
-    private var statusMessage: String? {
-        if case .failed(let message) = model.phase {
-            return message
-        }
-        return nil
-    }
+    var model: AppModel
+    @Binding var exploreWithoutAccount: Bool
+    @Binding var finishingSetup: Bool
+    @State private var showsSignIn = false
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                header
+            VStack(alignment: .leading, spacing: 20) {
+                Text("Your university in one place")
+                    .font(.largeTitle.bold())
+                    .accessibilityAddTraits(.isHeader)
 
-                AppSurfaceCard {
-                    VStack(alignment: .leading, spacing: 16) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("University login")
-                                .font(.title3.weight(.semibold))
+                Text("See your lectures, deadlines and official documents.")
+                    .foregroundStyle(.secondary)
 
-                            Text("Use the same login you use for Alma. Your details stay in the device Keychain.")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-
-                        UniversityCredentialsFields(
-                            username: $username,
-                            password: $password
-                        )
-
-                        if let statusMessage {
-                            StatusBanner(
-                                title: "Could not save credentials",
-                                message: statusMessage,
-                                systemImage: "exclamationmark.triangle"
-                            )
-                        } else {
-                            AppInlineStatusLine(
-                                text: "You can update or remove this login in Settings.",
-                                systemImage: "lock.shield",
-                                tint: .accentColor
-                            )
-                        }
-
-                        Button(action: saveCredentials) {
-                            Text("Continue")
-                                .font(.headline)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 15)
-                                .foregroundStyle(.white)
-                                .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!canContinue)
-                        .opacity(canContinue ? 1 : 0.55)
-                    }
+                Button("Connect university account") {
+                    showsSignIn = true
                 }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
 
-                AppSurfaceCard {
-                    Text("What you get after sign-in")
-                        .font(.headline)
-
-                    OnboardingCapabilityRow(
-                        title: "Personal timetable",
-                        subtitle: "Upcoming Alma lectures, rooms, and your current study term.",
-                        systemImage: "calendar.badge.clock",
-                        tint: .accentColor
-                    )
-
-                    OnboardingCapabilityRow(
-                        title: "Study overview",
-                        subtitle: "Tasks, deadlines, and grades from Moodle and ILIAS.",
-                        systemImage: "checklist.checked",
-                        tint: .orange
-                    )
-
-                    OnboardingCapabilityRow(
-                        title: "University inbox",
-                        subtitle: "Direct access to your Uni Tuebingen mailboxes inside the app.",
-                        systemImage: "envelope.badge",
-                        tint: .teal
-                    )
+                Button("Explore Campus without signing in") {
+                    exploreWithoutAccount = true
                 }
+                .frame(minHeight: 44)
             }
-            .padding(20)
-            .padding(.top, 8)
-            .padding(.bottom, 32)
+            .frame(maxWidth: 480, alignment: .leading)
+            .padding(24)
+            .frame(maxWidth: .infinity)
         }
-        .background(background.ignoresSafeArea())
-        .scrollIndicators(.hidden)
         .toolbar(.hidden, for: .navigationBar)
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(Color.accentColor.opacity(0.12))
-                Image(systemName: "graduationcap.fill")
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(Color.accentColor)
-            }
-            .frame(width: 52, height: 52)
-
-            Text("Connect your university account")
-                .font(.system(.largeTitle, design: .rounded, weight: .bold))
-
-            Text("Sign in once to bring your timetable, courses, tasks, grades, and university mail into Study Hub.")
-                .font(.body)
-                .foregroundStyle(.secondary)
-
-            Text("ALMA  MOODLE  ILIAS  MAIL")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(Color.accentColor)
-                .tracking(1.2)
-                .textCase(.uppercase)
-        }
-    }
-
-    private var background: some View {
-        LinearGradient(
-            colors: [
-                Color.accentColor.opacity(0.14),
-                Color(uiColor: .systemGroupedBackground),
-                Color(uiColor: .systemGroupedBackground)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
-
-    private func saveCredentials() {
-        model.saveCredentials(username: username, password: password)
-        if model.hasCredentials {
-            password = ""
+        .navigationDestination(isPresented: $showsSignIn) {
+            UniversityConnectionView(model: model, finishingSetup: $finishingSetup)
         }
     }
 }
 
-private struct OnboardingCapabilityRow: View {
-    let title: String
-    let subtitle: String
-    let systemImage: String
-    let tint: Color
+struct UniversityConnectionView: View {
+    var model: AppModel
+    @Binding var finishingSetup: Bool
+    @State private var username = ""
+    @State private var password = ""
+    @State private var checks: [UniversityConnectionCheck] = []
+    @State private var isChecking = false
+    @State private var showSaveError = false
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(tint.opacity(0.12))
-                Image(systemName: systemImage)
-                    .font(.headline)
-                    .foregroundStyle(tint)
+        Form {
+            if !isChecking && checks.isEmpty {
+                Section {
+                    UniversityCredentialsFields(username: $username, password: $password)
+                } footer: {
+                    Text("Your login is stored in the Keychain on this device.")
+                }
+                Button("Connect services", action: connect)
+                    .disabled(username.trimmedOrNil == nil || password.isEmpty)
+                if showSaveError, case .failed(let message) = model.phase {
+                    Label(message, systemImage: "exclamationmark.triangle")
+                }
+            } else {
+                Section("Services") {
+                    if isChecking {
+                        ProgressView("Checking university services")
+                    }
+                    ForEach(checks) { check in
+                        LabeledContent(check.service, value: check.status)
+                    }
+                }
+                if !isChecking {
+                    Button("Continue to Today") { finishingSetup = false }
+                }
             }
-            .frame(width: 44, height: 44)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline)
-
-                Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer(minLength: 0)
         }
+        .navigationTitle("Connect account")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(finishingSetup)
+        .task(id: isChecking) {
+            guard isChecking else { return }
+            checks = await UniversityConnectionCheck.fetch(using: model)
+            guard !Task.isCancelled else { return }
+            isChecking = false
+        }
+    }
+
+    private func connect() {
+        finishingSetup = true
+        model.saveCredentials(username: username, password: password)
+        guard model.hasCredentials else {
+            finishingSetup = false
+            showSaveError = true
+            return
+        }
+        password = ""
+        showSaveError = false
+        isChecking = true
+    }
+}
+
+private struct UniversityConnectionCheck: Identifiable {
+    let service: String
+    let status: String
+    var id: String { service }
+
+    @MainActor
+    static func fetch(using model: AppModel) async -> [Self] {
+        async let alma: Void = model.refreshUpcomingLectures()
+        async let courses: Void = model.refreshTasks()
+        _ = await (alma, courses)
+
+        let almaStatus: String
+        if case .loaded = model.phase { almaStatus = "Timetable checked" }
+        else { almaStatus = "Could not check timetable" }
+
+        let courseStatus: String
+        switch model.tasksPhase {
+        case .loaded:
+            courseStatus = model.tasksWarning ?? "Deadlines checked"
+        default:
+            courseStatus = "Could not check deadlines"
+        }
+        return [
+            Self(service: "Alma", status: almaStatus),
+            Self(service: "Moodle and ILIAS", status: courseStatus)
+        ]
     }
 }

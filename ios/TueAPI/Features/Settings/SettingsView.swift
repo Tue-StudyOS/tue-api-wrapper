@@ -4,6 +4,7 @@ struct SettingsView: View {
     @Bindable var model: AppModel
     @State private var username = ""
     @State private var password = ""
+    @State private var showsDisconnectConfirmation = false
     @State private var activeSheet: SettingsSheet?
 
     var body: some View {
@@ -17,25 +18,49 @@ struct SettingsView: View {
 
             Section {
                 Button("Save login") {
+                    let previous = model.credentialRevision
                     model.saveCredentials(username: username, password: password)
-                    password = ""
+                    if model.phase == .idle || model.credentialRevision != previous {
+                        password = ""
+                        Task {
+                            async let alma: Void = model.refreshUpcomingLectures()
+                            async let tasks: Void = model.refreshTasks()
+                            _ = await (alma, tasks)
+                        }
+                    }
                 }
                 .disabled(username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty)
 
                 if model.hasCredentials {
-                    Button("Remove login", role: .destructive) {
-                        model.deleteCredentials()
-                        password = ""
+                    Button("Disconnect account", role: .destructive) {
+                        showsDisconnectConfirmation = true
                     }
                 }
             }
 
-            Section {
-                StatusBanner(
-                    title: model.hasCredentials ? "University account connected" : "University account not connected",
-                    message: model.hasCredentials ? "Study Hub can refresh Alma, Moodle, ILIAS, and mail on this device. Widgets only read cached lecture data." : "Connect your account to sync your timetable, tasks, grades, and university mail.",
-                    systemImage: model.hasCredentials ? "lock.shield" : "lock"
-                )
+            Section("Source status") {
+                if model.hasCredentials {
+                    LabeledContent("University login", value: "Saved on this device")
+                    if model.phase == .loading {
+                        ProgressView("Checking Alma")
+                    } else if case .loaded(let date, _) = model.phase {
+                        LabeledContent("Alma timetable", value: date.formatted(date: .abbreviated, time: .shortened))
+                    } else if case .failed(let message) = model.phase {
+                        Text(message).foregroundStyle(.secondary)
+                    }
+                    if let warning = model.tasksWarning {
+                        Text(warning).foregroundStyle(.secondary)
+                    } else if case .loaded(let date) = model.tasksPhase {
+                        LabeledContent("Moodle and ILIAS", value: date.formatted(date: .abbreviated, time: .shortened))
+                    } else if case .failed(let message) = model.tasksPhase {
+                        Text(message).foregroundStyle(.secondary)
+                    }
+                } else {
+                    Text("Connect your account to check your timetable, work and university mail.")
+                    if case .failed(let message) = model.phase {
+                        Text(message).foregroundStyle(.secondary)
+                    }
+                }
             }
 
             Section {
@@ -47,13 +72,6 @@ struct SettingsView: View {
                 Text("Alma connection")
             } footer: {
                 Text("Default Alma address: https://alma.uni-tuebingen.de.")
-            }
-
-            Section("Widget cache") {
-                Text("Upcoming lectures are cached in the app group after each refresh.")
-                Text(AppGroup.identifier)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
             }
 
             Section("Assistant") {
@@ -120,7 +138,16 @@ struct SettingsView: View {
                 Text("Reminds once when an open ILIAS submission has no recorded upload and is due within three days.")
             }
         }
-        .navigationTitle("Settings")
+        .navigationTitle("Connections and reminders")
+        .confirmationDialog("Disconnect university account?", isPresented: $showsDisconnectConfirmation, titleVisibility: .visible) {
+            Button("Disconnect", role: .destructive) {
+                model.deleteCredentials()
+                password = ""
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This removes your saved login, timetable and deadlines from this device.")
+        }
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .appFeedback:

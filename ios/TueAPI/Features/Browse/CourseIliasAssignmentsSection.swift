@@ -10,8 +10,24 @@ struct CourseIliasAssignmentsSection: View {
         Section("ILIAS assignments") {
             content
         }
-        .task(id: target.absoluteString) {
-            await load()
+        .task(id: target.absoluteString) { await load() }
+        if case .loaded(let page) = phase {
+            materialSection(page)
+        }
+    }
+
+    @ViewBuilder
+    private func materialSection(_ page: IliasCourseAssignmentsPage) -> some View {
+        let exerciseURLs = Set(page.exercises.map { $0.exercise.url })
+        let materials = page.course.sections.flatMap(\.items).filter { !exerciseURLs.contains($0.url) }
+        if !materials.isEmpty {
+            Section("ILIAS materials") {
+                ForEach(materials) { item in
+                    if let url = URL(string: item.url), url.scheme == "https" {
+                        Link(item.label, destination: url)
+                    }
+                }
+            }
         }
     }
 
@@ -48,6 +64,7 @@ struct CourseIliasAssignmentsSection: View {
             }
             let page = try await IliasOnDeviceClient(credentials: credentials)
                 .fetchCourseAssignments(target: target.absoluteString)
+            guard !Task.isCancelled else { return }
             phase = .loaded(page)
         } catch {
             phase = .failed(error.localizedDescription)

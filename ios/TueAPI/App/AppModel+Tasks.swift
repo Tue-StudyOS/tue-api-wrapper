@@ -2,11 +2,14 @@ import Foundation
 
 extension AppModel {
     func refreshTasks() async {
+        guard tasksPhase != .loading else { return }
         tasksPhase = .loading
+        let revision = credentialRevision
 
         do {
             let snapshot = try await UniversityPortalClient(credentialsLoader: keychain)
                 .fetchTasksAndDeadlines()
+            guard revision == credentialRevision else { return }
             let visibleSnapshot = StudyTaskCache.visibleSnapshot(from: snapshot)
             tasks = visibleSnapshot.tasks
             iliasAssignments = visibleSnapshot.iliasAssignments
@@ -16,6 +19,7 @@ extension AppModel {
             try? StudyTaskCache.save(visibleSnapshot)
             await rescheduleSubmissionRemindersIfEnabled()
         } catch UniversityPortalError.missingCredentials {
+            guard revision == credentialRevision else { return }
             tasks = []
             iliasAssignments = []
             deadlines = []
@@ -25,6 +29,7 @@ extension AppModel {
             SubmissionReminderScheduler.clearReminderHistory()
             await SubmissionReminderScheduler.cancelScheduledReminders()
         } catch {
+            guard revision == credentialRevision else { return }
             tasksWarning = nil
             tasksPhase = .failed(error.localizedDescription)
         }

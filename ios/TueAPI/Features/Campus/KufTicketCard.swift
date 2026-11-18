@@ -16,7 +16,7 @@ struct KufTicketCard: View {
                 if let displayName = ticket.displayName, !displayName.isEmpty {
                     Text(displayName)
                         .font(.headline)
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(.black)
                 }
             }
 
@@ -42,6 +42,13 @@ struct KufTicketCard: View {
         .shadow(color: .black.opacity(0.08), radius: 20, x: 0, y: 10)
     }
 
+    private var barcodeHeight: CGFloat {
+        switch KufBarcodeRenderer.renderFormat(for: ticket.symbology) {
+        case .qr, .aztec: 240
+        default: 128
+        }
+    }
+
     @ViewBuilder
     private var barcode: some View {
         if let image = KufBarcodeRenderer.image(for: ticket) {
@@ -49,7 +56,7 @@ struct KufTicketCard: View {
                 .interpolation(.none)
                 .resizable()
                 .scaledToFit()
-                .frame(maxWidth: .infinity, minHeight: 92, maxHeight: 128)
+                .frame(maxWidth: .infinity, minHeight: 92, maxHeight: barcodeHeight)
                 .accessibilityLabel("KuF barcode")
         } else {
             ContentUnavailableView(

@@ -2,7 +2,7 @@ import Foundation
 
 struct AlmaClient {
     let baseURL: URL
-    private let session: URLSession
+    let session: URLSession
 
     init(baseURL: URL) {
         let configuration = URLSessionConfiguration.ephemeral

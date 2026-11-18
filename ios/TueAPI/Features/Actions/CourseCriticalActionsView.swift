@@ -7,6 +7,7 @@ struct CourseCriticalActionsView: View {
     @State private var phase: CriticalActionLoadPhase = .idle
     @State private var intent: CriticalActionIntent?
     @State private var actionError: String?
+    @State private var reviewedOption: AlmaCourseRegistrationOption?
 
     var body: some View {
         if course.detailURL != nil {
@@ -20,7 +21,10 @@ struct CourseCriticalActionsView: View {
                         Label("Prepare Alma registration", systemImage: "person.badge.plus")
                     }
                 }
-                .disabled(phase.isBusy)
+                .disabled(phase.isBusy || phase == .unknown)
+                if phase == .unknown, let url = course.detailURL {
+                    Link("Check registration in Alma", destination: url)
+                }
 
                 actionStatus
             }
@@ -47,6 +51,12 @@ struct CourseCriticalActionsView: View {
         switch phase {
         case .failed(let message):
             StatusBanner(title: "Action unavailable", message: message, systemImage: "exclamationmark.triangle")
+        case .unknown:
+            StatusBanner(
+                title: "Registration status unknown",
+                message: "Check this course in Alma before sending another request.",
+                systemImage: "exclamationmark.circle"
+            )
         case .completed(let message):
             StatusBanner(title: "Action submitted", message: message, systemImage: "checkmark.circle")
         default:
@@ -84,6 +94,7 @@ struct CourseCriticalActionsView: View {
                 return
             }
 
+            reviewedOption = options.options[0]
             intent = CriticalActionIntent(
                 kind: .almaCourseRegistration,
                 portal: "Alma",
@@ -111,7 +122,7 @@ struct CourseCriticalActionsView: View {
             actionError = "This course does not expose an Alma detail URL."
             return
         }
-        guard intent.kind == .almaCourseRegistration else {
+        guard intent.kind == .almaCourseRegistration, let reviewedOption else {
             actionError = "This action intent is incomplete. Prepare it again."
             return
         }
@@ -121,14 +132,22 @@ struct CourseCriticalActionsView: View {
             let (client, credentials) = try model.almaAccessContext(for: "submit Alma registration")
             let result = try await client.registerForCourse(
                 detailURL: detailURL,
-                credentials: credentials
+                credentials: credentials,
+                planelementID: reviewedOption.planelementID
             )
             self.intent = nil
             actionError = nil
-            phase = .completed(result.messages.first ?? "Alma registration submitted.")
+            switch result.status {
+            case "registered":
+                phase = .completed(result.messages.first ?? "Alma reports that you are registered.")
+            case "not_registered":
+                phase = .failed(result.messages.first ?? "Alma reports that you are not registered.")
+            default:
+                phase = .unknown
+            }
         } catch {
-            actionError = error.localizedDescription
-            phase = .ready
+            self.intent = nil
+            phase = .unknown
         }
     }
 

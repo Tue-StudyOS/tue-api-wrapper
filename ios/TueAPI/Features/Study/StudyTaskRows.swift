@@ -11,7 +11,7 @@ struct StudyDeadlineRow: View {
 
             HStack(spacing: 8) {
                 if let courseName = deadline.courseName {
-                    Label(courseName, systemImage: "book.closed")
+                    Label(HTMLText.decodeEntities(courseName), systemImage: "book.closed")
                 }
                 if let due = deadline.formattedTime ?? deadline.dueAt {
                     Label(due, systemImage: "clock")

@@ -148,13 +148,9 @@ struct StudyTasksView: View {
                     }
                 }
             } else if model.deadlines.isEmpty {
-                ContentUnavailableView(
-                    "No deadlines",
-                    systemImage: "calendar.badge.checkmark",
-                    description: Text("No actionable Moodle deadlines are visible right now.")
-                )
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 18)
+                Text("No actionable Moodle deadlines are visible.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             } else {
                 VStack(spacing: 14) {
                     ForEach(Array(model.deadlines.enumerated()), id: \.element.id) { index, deadline in
@@ -179,13 +175,9 @@ struct StudyTasksView: View {
                     }
                 }
             } else if model.tasks.isEmpty {
-                ContentUnavailableView(
-                    "No ILIAS tasks",
-                    systemImage: "checklist",
-                    description: Text("No current task rows are visible in ILIAS.")
-                )
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 18)
+                Text("No current tasks are visible in ILIAS.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             } else {
                 VStack(spacing: 14) {
                     ForEach(Array(model.tasks.enumerated()), id: \.element.id) { index, task in
@@ -210,13 +202,9 @@ struct StudyTasksView: View {
                     }
                 }
             } else if model.iliasAssignments.isEmpty {
-                ContentUnavailableView(
-                    "No ILIAS submissions",
-                    systemImage: "tray.and.arrow.up",
-                    description: Text("No visible exercise submissions were found in your joined ILIAS courses.")
-                )
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 18)
+                Text("No exercise submissions are visible in joined ILIAS courses.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             } else {
                 VStack(spacing: 14) {
                     ForEach(Array(model.iliasAssignments.enumerated()), id: \.element.id) { index, deadline in

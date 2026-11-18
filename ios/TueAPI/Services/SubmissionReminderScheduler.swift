@@ -211,7 +211,7 @@ enum SubmissionReminderScheduler {
     }
 }
 
-private enum SubmissionReminderDateParser {
+enum SubmissionReminderDateParser {
     private static let formats = [
         "d. MMM yyyy, HH:mm",
         "dd. MMM yyyy, HH:mm",
@@ -226,6 +226,17 @@ private enum SubmissionReminderDateParser {
         Locale(identifier: "en_US_POSIX")
     ]
 
+    private static let formatters: [DateFormatter] = locales.flatMap { locale in
+        formats.map { format in
+            let formatter = DateFormatter()
+            formatter.calendar = Calendar(identifier: .gregorian)
+            formatter.locale = locale
+            formatter.timeZone = TimeZone(identifier: "Europe/Berlin")
+            formatter.dateFormat = format
+            return formatter
+        }
+    }
+
     static func date(from value: String) -> Date? {
         let cleaned = value
             .replacingOccurrences(of: "\u{00a0}", with: " ")
@@ -235,16 +246,9 @@ private enum SubmissionReminderDateParser {
             return nil
         }
 
-        for locale in locales {
-            for format in formats {
-                let formatter = DateFormatter()
-                formatter.calendar = Calendar(identifier: .gregorian)
-                formatter.locale = locale
-                formatter.timeZone = TimeZone(identifier: "Europe/Berlin")
-                formatter.dateFormat = format
-                if let date = formatter.date(from: cleaned) {
-                    return date
-                }
+        for formatter in formatters {
+            if let date = formatter.date(from: cleaned) {
+                return date
             }
         }
         return nil

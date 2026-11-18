@@ -2,7 +2,7 @@
 
 Native SwiftUI client for TUE API wrapper data.
 
-This target does not call the Next.js or FastAPI surfaces for native credentialed data flows. It logs in to Alma and Moodle directly for grades, reads Uni Tuebingen mail directly over TLS IMAP, stores university credentials in Keychain from Settings, parses the Alma timetable iCalendar feed in Swift, browses public current lectures, caches upcoming lectures in an app group container, exposes that cache through WidgetKit plus Live Activities, and ships an on-device study assistant test screen. The app-feedback sheet creates GitHub issues directly from the client when `GITHUB_FEEDBACK_TOKEN` is configured as a build setting.
+This target uses native clients for credentialed data flows. It logs in to Alma and Moodle directly for grades, reads Uni Tuebingen mail directly over TLS IMAP, stores university credentials in Keychain from Settings, parses the Alma timetable iCalendar feed in Swift, browses public current lectures, caches upcoming lectures in an app group container, exposes that cache through WidgetKit plus Live Activities, and ships an on-device study assistant test screen. The app-feedback sheet creates GitHub issues directly from the client when `GITHUB_FEEDBACK_TOKEN` is configured as a build setting.
 
 ## Preview
 
@@ -64,6 +64,12 @@ Run a local unsigned release sanity check without Apple signing:
 ```bash
 npm run release-check:ios
 ```
+
+## KuF Pass
+
+Open **Campus → KuF pass** and scan the barcode from your Hochschulsport confirmation. The app keeps the scanned format, including QR when supplied, and displays the saved pass offline.
+
+Add **KuF Pass** under **TUE API** in the Home Screen or Lock Screen widget gallery. Tapping the widget opens the pass in the app. You can use the pass without connecting a university account.
 
 ## App Groups
 

@@ -18,6 +18,7 @@ final class AppModel {
     var phase: LoadPhase = .idle
     var browsePhase: BrowsePhase = .idle
     var hasCredentials = false
+    private(set) var credentialRevision = 0
     var liveActivityMessage: String?
     var remindersEnabled: Bool {
         didSet {
@@ -72,13 +73,13 @@ final class AppModel {
 
     init() {
         self.baseURLString = UserDefaults.standard.string(forKey: AppConfig.almaBaseURLDefaultsKey) ?? "https://alma.uni-tuebingen.de"
-        let cachedSnapshot = UpcomingLectureCache.load()
+        let hasSavedCredentials = ((try? keychain.load()) ?? nil) != nil
+        let cachedSnapshot = hasSavedCredentials ? UpcomingLectureCache.load() : nil
         self.events = Self.upcomingOnly(cachedSnapshot?.events ?? [])
         self.semesterCredits = cachedSnapshot?.semesterCredits
         self.timetableRefreshedAt = cachedSnapshot?.refreshedAt
         self.profileName = cachedSnapshot?.personName
         self.almaSourceTerm = cachedSnapshot?.sourceTerm
-        let hasSavedCredentials = ((try? keychain.load()) ?? nil) != nil
         self.hasCredentials = hasSavedCredentials
         if hasSavedCredentials, let cachedTasks = StudyTaskCache.load() {
             self.tasks = cachedTasks.tasks
@@ -106,7 +107,10 @@ final class AppModel {
         }
 
         do {
-            try keychain.save(AlmaCredentials(username: trimmedUsername, password: password))
+            let credentials = AlmaCredentials(username: trimmedUsername, password: password)
+            let existing = try keychain.load()
+            try keychain.save(credentials)
+            if existing != credentials { resetUniversityData() }
             hasCredentials = true
             phase = .idle
         } catch {
@@ -172,24 +176,40 @@ final class AppModel {
         do {
             try keychain.delete()
             hasCredentials = false
-            profileName = nil
-            almaSourceTerm = nil
-            tasks = []
-            iliasAssignments = []
-            deadlines = []
-            tasksWarning = nil
+            resetUniversityData()
             tasksPhase = .unavailable
-            StudyTaskCache.clear()
+            remindersEnabled = false
+            reminderMessage = nil
             submissionRemindersEnabled = false
             submissionReminderMessage = nil
             SubmissionReminderScheduler.clearReminderHistory()
             Task {
-                await SubmissionReminderScheduler.cancelScheduledReminders()
+                _ = await LectureReminderScheduler.cancelScheduledReminders()
+                _ = await SubmissionReminderScheduler.cancelScheduledReminders()
+                await endLiveActivities()
             }
             phase = .idle
         } catch {
             phase = .failed(error.localizedDescription)
         }
+    }
+
+    private func resetUniversityData() {
+        credentialRevision += 1
+        events = []
+        semesterCredits = nil
+        timetableRefreshedAt = nil
+        profileName = nil
+        almaSourceTerm = nil
+        tasks = []
+        iliasAssignments = []
+        deadlines = []
+        tasksWarning = nil
+        tasksPhase = .idle
+        UpcomingLectureCache.clear()
+        StudyTaskCache.clear()
+        UserDefaults.standard.removeObject(forKey: StudentCourseLinks.storageKey)
+        WidgetCenter.shared.reloadTimelines(ofKind: "UpcomingLecturesWidget")
     }
 
     func startLiveActivity(for event: LectureEvent) {

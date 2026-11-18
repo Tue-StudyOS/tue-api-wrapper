@@ -22,6 +22,10 @@ struct UpcomingLectureCache {
         return try? JSONDecoder().decode(LectureSnapshot.self, from: data)
     }
 
+    static func clear() {
+        UserDefaults(suiteName: AppGroup.identifier)?.removeObject(forKey: key)
+    }
+
     static func save(_ snapshot: LectureSnapshot) throws {
         guard let defaults = UserDefaults(suiteName: AppGroup.identifier) else {
             throw UpcomingLectureCacheError.sharedContainerUnavailable

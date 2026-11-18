@@ -1,8 +1,0 @@
-node_modules
-dist
-web/dist
-npm-debug.log
-data
-release
-.env
-.env.*

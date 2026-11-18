@@ -1,6 +1,6 @@
 # Agent Instructions
 
-This repository wraps University of Tuebingen study systems across Python, iOS, Electron, Next.js, ChatGPT, and CLI surfaces.
+This repository wraps University of Tuebingen study systems across Python, iOS, and CLI surfaces.
 
 ## Principles
 
@@ -13,11 +13,8 @@ This repository wraps University of Tuebingen study systems across Python, iOS, 
 ## Common Commands
 
 - Python tests: `cd package && pytest`
-- Desktop build: `npm --prefix desktop run build`
-- Desktop dev: `npm run dev:desktop`
 - iOS project: `npm run generate:ios`
 - iOS simulator build: `npm run build:ios`
-- Next.js build: `npm --prefix nextjs run build`
 
 ## Endpoint Work
 
@@ -28,4 +25,4 @@ This repository wraps University of Tuebingen study systems across Python, iOS, 
 
 ## Native Client Direction
 
-iOS should implement as much as practical in Swift-native clients, using the Python wrapper as the request and parsing reference. Electron can use its managed local Python sidecar for the same behavior without depending on hosted Cloud Run for authenticated flows.
+iOS should implement as much as practical in Swift-native clients, using the Python wrapper as the request and parsing reference. The local Python servers can expose shared behavior without sending credentials to hosted services.

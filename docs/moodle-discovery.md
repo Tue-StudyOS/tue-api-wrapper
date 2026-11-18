@@ -16,7 +16,7 @@ This HAR is valuable because it reflects a normal student session instead of adm
 
 ## Existing gap
 
-The current repo supports Alma, ILIAS, and mail, but no Moodle surface exists yet in the Python API, Go CLI, Next.js dashboard, or ChatGPT app.
+This discovery note predates the current Moodle client. Check the SDK and MCP documentation for implemented coverage.
 
 ## High-value features to add first
 
@@ -222,9 +222,7 @@ If we keep this aligned with the rest of the repo, the first Python client addit
 Then expose them in:
 
 - FastAPI routes under `/api/moodle/...`
-- Go CLI commands under `tue moodle ...`
-- Next.js dashboard cards
-- ChatGPT tools for deadlines, courses, and enrolment checks
+- `tue study` and the local MCP server
 
 ## Confidence notes
 

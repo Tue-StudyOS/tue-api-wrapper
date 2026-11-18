@@ -29,7 +29,7 @@ The same university username and password are used for Alma, ILIAS, Moodle, and 
 Most local MCP clients use stdio:
 
 ```bash
-tue-mcp
+tue mcp
 ```
 
 Example MCP client command:
@@ -38,20 +38,21 @@ Example MCP client command:
 {
   "mcpServers": {
     "tue-api-wrapper": {
-      "command": "tue-mcp"
+      "command": "tue",
+      "args": ["mcp"]
     }
   }
 }
 ```
 
-If the command is not on your PATH, use the full path to the virtualenv executable, for example `package/.venv/bin/tue-mcp`.
+If the command is not on your PATH, use the full path as `command`, for example `package/.venv/bin/tue`, and retain `"args": ["mcp"]`.
 
 ## Run With HTTP
 
 For HTTP-based tools:
 
 ```bash
-tue-mcp --transport streamable-http --host 127.0.0.1 --port 8765
+tue mcp --transport streamable-http --host 127.0.0.1 --port 8765
 ```
 
 The MCP endpoint is:
@@ -66,7 +67,7 @@ For independent course search, opt-in raw course responses, and observed portal
 request contracts, see [Agent course access](agent-course-access.md).
 
 The `study` group adds read-only study tools. Enable only this group with
-`tue-mcp --service study`; omit `--service` to enable all groups except `raw`. The server
+`tue mcp --service study`; omit `--service` to enable all groups except `raw`. The server
 also retains the existing service groups listed below.
 
 - `study_radar_read` reads the upcoming Alma timetable, bounded ILIAS assignments
@@ -102,10 +103,10 @@ independent user review. Use the interactive CLI described below.
 After installing the package, find the course or exam detail URL in Alma and run:
 
 ```bash
-tue-register inspect course --url 'https://alma.uni-tuebingen.de/alma/...'
-tue-register options course --url 'https://alma.uni-tuebingen.de/alma/...'
-tue-register prepare course --url 'https://alma.uni-tuebingen.de/alma/...' --option '<planelement-id>'
-tue-register execute course --url 'https://alma.uni-tuebingen.de/alma/...' --option '<planelement-id>'
+tue register inspect course --url 'https://alma.uni-tuebingen.de/alma/...'
+tue register options course --url 'https://alma.uni-tuebingen.de/alma/...'
+tue register prepare course --url 'https://alma.uni-tuebingen.de/alma/...' --option '<planelement-id>'
+tue register execute course --url 'https://alma.uni-tuebingen.de/alma/...' --option '<planelement-id>'
 ```
 
 Replace `course` with `exam` for an exam. Provide `--exam-id` when needed to
@@ -158,25 +159,25 @@ post and quiz-attempt writes have not been verified during development.
 After installing the package, use:
 
 ```bash
-tue-study --days 30 --limit 50
-tue-study --days 30 --limit 50 --changes
-tue-study timetable --term "Winter 2026/27" --days 7
-tue-study exams
-tue-study content --target crs/12345
-tue-study moodle-courses --limit 20 --offset 0
-tue-study moodle-content --target 12345
-tue-study moodle-assignment --target 12345
-tue-study moodle-submission-inspect --target 12345
-tue-study mail-message --target 123 --mailbox INBOX
-tue-study buildings
-tue-study rooms --query "Gruppenraum"
+tue study --days 30 --limit 50
+tue study --days 30 --limit 50 --changes
+tue study timetable --term "Winter 2026/27" --days 7
+tue study exams
+tue study content --target crs/12345
+tue study moodle-courses --limit 20 --offset 0
+tue study moodle-content --target 12345
+tue study moodle-assignment --target 12345
+tue study moodle-submission-inspect --target 12345
+tue study mail-message --target 123 --mailbox INBOX
+tue study buildings
+tue study rooms --query "Gruppenraum"
 ```
 
 The first command reads current observations without saving a snapshot. The
 second compares and updates the same account-specific snapshot used by MCP.
 Both write JSON to stdout and return exit status 1 when any source fails.
 `--days` applies to Moodle and the timetable; ILIAS date strings are returned
-as displayed. `tue-study --help` lists all available resources. The public
+as displayed. `tue study --help` lists all available resources. The public
 `buildings`, `canteens`, `seats`, `people`, and `rooms` commands need no login.
 
 Public tools:
@@ -196,4 +197,4 @@ Authenticated tools:
 
 ## Design Notes
 
-This MCP server is intended for local student projects and agent experiments. It keeps university credentials in the local process and does not provide multi-user hosted authentication. For a public hosted ChatGPT app, prefer public tools or add a real account-linking design first.
+This MCP server is intended for local student projects and agent experiments. It keeps university credentials in the local process and does not provide multi-user hosted authentication. Do not expose authenticated tools to an untrusted host.

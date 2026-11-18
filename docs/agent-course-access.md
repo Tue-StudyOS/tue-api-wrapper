@@ -4,7 +4,7 @@ This describes the repository's observed contracts, not a guaranteed public API.
 University systems may change, and network or VPN access may be required. Use
 only the student's own authorized account. Do not bypass access controls.
 
-Run `tue-study connectivity` or MCP `campus_connectivity` to check university
+Run `tue study connectivity` or MCP `campus_connectivity` to check university
 service reachability without credentials. On macOS this also reports eduVPN's
 connection status, but cannot identify the active institution or prove that
 university routes use the tunnel. On other platforms VPN status is unknown.
@@ -16,8 +16,8 @@ VPN login credentials, connect a tunnel, or disconnect a user's tunnel.
 ## Independent live course search
 
 ```bash
-tue-study course-search --query 'Machine Learning' --limit 20
-tue-study course-search --query 'Machine Learning' --term '<alma-search-term-value>' --offset 20
+tue study course-search --query 'Machine Learning' --limit 20
+tue study course-search --query 'Machine Learning' --term '<alma-search-term-value>' --offset 20
 ```
 
 MCP `study_course_search` exposes the same operation. It queries each service
@@ -45,8 +45,8 @@ Use Alma's module-description filters to search backwards from a degree type
 and subject. Fetch the current option labels and values first:
 
 ```bash
-tue-study alma-program-filters
-tue-study alma-program-search --degree 89 --subject 2385 --element-type 5 --limit 50
+tue study alma-program-filters
+tue study alma-program-search --degree 89 --subject 2385 --element-type 5 --limit 50
 ```
 
 The example values were observed on 15 November 2026 for `Master`,
@@ -73,7 +73,7 @@ and programme rules, and check current offerings and registration separately.
 ## Moodle course contents and explicit links
 
 ```bash
-tue-study moodle-content --target 12345
+tue study moodle-content --target 12345
 ```
 
 MCP `study_moodle_content(course_id)` provides the same structured read. It
@@ -95,8 +95,8 @@ An assignment activity ID is the numeric `id` in its Moodle `/mod/assign/view.ph
 URL, not the course ID. The course-content reader lists activity URLs.
 
 ```bash
-tue-study moodle-assignment --target 12345
-tue-study moodle-submission-inspect --target 12345
+tue study moodle-assignment --target 12345
+tue study moodle-submission-inspect --target 12345
 ```
 
 MCP exposes the same reads as `study_moodle_assignment(assignment_id)` and
@@ -113,27 +113,27 @@ settings; upload, save and final confirmation must not be conflated.
 
 ## Moodle file submission workflow
 
-The `tue-submit` CLI and opt-in MCP `moodle-write` group support the observed
+The `tue submit` CLI and opt-in MCP `moodle-write` group support the observed
 file-manager form. Same-name file replacement and byte verification were tested
 on a live university group assignment on 16 November 2026. Saving that assignment
 submitted for grading immediately. A separate final-submit confirmation flow has
 not been verified live. Do not assume success until the receipt confirms the file and
 the intended status, and check Moodle if the result is unknown.
-Reinstall the package after updating it to add the new `tue-submit` entry point.
+Reinstall the package after updating it to add the new `tue submit` entry point.
 
 ```bash
-tue-submit review --assignment-id 12345 --file ./work.pdf
-tue-submit save --assignment-id 12345 --file ./work.pdf --sha256 <file-hash> --review-sha256 <review-hash> --confirm
-tue-submit review-final --assignment-id 12345 --file ./work.pdf
-tue-submit submit --assignment-id 12345 --file ./work.pdf --sha256 <file-hash> --confirmation-sha256 <confirmation-hash> --confirm
-tue-submit verify --assignment-id 12345 --file ./work.pdf
+tue submit review --assignment-id 12345 --file ./work.pdf
+tue submit save --assignment-id 12345 --file ./work.pdf --sha256 <file-hash> --review-sha256 <review-hash> --confirm
+tue submit review-final --assignment-id 12345 --file ./work.pdf
+tue submit submit --assignment-id 12345 --file ./work.pdf --sha256 <file-hash> --confirmation-sha256 <confirmation-hash> --confirm
+tue submit verify --assignment-id 12345 --file ./work.pdf
 ```
 
 To replace a saved file, use `--replace-existing` on both review and save:
 
 ```bash
-tue-submit review --assignment-id 12345 --file ./work.pdf --replace-existing
-tue-submit save --assignment-id 12345 --file ./work.pdf --replace-existing --sha256 <file-hash> --review-sha256 <review-hash> --confirm
+tue submit review --assignment-id 12345 --file ./work.pdf --replace-existing
+tue submit save --assignment-id 12345 --file ./work.pdf --replace-existing --sha256 <file-hash> --review-sha256 <review-hash> --confirm
 ```
 
 Replacement must target exactly one saved, root-level file with the same name.
@@ -153,10 +153,10 @@ limits, and original file bytes remain covered. This avoids falsely detecting a
 change on every page load without disabling the review guard.
 
 When the installed executable is unavailable, use
-`python -m tue_api_wrapper.moodle_submission_cli` instead of `tue-submit`.
+`python -m tue_api_wrapper.moodle_submission_cli` instead of `tue submit`.
 Credentials stay in the local runtime. Use `--env-file` to select their local file.
 
-Enable the tools with `tue-mcp --service moodle-write`; they are disabled by
+Enable the tools with `tue mcp --service moodle-write`; they are disabled by
 default. They are `moodle_submission_review`, `moodle_submission_save`,
 `moodle_submission_review_final`, `moodle_submission_submit`, and
 `moodle_submission_verify`. The file path is local to the CLI or MCP server.
@@ -183,14 +183,14 @@ sensitive personal information.
 ## Explicit raw course-page reads
 
 ```bash
-tue-study raw-course --service moodle --target 12345
-tue-study raw-course --service ilias --target 12345
-tue-study raw-alma-search --form-only
-tue-study raw-alma-search --query 'Machine Learning'
-tue-study raw-ilias-search --form-only
-tue-study raw-ilias-search --query 'Machine Learning'
-tue-study raw-moodle-search --query 'Machine Learning' --page 0 --limit 20
-tue-mcp --service raw
+tue study raw-course --service moodle --target 12345
+tue study raw-course --service ilias --target 12345
+tue study raw-alma-search --form-only
+tue study raw-alma-search --query 'Machine Learning'
+tue study raw-ilias-search --form-only
+tue study raw-ilias-search --query 'Machine Learning'
+tue study raw-moodle-search --query 'Machine Learning' --page 0 --limit 20
+tue mcp --service raw
 ```
 
 The opt-in MCP `raw_course_page`, `raw_alma_course_search`, `raw_ilias_search`,

@@ -27,7 +27,7 @@ Official references:
 - [ ] Inspect `package/dist/` and confirm it contains one `.tar.gz` and one `.whl`.
 - [ ] Install the built wheel in a fresh virtual environment.
 - [ ] Test `python -c "from tue_api_wrapper import TuebingenPublicClient"`.
-- [ ] Test `tue-mcp --help`.
+- [ ] Test `tue mcp --help`.
 - [ ] Commit the release changes.
 - [ ] Push to `main`.
 - [ ] Create a GitHub release or run the `Publish Python package` workflow manually.
@@ -50,7 +50,7 @@ python3 -m venv /tmp/tue-api-wrapper-smoke
 source /tmp/tue-api-wrapper-smoke/bin/activate
 pip install package/dist/*.whl
 python -c "from tue_api_wrapper import TuebingenPublicClient; print(TuebingenPublicClient)"
-tue-mcp --help
+tue mcp --help
 deactivate
 ```
 

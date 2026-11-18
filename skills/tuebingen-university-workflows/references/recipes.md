@@ -60,7 +60,7 @@ Install MCP support and run it locally:
 
 ```bash
 pip install "tue-api-wrapper[mcp]"
-tue-mcp --transport streamable-http --host 127.0.0.1 --port 8765
+tue mcp --transport streamable-http --host 127.0.0.1 --port 8765
 ```
 
 The MCP server exposes public Alma/course/event/TIMMS tools plus local authenticated timetable, ILIAS tasks, Moodle deadlines, mail summaries, and course discovery. Configure the MCP client to talk only to `127.0.0.1`; do not expose the credentialed server publicly.

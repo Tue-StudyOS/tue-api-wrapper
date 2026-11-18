@@ -12,7 +12,7 @@ No credentials, cookies, bearer tokens, or full private captures are stored here
 
 ## Existing Gap
 
-The repo currently wraps Alma, ILIAS, Moodle, and mail. There is no TIMMS, Praxisportal, or EPV surface in the Python API, dashboard, ChatGPT app, or Go CLI.
+This note predates the current TIMMS and Praxisportal clients. Check the SDK for implemented coverage.
 
 ## TIMMS Contracts
 

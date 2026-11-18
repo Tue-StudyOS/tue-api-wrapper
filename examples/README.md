@@ -32,7 +32,7 @@ Start the local MCP server:
 
 ```bash
 cd package
-tue-mcp
+tue mcp
 ```
 
 Use `examples/mcp-client-config.json` as a template for editor or agent clients that accept MCP server JSON.

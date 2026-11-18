@@ -8,7 +8,7 @@ or personal records are recorded in this document.
 
 - Alma, ILIAS and Moodle authenticated through their existing local clients.
 - A read-only `Machine Learning` search returned results from each system. The
-  combined `tue-study course-search` command returned a successful source status
+  combined `tue study course-search` command returned a successful source status
   for each service. This is one query on one account, not complete coverage.
 - Raw search form/results were tested for Alma and ILIAS and raw results for
   Moodle. The `raw_alma_course_search`, `raw_ilias_search`, and

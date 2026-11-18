@@ -233,7 +233,7 @@ These two data sources fit together unusually well.
 1. `my-stuwe` multi-canteen menu API and filters.
 2. canteen location directory with map links.
 3. official building directory and campus-area map routes.
-4. combined lecture-to-lunch and place-search surfaces in the dashboard and ChatGPT app.
+4. combined lecture-to-lunch and place-search workflows.
 5. accessibility overlays and clinic or lecture-hall shortcuts.
 
 ## Confidence Notes

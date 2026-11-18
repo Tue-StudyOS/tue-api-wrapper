@@ -104,6 +104,5 @@ access tokens, so never put unredacted links in shared logs or documentation.
    student-visible course-request link does not establish instructor access or
    the ability to manage courses.
 
-See the broader [service map](agent-service-map-2026-11-13.md) and
-[course-access request flows](agent-course-access.md). These observations
+See the [course-access request flows](agent-course-access.md). These observations
 identify candidates; they do not validate the underlying request contracts.

@@ -33,7 +33,7 @@ trust relationship. An institutional domain does not prove operator approval.
 
 ## Local API restrictions and remaining risks
 
-The standard `tue-api-server` command and Python module entry point reject a
+The standard `tue api-server` command and Python module entry point reject a
 non-loopback bind when any university username or password is configured through
 `UNI_*`, `ALMA_*`, or `ILIAS_*` login variables. Local authenticated use remains
 available on loopback. Without university credentials, the bind check permits
@@ -42,13 +42,13 @@ network deployment; do not configure other private credentials in a public API.
 This startup check is not an access-control boundary:
 
 - Direct ASGI launches, such as `uvicorn tue_api_wrapper.api_server:app`, bypass it.
-- A reverse proxy, tunnel, or server-rendered Next.js frontend can expose a
+- A reverse proxy or tunnel can expose a
   loopback API. Do not publish those surfaces with account credentials loaded.
 - HTTP routes use the process account without per-caller authentication.
 - CORS currently allows arbitrary origins. Loopback binding alone therefore
   does not protect against browser-origin access. CORS is not authentication.
 - Local processes can access the API. Browser access controls and per-instance
-  authorization need a separate change across the desktop and sidecar clients.
+  authorization require separate access controls.
 
 The Docker image sets `HOST=0.0.0.0`. It will now fail startup with university
 credentials. Use native local execution for authenticated access. Do not bypass

@@ -1,42 +1,15 @@
 ---
 name: tue-api-wrapper
-description: Use when working in the tue-api-wrapper repository: adding university system endpoints, improving iOS/Electron/Next.js/ChatGPT surfaces, validating endpoint coverage, or helping agents onboard to the project.
+description: Work on the Python clients, CLI, or native iOS app for University of Tübingen services.
 ---
 
 # TUE API Wrapper
 
-Use this skill for repository-local work in `tue-api-wrapper`.
+- `package/`: Python clients, parsers, local API and MCP servers, CLI, and tests.
+- `ios/`: native Swift app and clients. Keep credentialed flows on device.
+- `skills/tuebingen-university-workflows/`: agent workflow and service instructions.
+- `docs/`: SDK, agent access, and observed university-service contracts.
 
-## Architecture
+Use existing typed clients and parsers. Keep files under 300 lines and preserve unrelated work. Do not introduce mock or fallback data. Surface errors clearly.
 
-- `package/`: Python clients, parsers, shared contracts, FastAPI routes, tests.
-- `ios/`: SwiftUI app. Prefer Swift-native clients for app features when practical, using Python as the reference for request shape and parsing.
-- `desktop/`: Electron shell with a managed local Python sidecar. Authenticated desktop flows should use the local sidecar, not hosted Cloud Run.
-- `nextjs/`, `chatgpt/`, `go/`: secondary surfaces consuming shared contracts.
-
-## Working Rules
-
-- No mock/fallback data unless explicitly requested. Surface errors clearly.
-- Keep files under 300 LOC; split views, models, clients, and helpers.
-- Do not route student credentials through hosted services.
-- Preserve unrelated dirty work from other agents.
-- Prefer typed models and parsers over string scraping in UI code.
-
-## Endpoint Workflow
-
-1. Find existing routes with `rg -n "@.*api|/api/" package/src/tue_api_wrapper`.
-2. Locate client/parser code near the target system, for example `alma_*`, `ilias_*`, `moodle_*`, `mail_*`, `campus_*`.
-3. Add or update dataclass contracts and serialization through `portal_service.serialize`.
-4. Add focused tests in `package/tests/`, using fixtures only when live credentials are not required.
-5. Expose a shared FastAPI contract, then port the same request/parsing behavior natively in iOS when needed.
-
-## Validation Commands
-
-- Python: `cd package && pytest`
-- Desktop: `npm --prefix desktop run build`
-- iOS: `npm run build:ios`
-- Next.js: `npm --prefix nextjs run build`
-
-## Release Notes
-
-Desktop releases are triggered by pushing tags matching `desktop-v*`; the workflow builds macOS DMG, Windows NSIS EXE, and Linux AppImage.
+For an endpoint, find its client and parser in `package/src/tue_api_wrapper/`, update its typed contract, and add focused tests under `package/tests/`. Check whether the iOS client needs the same change. Run `cd package && python -m pytest tests -q` for Python changes; use `npm run build:ios` for the simulator app.

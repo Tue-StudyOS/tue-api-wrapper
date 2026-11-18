@@ -4,11 +4,11 @@ The public advising reader discovers university pages and searches a local index
 It needs no login and sends no search terms to an external search engine. Start with:
 
 ```sh
-tue-study advising-refresh
-tue-study advising-discover
-tue-study advising-search --query 'Anerkennung' --limit 10
-tue-study advising-search --query 'Machine Learning' --limit 10
-tue-study advising --target 'https://uni-tuebingen.de/path/to/advising-page/'
+tue study advising-refresh
+tue study advising-discover
+tue study advising-search --query 'Anerkennung' --limit 10
+tue study advising-search --query 'Machine Learning' --limit 10
+tue study advising --target 'https://uni-tuebingen.de/path/to/advising-page/'
 ```
 
 Python: `TuebingenPublicClient().directory.discover_advising()`,

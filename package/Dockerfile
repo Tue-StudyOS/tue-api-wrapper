@@ -12,4 +12,4 @@ ENV PORT=8000
 
 EXPOSE 8000
 
-CMD ["python", "-m", "tue_api_wrapper.api_server"]
+CMD ["tue", "api-server"]

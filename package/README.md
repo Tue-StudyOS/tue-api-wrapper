@@ -16,7 +16,7 @@ The package has three entry points:
 
 - `TuebingenPublicClient`: public data that does not need credentials
 - `TuebingenAuthenticatedClient`: private university data with explicit credentials
-- `tue-mcp`: local MCP server for agents and LLM tools
+- `tue mcp`: local MCP server for agents and LLM tools
 
 ## Install for local development
 
@@ -132,19 +132,19 @@ and token requests are available below `/api/ppi/`.
 ```bash
 cd package
 pip install -e ".[mcp]"
-tue-mcp
+tue mcp
 ```
 
 Use `stdio` for most local agent clients. For HTTP-based clients:
 
 ```bash
-tue-mcp --transport streamable-http --host 127.0.0.1 --port 8765
+tue mcp --transport streamable-http --host 127.0.0.1 --port 8765
 ```
 
 ## FastAPI server
 
 ```bash
-tue-api-server
+tue api-server
 ```
 
 The API starts on `http://127.0.0.1:8000` and exposes OpenAPI docs at `/docs`.

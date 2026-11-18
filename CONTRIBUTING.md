@@ -2,7 +2,7 @@
 
 Thanks for considering a contribution.
 
-This repository mixes request-contract discovery, parsing, backend APIs, CLI tooling, and frontend surfaces. The best contributions are small, testable, and explicit about which contract or user-facing behavior they change.
+This repository mixes request-contract discovery, parsing, Python clients, local APIs, and CLI tooling. The best contributions are small, testable, and explicit about which contract or user-facing behavior they change.
 
 ## Before you start
 
@@ -21,7 +21,6 @@ If your change touches live Alma or ILIAS behavior, include enough context in th
 - add support for a new stable Alma or ILIAS endpoint
 - add or improve fixture-based contract tests
 - improve packaging, CI, or local developer ergonomics
-- improve the Next.js or ChatGPT surfaces
 - improve docs, onboarding, or examples
 
 ## License and contributor terms
@@ -41,34 +40,8 @@ for normal pull requests.
 cd package
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -e .
-python -m unittest discover -s tests -v
-```
-
-### Go CLI
-
-```bash
-cd go
-go build ./cmd/tue
-go test ./...
-```
-
-### Next.js app
-
-```bash
-cd nextjs
-npm ci --workspaces=false
-npm run check
-npm run build
-```
-
-### ChatGPT app
-
-```bash
-cd chatgpt
-npm ci --workspaces=false
-npm run check
-npm run build
+pip install -e ".[dev]"
+python -m pytest tests -q
 ```
 
 ## Credentials and local data
@@ -105,13 +78,13 @@ To review whether a browser capture contains structured endpoints:
 
 ```bash
 cd package
-route-discovery generic --har ../local-session.har --audit-formats --format markdown
+tue route-discovery generic --har ../local-session.har --audit-formats --format markdown
 ```
 
 To restrict the audit to one host:
 
 ```bash
-route-discovery generic --har ../local-session.har --audit-formats --start-url https://moodle.zdv.uni-tuebingen.de/my/
+tue route-discovery generic --har ../local-session.har --audit-formats --start-url https://moodle.zdv.uni-tuebingen.de/my/
 ```
 
 ## PR checklist

@@ -40,7 +40,6 @@ struct StudyAssistantEntryView: View {
 
     private var assistantConfiguration: StudyAssistantConfiguration {
         StudyAssistantConfiguration(
-            almaBaseURLString: model.baseURLString,
             portalAPIBaseURLString: model.portalAPIBaseURLString,
             hasCredentials: model.hasCredentials
         )

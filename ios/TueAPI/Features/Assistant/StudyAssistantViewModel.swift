@@ -182,9 +182,7 @@ final class StudyAssistantViewModel {
                 if seen.insert(output.toolName).inserted {
                     ordered.append(output.toolName)
                 }
-            case .instructions, .prompt, .response:
-                break
-            @unknown default:
+            default:
                 break
             }
         }

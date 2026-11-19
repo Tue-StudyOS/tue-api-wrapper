@@ -37,12 +37,6 @@ final class AppModel {
         }
     }
     var submissionReminderMessage: String?
-    var baseURLString: String {
-        didSet {
-            UserDefaults.standard.set(baseURLString, forKey: AppConfig.almaBaseURLDefaultsKey)
-        }
-    }
-
     var portalAPIBaseURLString: String {
         AppConfig.portalAPIBaseURLString
     }
@@ -72,7 +66,6 @@ final class AppModel {
     }()
 
     init() {
-        self.baseURLString = UserDefaults.standard.string(forKey: AppConfig.almaBaseURLDefaultsKey) ?? "https://alma.uni-tuebingen.de"
         let hasSavedCredentials = ((try? keychain.load()) ?? nil) != nil
         let cachedSnapshot = hasSavedCredentials ? UpcomingLectureCache.load() : nil
         self.events = Self.upcomingOnly(cachedSnapshot?.events ?? [])
@@ -122,10 +115,7 @@ final class AppModel {
         browsePhase = .loading
 
         do {
-            guard let baseURL = URL(string: baseURLString), baseURL.scheme?.hasPrefix("http") == true else {
-                throw AlmaClientError.invalidURL
-            }
-
+            let baseURL = AlmaClient.officialBaseURL
             let dateString = Self.almaDateString(from: date)
             let publicPage = try await AlmaClient(baseURL: baseURL).fetchCurrentLectures(date: dateString, limit: 200)
 

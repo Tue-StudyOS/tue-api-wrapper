@@ -191,7 +191,6 @@ struct CourseDetailView: View {
 
     private var statusLookupID: String {
         [
-            model.baseURLString,
             course.id,
             course.detailURL?.absoluteString ?? "",
             course.title

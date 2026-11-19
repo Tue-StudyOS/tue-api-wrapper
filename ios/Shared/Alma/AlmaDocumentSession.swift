@@ -15,7 +15,7 @@ enum AlmaDocumentPreparation {
 struct AlmaDocumentSession {
     let client: AlmaClient
 
-    static let officialURL = studyServiceURL(base: URL(string: "https://alma.uni-tuebingen.de")!)
+    static let officialURL = studyServiceURL(base: AlmaClient.officialBaseURL)
 
     func reports(credentials: AlmaCredentials) async throws -> [AlmaDocumentOption] {
         try await listing(credentials: credentials).form.reports
@@ -117,7 +117,7 @@ struct AlmaDocumentSession {
         }
         var request = request
         request.setValue(client.userAgent, forHTTPHeaderField: "User-Agent")
-        let (data, response) = try await client.session.data(for: request, delegate: DocumentRedirectGuard(origin: client.baseURL))
+        let (data, response) = try await client.session.data(for: request, delegate: AlmaRedirectGuard(origin: client.baseURL))
         guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode),
               let url = http.url, isAlmaOrigin(url) else {
             throw AlmaDocumentError.unavailable("Alma could not complete the document request.")
@@ -130,7 +130,7 @@ struct AlmaDocumentSession {
     }
 
     private func isAlmaOrigin(_ url: URL) -> Bool {
-        DocumentRedirectGuard.matches(url, origin: client.baseURL)
+        AlmaRedirectGuard.matches(url, origin: client.baseURL)
     }
 
     private static func studyServiceURL(base: URL) -> URL {
@@ -147,23 +147,5 @@ struct AlmaDocumentSession {
         let url: URL
         var isPDF: Bool { data.starts(with: Data("%PDF-".utf8)) }
         var html: String { String(data: data, encoding: .utf8) ?? String(decoding: data, as: UTF8.self) }
-    }
-}
-
-private final class DocumentRedirectGuard: NSObject, URLSessionTaskDelegate {
-    let origin: URL
-
-    init(origin: URL) { self.origin = origin }
-
-    static func matches(_ url: URL, origin: URL) -> Bool {
-        url.scheme == origin.scheme && url.host == origin.host && url.port == origin.port
-            && url.user == nil && url.password == nil
-    }
-
-    func urlSession(
-        _ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
-        newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void
-    ) {
-        completionHandler(request.url.map { Self.matches($0, origin: origin) } == true ? request : nil)
     }
 }

@@ -77,10 +77,8 @@ struct TodayPortalMessagesCard: View {
                 phase = .unavailable
                 return
             }
-            guard let baseURL = URL(string: model.baseURLString), baseURL.scheme?.hasPrefix("http") == true else {
-                throw AlmaClientError.invalidURL
-            }
-            let page = try await AlmaClient(baseURL: baseURL).fetchPortalMessages(credentials: credentials)
+            let page = try await AlmaClient(baseURL: AlmaClient.officialBaseURL)
+                .fetchPortalMessages(credentials: credentials)
             phase = .loaded(page.items)
         } catch {
             phase = .failed(error.localizedDescription)

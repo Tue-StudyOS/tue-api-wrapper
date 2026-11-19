@@ -2,7 +2,7 @@
 
 Native SwiftUI client for TUE API wrapper data.
 
-This target uses native clients for credentialed data flows. It logs in to Alma and Moodle directly for grades, reads Uni Tuebingen mail directly over TLS IMAP, stores university credentials in Keychain from Settings, parses the Alma timetable iCalendar feed in Swift, browses public current lectures, caches upcoming lectures in an app group container, exposes that cache through WidgetKit plus Live Activities, and ships an on-device study assistant test screen. The app-feedback sheet creates GitHub issues directly from the client when `GITHUB_FEEDBACK_TOKEN` is configured as a build setting.
+This target uses native clients for credentialed data flows. It logs in to Alma and Moodle directly for grades, reads Uni Tuebingen mail directly over TLS IMAP, stores university credentials in Keychain from Settings, parses the Alma timetable iCalendar feed in Swift, browses public current lectures, caches upcoming lectures in an app group container, exposes that cache through WidgetKit plus Live Activities, and ships an on-device study assistant test screen.
 
 ## Preview
 
@@ -57,7 +57,6 @@ External Beta App Review notes should mention:
 - The app is a University of Tuebingen student client for timetable, tasks, grades, mail, campus food, talks, maps, and course discovery.
 - Testers sign in with their own university account. Credentials are stored in the iOS Keychain and are not included in feedback.
 - Public discovery, campus food, talks, and map surfaces can be tested without university credentials.
-- The feedback sheet creates a public GitHub issue from user-entered text and app/device context.
 
 Run a local unsigned release sanity check without Apple signing:
 

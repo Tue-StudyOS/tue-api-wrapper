@@ -15,12 +15,13 @@ enum LiveActivityController {
             throw LiveActivityError.unavailable
         }
 
+        let showsDetails = LectureWidgetPrivacy.showsDetails
         let attributes = LectureActivityAttributes(eventID: event.id)
         let state = LectureActivityAttributes.ContentState(
-            title: event.title,
+            title: showsDetails ? event.title : "Lecture",
             startDate: event.startDate,
             endDate: event.endDate,
-            location: event.location
+            location: showsDetails ? event.location : nil
         )
         let content = ActivityContent(state: state, staleDate: event.endDate)
         _ = try Activity<LectureActivityAttributes>.request(attributes: attributes, content: content, pushType: nil)

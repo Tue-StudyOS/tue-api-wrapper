@@ -181,17 +181,11 @@ struct GradeOverviewView: View {
     }
 
     private func refresh() async {
-        guard let almaBaseURL = URL(string: model.baseURLString),
-              ["http", "https"].contains(almaBaseURL.scheme?.lowercased() ?? "") else {
-            phase = .unavailable
-            return
-        }
-
         phase = .loading
         do {
             let response = try await UniversityGradesClient(
                 credentialsLoader: model.keychain,
-                almaBaseURL: almaBaseURL
+                almaBaseURL: AlmaClient.officialBaseURL
             )
             .fetchGrades(
                 examLimit: 50,

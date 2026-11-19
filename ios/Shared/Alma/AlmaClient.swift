@@ -1,6 +1,7 @@
 import Foundation
 
 struct AlmaClient {
+    static let officialBaseURL = URL(string: "https://alma.uni-tuebingen.de")!
     let baseURL: URL
     let session: URLSession
 
@@ -161,11 +162,14 @@ struct AlmaClient {
     }
 
     func loadHTMLResponse(_ request: URLRequest) async throws -> (html: String, url: URL) {
-        let (data, response) = try await session.data(for: request)
+        guard let url = request.url, AlmaRedirectGuard.matches(url, origin: baseURL) else {
+            throw AlmaClientError.server("Alma provided a link outside its official connection.")
+        }
+        let (data, response) = try await session.data(for: request, delegate: AlmaRedirectGuard(origin: baseURL))
         guard let httpResponse = response as? HTTPURLResponse else {
             throw AlmaClientError.server("Alma did not return an HTTP response.")
         }
-        guard (200..<400).contains(httpResponse.statusCode) else {
+        guard (200..<300).contains(httpResponse.statusCode) else {
             throw AlmaClientError.server("Alma request failed with HTTP \(httpResponse.statusCode).")
         }
         guard let finalURL = httpResponse.url ?? request.url else {

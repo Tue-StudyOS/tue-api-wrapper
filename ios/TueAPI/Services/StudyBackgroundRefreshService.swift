@@ -39,12 +39,11 @@ enum StudyBackgroundRefreshService {
     private static func refreshUpcomingLectures() async -> Bool {
         do {
             let keychain = KeychainCredentialsStore()
-            guard let credentials = try keychain.load(),
-                  let baseURL = almaBaseURL() else {
+            guard let credentials = try keychain.load() else {
                 return false
             }
 
-            let snapshot = try await AlmaClient(baseURL: baseURL)
+            let snapshot = try await AlmaClient(baseURL: AlmaClient.officialBaseURL)
                 .fetchUpcomingLectures(credentials: credentials)
             guard try keychain.load() == credentials else { return false }
             try UpcomingLectureCache.save(snapshot)
@@ -75,14 +74,5 @@ enum StudyBackgroundRefreshService {
         } catch {
             return false
         }
-    }
-
-    private static func almaBaseURL() -> URL? {
-        let value = UserDefaults.standard.string(forKey: AppConfig.almaBaseURLDefaultsKey)
-            ?? "https://alma.uni-tuebingen.de"
-        guard let url = URL(string: value), url.scheme?.hasPrefix("http") == true else {
-            return nil
-        }
-        return url
     }
 }

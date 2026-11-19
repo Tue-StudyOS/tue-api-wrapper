@@ -1,14 +1,12 @@
 import Foundation
 
 struct StudyAssistantConfiguration: Sendable {
-    var almaBaseURLString: String
     var portalAPIBaseURLString: String
     var hasCredentials: Bool
 }
 
 enum StudyAssistantDataError: LocalizedError {
     case emptyQuery
-    case invalidAlmaURL
     case missingCredentials
     case missingPortalBackend
 
@@ -16,8 +14,6 @@ enum StudyAssistantDataError: LocalizedError {
         switch self {
         case .emptyQuery:
             "Enter a non-empty search query."
-        case .invalidAlmaURL:
-            "The Alma base URL in Settings is invalid."
         case .missingCredentials:
             "Connect your university account in Settings before using study snapshot or grades."
         case .missingPortalBackend:
@@ -33,10 +29,9 @@ struct StudyAssistantDataSource: Sendable {
 
     func loadStudySnapshot(limit: Int) async throws -> String {
         let credentials = try loadCredentials()
-        let almaBaseURL = try loadAlmaBaseURL()
         let cappedLimit = capped(limit, max: 8)
 
-        async let lectureSnapshot = AlmaClient(baseURL: almaBaseURL).fetchUpcomingLectures(
+        async let lectureSnapshot = AlmaClient(baseURL: AlmaClient.officialBaseURL).fetchUpcomingLectures(
             credentials: credentials,
             limit: cappedLimit
         )
@@ -112,11 +107,10 @@ struct StudyAssistantDataSource: Sendable {
     }
 
     func loadGrades(limit: Int) async throws -> String {
-        let almaBaseURL = try loadAlmaBaseURL()
         let cappedLimit = capped(limit, max: 10)
         let payload = try await UniversityGradesClient(
             credentialsLoader: keychain,
-            almaBaseURL: almaBaseURL
+            almaBaseURL: AlmaClient.officialBaseURL
         ).fetchGrades(
             examLimit: cappedLimit,
             moodleLimit: cappedLimit
@@ -237,14 +231,6 @@ struct StudyAssistantDataSource: Sendable {
             throw StudyAssistantDataError.missingCredentials
         }
         return credentials
-    }
-
-    private func loadAlmaBaseURL() throws -> URL {
-        guard let url = URL(string: configuration.almaBaseURLString),
-              ["http", "https"].contains(url.scheme?.lowercased() ?? "") else {
-            throw StudyAssistantDataError.invalidAlmaURL
-        }
-        return url
     }
 
     private func capped(_ value: Int, max: Int) -> Int {

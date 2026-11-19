@@ -21,10 +21,10 @@ struct LectureLiveActivityWidget: Widget {
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(context.state.title)
+                        Text(LectureWidgetPrivacy.showsDetails ? context.state.title : "Lecture")
                             .font(.subheadline.weight(.semibold))
                             .lineLimit(2)
-                        if let location = context.state.location, !location.isEmpty {
+                        if LectureWidgetPrivacy.showsDetails, let location = context.state.location, !location.isEmpty {
                             Label(location, systemImage: "mappin.and.ellipse")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
@@ -65,13 +65,13 @@ struct LectureLiveActivityView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(state.title)
+            Text(LectureWidgetPrivacy.showsDetails ? state.title : "Lecture")
                 .font(.headline)
                 .lineLimit(2)
             Text(timeText)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-            if let location = state.location, !location.isEmpty {
+            if LectureWidgetPrivacy.showsDetails, let location = state.location, !location.isEmpty {
                 Label(location, systemImage: "mappin.and.ellipse")
                     .font(.caption)
                     .foregroundStyle(.secondary)

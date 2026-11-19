@@ -5,7 +5,6 @@ struct SettingsView: View {
     @State private var username = ""
     @State private var password = ""
     @State private var showsDisconnectConfirmation = false
-    @State private var activeSheet: SettingsSheet?
 
     var body: some View {
         Form {
@@ -63,17 +62,6 @@ struct SettingsView: View {
                 }
             }
 
-            Section {
-                TextField("Base URL", text: $model.baseURLString)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .keyboardType(.URL)
-            } header: {
-                Text("Alma connection")
-            } footer: {
-                Text("Default Alma address: https://alma.uni-tuebingen.de.")
-            }
-
             Section("Assistant") {
                 NavigationLink {
                     StudyAssistantEntryView(model: model)
@@ -83,21 +71,6 @@ struct SettingsView: View {
                         Text("Ask questions about your timetable, tasks, grades, and campus resources.")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
-                    }
-                }
-            }
-
-            if AppFeedbackGitHubClient.isConfigured {
-                Section("Feedback") {
-                    Button {
-                        activeSheet = .appFeedback
-                    } label: {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Send app feedback")
-                            Text("Create a GitHub issue without including university login details.")
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-                        }
                     }
                 }
             }
@@ -148,12 +121,6 @@ struct SettingsView: View {
         } message: {
             Text("This removes your saved login, timetable and deadlines from this device.")
         }
-        .sheet(item: $activeSheet) { sheet in
-            switch sheet {
-            case .appFeedback:
-                AppFeedbackSheet()
-            }
-        }
     }
 
     private var reminderToggle: Binding<Bool> {
@@ -193,10 +160,4 @@ struct SettingsView: View {
             }
         }
     }
-}
-
-private enum SettingsSheet: String, Identifiable {
-    case appFeedback
-
-    var id: String { rawValue }
 }

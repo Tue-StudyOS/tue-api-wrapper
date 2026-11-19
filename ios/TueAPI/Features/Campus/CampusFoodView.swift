@@ -85,7 +85,6 @@ struct CampusFoodView: View {
                 }
             }
             .padding(16)
-            .padding(.bottom, 124)
         }
         .background(Color(uiColor: .systemGroupedBackground))
         .toolbar {

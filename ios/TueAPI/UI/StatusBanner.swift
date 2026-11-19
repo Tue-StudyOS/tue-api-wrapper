@@ -10,6 +10,7 @@ struct StatusBanner: View {
             Image(systemName: systemImage)
                 .font(.title3)
                 .foregroundStyle(.tint)
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
@@ -22,6 +23,6 @@ struct StatusBanner: View {
             Spacer(minLength: 0)
         }
         .padding()
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
     }
 }

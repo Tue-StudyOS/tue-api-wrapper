@@ -8,6 +8,7 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            StudentListHeading(title: "Connections and reminders", detail: "Manage your university login and notifications.")
             Section("University login") {
                 UniversityCredentialsFields(
                     username: $username,
@@ -112,6 +113,7 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Connections and reminders")
+        .navigationBarTitleDisplayMode(.inline)
         .confirmationDialog("Disconnect university account?", isPresented: $showsDisconnectConfirmation, titleVisibility: .visible) {
             Button("Disconnect", role: .destructive) {
                 model.deleteCredentials()

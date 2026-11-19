@@ -14,6 +14,7 @@ struct AppInlineStatusLine: View {
             } else if let systemImage {
                 Image(systemName: systemImage)
                     .foregroundStyle(tint)
+                    .accessibilityHidden(true)
             }
 
             Text(text)
@@ -23,6 +24,6 @@ struct AppInlineStatusLine: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(Color(uiColor: .secondarySystemBackground), in: Capsule())
+        .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12))
     }
 }

@@ -106,7 +106,7 @@ struct AppSearchActionRow: View {
                     Text(searchTitle)
                 }
             }
-            .buttonStyle(.borderedProminent)
+            .studentProminentButton()
             .disabled(isSearchDisabled)
         }
     }

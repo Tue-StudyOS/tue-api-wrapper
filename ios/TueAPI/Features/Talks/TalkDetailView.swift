@@ -5,6 +5,7 @@ struct TalkDetailView: View {
 
     var body: some View {
         List {
+            StudentListHeading(title: talk.title)
             Section {
                 LabeledContent("Speaker", value: talk.speakerName ?? "Speaker pending")
                 if let date = talk.startDate {
@@ -45,7 +46,7 @@ struct TalkDetailView: View {
                 }
             }
         }
-        .navigationTitle(talk.title)
+        .navigationTitle("Talk")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

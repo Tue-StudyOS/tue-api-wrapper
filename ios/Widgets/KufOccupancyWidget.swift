@@ -47,6 +47,7 @@ struct KufOccupancyWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: KufOccupancyProvider()) { entry in
             KufOccupancyWidgetView(entry: entry)
+                .widgetURL(AppLink.kufTrends.url)
                 .containerBackground(.background, for: .widget)
         }
         .configurationDisplayName("KuF Count")

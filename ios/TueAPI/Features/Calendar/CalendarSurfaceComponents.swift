@@ -4,13 +4,7 @@ struct CalendarHeader: View {
     let subtitle: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Calendar")
-                .font(.largeTitle.weight(.bold))
-            Text(subtitle)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
+        StudentScreenHeading(title: "Schedule", detail: subtitle)
     }
 }
 
@@ -110,7 +104,7 @@ struct CalendarDayChip: View {
     }
 
     private var backgroundStyle: Color {
-        if isSelected { return .accentColor }
+        if isSelected { return .studentActionFill }
         return isEnabled ? Color(uiColor: .secondarySystemBackground) : Color(uiColor: .tertiarySystemBackground)
     }
 

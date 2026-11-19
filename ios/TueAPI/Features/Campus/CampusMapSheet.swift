@@ -112,7 +112,7 @@ private struct CampusPlacesScroller: View {
                                 .multilineTextAlignment(.leading)
                         }
                         .frame(width: 188, alignment: .leading)
-                        .padding(14)
+                    .padding(14)
                         .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                     }
                     .buttonStyle(.plain)
@@ -189,6 +189,7 @@ struct PostHappeningSheet: View {
     var body: some View {
         NavigationStack {
             Form {
+                StudentListHeading(title: "Post a happening", detail: "Add a time and place to the campus map.")
                 Section("Happening") {
                     TextField("Coffee after lecture", text: $title)
                     Picker("Type", selection: $category) {
@@ -223,6 +224,7 @@ struct PostHappeningSheet: View {
                 }
             }
             .navigationTitle("Post")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {

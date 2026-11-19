@@ -10,9 +10,9 @@ struct CriticalActionConfirmationSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Action") {
+                StudentListHeading(title: intent.actionLabel, detail: "Review the target and what will change.")
+                Section("Destination") {
                     LabeledContent("Portal", value: intent.portal)
-                    LabeledContent("Action", value: intent.actionLabel)
                     LabeledContent(
                         "Submission",
                         value: [intent.method, intent.endpoint]
@@ -31,7 +31,7 @@ struct CriticalActionConfirmationSheet: View {
                     }
                 }
 
-                Section("What Proceed Will Do") {
+                Section("What will change") {
                     ForEach(intent.sideEffects, id: \.self) { effect in
                         Label(effect, systemImage: "arrow.right.circle")
                     }

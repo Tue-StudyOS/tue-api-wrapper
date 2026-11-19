@@ -10,6 +10,7 @@ struct PeopleDirectoryView: View {
 
     var body: some View {
         List {
+            StudentListHeading(title: "University directory", detail: "Find people, chairs and departments.")
             Section("Search") {
                 TextField("Name or institution", text: $query)
                     .textInputAutocapitalization(.words)

@@ -11,6 +11,7 @@ struct StudentDocumentsView: View {
 
     var body: some View {
         List {
+            StudentListHeading(title: "Documents", detail: "Certificates and reports from Alma.")
             Section("Available reports") {
                 if !model.hasCredentials {
                     NavigationLink("Connect your university account") {
@@ -39,6 +40,7 @@ struct StudentDocumentsView: View {
             }
         }
         .navigationTitle("Documents")
+        .navigationBarTitleDisplayMode(.inline)
         .task(id: model.hasCredentials) { await load() }
         .refreshable { await load() }
     }
@@ -75,8 +77,8 @@ private struct StudentDocumentDetail: View {
 
     var body: some View {
         List {
-            Section("Official document · Alma") {
-                Text(report.title)
+            StudentListHeading(title: report.title, detail: "Official document from Alma")
+            Section("Download") {
                 if let prepared, !prepared.terms.isEmpty {
                     Picker("Semester", selection: $term) {
                         Text("Choose a semester").tag(nil as AlmaDocumentOption?)
@@ -112,6 +114,7 @@ private struct StudentDocumentDetail: View {
             }
         }
         .navigationTitle("Report")
+        .sensoryFeedback(.success, trigger: pdf != nil) { _, isReady in isReady }
         .privacySensitive()
     }
 

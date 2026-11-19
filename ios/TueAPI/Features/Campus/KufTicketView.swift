@@ -8,6 +8,7 @@ struct KufTicketView: View {
     @State private var tickets: [KufTicket]
     @State private var isScannerPresented = false
     @State private var errorMessage: String?
+    @State private var saveCount = 0
 
     init(model: AppModel, store: KufTicketStore? = KufTicketStore(), onClose: (() -> Void)? = nil) {
         self.model = model
@@ -19,6 +20,7 @@ struct KufTicketView: View {
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
+                StudentScreenHeading(title: "KuF pass", detail: "Scan and show your Hochschulsport entry barcode.")
                 if tickets.isEmpty {
                     emptyTicketState
                 } else {
@@ -28,9 +30,9 @@ struct KufTicketView: View {
                 }
             }
             .padding(16)
-            .padding(.bottom, 124)
         }
         .background(Color(uiColor: .systemGroupedBackground))
+        .sensoryFeedback(.success, trigger: saveCount)
         .navigationTitle("KuF pass")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -50,11 +52,10 @@ struct KufTicketView: View {
             }
         }
         .sheet(isPresented: $isScannerPresented) {
-            KufBarcodeScannerView(
-                onScan: saveScan,
-                onError: showScannerError
+            StudentBarcodeScannerSheet(
+                title: "Scan KuF pass",
+                scanner: KufBarcodeScannerView(onScan: saveScan, onError: showScannerError)
             )
-            .ignoresSafeArea()
         }
         .privacySensitive()
         .alert("KuF pass", isPresented: errorBinding) {
@@ -80,7 +81,7 @@ struct KufTicketView: View {
                 Label("Scan barcode", systemImage: "camera.viewfinder")
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
+            .studentProminentButton()
             .controlSize(.large)
         }
     }
@@ -135,6 +136,7 @@ struct KufTicketView: View {
             try store.save(nextTicket)
             tickets = store.loadTickets()
             isScannerPresented = false
+            saveCount += 1
         } catch {
             showScannerError(error.localizedDescription)
         }

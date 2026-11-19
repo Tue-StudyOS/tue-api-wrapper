@@ -14,6 +14,7 @@ struct ModuleSearchView: View {
 
     var body: some View {
         List {
+            StudentListHeading(title: navigationTitle, detail: "Find modules by degree, subject or language.")
             Section {
                 statusContent
             }
@@ -96,6 +97,7 @@ struct ModuleSearchView: View {
             }
         }
         .navigationTitle(navigationTitle)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {

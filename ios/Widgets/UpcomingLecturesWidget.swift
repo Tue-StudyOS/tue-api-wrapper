@@ -32,9 +32,10 @@ struct UpcomingLecturesWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: UpcomingLecturesProvider()) { entry in
             UpcomingLecturesWidgetView(entry: entry)
+                .widgetURL(AppLink.schedule.url)
         }
         .configurationDisplayName("Upcoming Lectures")
-        .description("Shows cached Alma lectures refreshed by the TUE API app.")
+        .description("See your next lectures and open your schedule.")
         .supportedFamilies([.systemSmall, .systemMedium, .accessoryRectangular, .accessoryInline, .accessoryCircular])
     }
 }

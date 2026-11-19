@@ -85,7 +85,6 @@ struct TalksView: View {
                 }
             }
             .padding(16)
-            .padding(.bottom, 124)
         }
         .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("")
@@ -161,13 +160,7 @@ private struct TalksHeader: View {
     let subtitle: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Talks")
-                .font(.system(.largeTitle, design: .rounded, weight: .bold))
-            Text(subtitle)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
+        StudentScreenHeading(title: "Talks and events", detail: subtitle)
     }
 }
 

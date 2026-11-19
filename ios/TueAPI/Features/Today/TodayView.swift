@@ -91,7 +91,6 @@ struct TodayView: View {
                 }
             }
             .padding(16)
-            .padding(.bottom, 124)
         }
         .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("")

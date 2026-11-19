@@ -24,7 +24,6 @@ struct MLXStudyAssistantView: View {
                     }
                 }
                 .padding(16)
-                .padding(.bottom, 140)
             }
             .background(Color(uiColor: .systemGroupedBackground))
             .safeAreaInset(edge: .bottom) {

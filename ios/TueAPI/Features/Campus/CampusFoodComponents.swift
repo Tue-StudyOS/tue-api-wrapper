@@ -4,13 +4,7 @@ struct CampusFoodHeader: View {
     let subtitle: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Campus food")
-                .font(.system(.largeTitle, design: .rounded, weight: .bold))
-            Text(subtitle)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
+        StudentScreenHeading(title: "Campus food", detail: subtitle)
     }
 }
 

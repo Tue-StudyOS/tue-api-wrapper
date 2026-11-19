@@ -20,21 +20,15 @@ struct CourseDetailView: View {
 
     var body: some View {
         List {
-            Section("Course") {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(course.title)
-                        .font(.headline)
-                    if let subtitle {
-                        Text(subtitle)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+            StudentListHeading(title: course.title, detail: subtitle)
+            if course.number != nil || course.semester != nil {
+                Section("Course information") {
+                    if let number = course.number {
+                        LabeledContent("Course number", value: number)
                     }
-                }
-                if let number = course.number {
-                    LabeledContent("Shared lookup", value: number)
-                }
-                if let semester = course.semester {
-                    LabeledContent("Semester", value: semester)
+                    if let semester = course.semester {
+                        LabeledContent("Semester", value: semester)
+                    }
                 }
             }
 
@@ -125,7 +119,8 @@ struct CourseDetailView: View {
                 }
             }
         }
-        .navigationTitle("Course Detail")
+        .navigationTitle("Course")
+        .navigationBarTitleDisplayMode(.inline)
         .task(id: statusLookupID) {
             await loadPortalStatuses()
         }

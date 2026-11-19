@@ -10,9 +10,10 @@ struct MailMessageDetailView: View {
 
     var body: some View {
         List {
+            StudentListHeading(title: selection.subject)
             content
         }
-        .navigationTitle(selection.subject)
+        .navigationTitle("Message")
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await load()

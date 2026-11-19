@@ -10,6 +10,7 @@ struct BrowseLecturesView: View {
 
     var body: some View {
         List {
+            StudentListHeading(title: navigationTitle, detail: "Find classes on a specific day.")
             Section("Search day") {
                 DatePicker("Date", selection: $selectedDate, displayedComponents: .date)
                 Button {
@@ -45,6 +46,7 @@ struct BrowseLecturesView: View {
             }
         }
         .navigationTitle(navigationTitle)
+        .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(for: AlmaCurrentLecture.self) { lecture in
             CourseDetailView(lecture: lecture, model: model)
         }

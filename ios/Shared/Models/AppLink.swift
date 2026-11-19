@@ -1,7 +1,11 @@
 import Foundation
 
-enum AppLink: String {
+enum AppLink: String, Identifiable {
     case kufPass = "kuf-pass"
+    case kufTrends = "kuf-trends"
+    case schedule
+
+    var id: Self { self }
 
     var url: URL { URL(string: "tueapi://\(rawValue)")! }
 

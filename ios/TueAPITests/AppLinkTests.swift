@@ -17,4 +17,10 @@ final class AppLinkTests: XCTestCase {
             XCTAssertNil(AppLink(url: URL(string: address)!), address)
         }
     }
+
+    func testWidgetsLinkToTheirMatchingScreens() {
+        XCTAssertEqual(AppLink(url: URL(string: "tueapi://schedule")!), .schedule)
+        XCTAssertEqual(AppLink(url: URL(string: "tueapi://kuf-trends")!), .kufTrends)
+        XCTAssertNil(AppLink(url: URL(string: "tueapi://schedule?event=example")!))
+    }
 }

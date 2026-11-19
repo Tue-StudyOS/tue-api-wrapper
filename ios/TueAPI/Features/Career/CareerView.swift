@@ -11,6 +11,7 @@ struct CareerView: View {
 
     var body: some View {
         List {
+            StudentListHeading(title: "Career opportunities", detail: "Explore placements, projects and student jobs.")
             Section("Search") {
                 TextField("Internship, thesis, working student", text: $request.query)
                     .textInputAutocapitalization(.never)
@@ -79,6 +80,7 @@ struct CareerView: View {
             resultsSection
         }
         .navigationTitle("Career")
+        .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(for: CareerProjectSelection.self) { selection in
             CareerProjectDetailView(model: model, selection: selection)
         }

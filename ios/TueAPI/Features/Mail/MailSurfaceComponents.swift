@@ -4,13 +4,7 @@ struct MailHeader: View {
     let subtitle: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Inbox")
-                .font(.system(.largeTitle, design: .rounded, weight: .bold))
-            Text(subtitle)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
+        StudentScreenHeading(title: "University mail", detail: subtitle)
     }
 }
 
@@ -36,7 +30,7 @@ struct MailFilterSurface: View {
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 9)
                                 .background(
-                                    mailbox.name == selectedMailbox ? Color.accentColor : Color(uiColor: .secondarySystemBackground),
+                                    mailbox.name == selectedMailbox ? Color.studentActionFill : Color(uiColor: .secondarySystemBackground),
                                     in: Capsule()
                                 )
                                 .foregroundStyle(mailbox.name == selectedMailbox ? Color.white : .primary)

@@ -79,6 +79,7 @@ struct StudyTasksView: View {
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
+                StudentScreenHeading(title: "Deadlines and tasks", detail: "Check upcoming work across Moodle and ILIAS.")
                 if let topStatusLine {
                     AppInlineStatusLine(
                         text: topStatusLine.text,
@@ -112,10 +113,10 @@ struct StudyTasksView: View {
                 }
             }
             .padding(16)
-            .padding(.bottom, 124)
         }
         .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("Tasks")
+        .navigationBarTitleDisplayMode(.inline)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {

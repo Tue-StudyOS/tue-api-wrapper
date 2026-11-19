@@ -8,6 +8,7 @@ struct DeutschlandTicketView: View {
     @State private var ticket: DeutschlandTicket?
     @State private var isScannerPresented = false
     @State private var errorMessage: String?
+    @State private var saveCount = 0
 
     init(model: AppModel, store: DeutschlandTicketStore? = DeutschlandTicketStore()) {
         self.model = model
@@ -27,9 +28,9 @@ struct DeutschlandTicketView: View {
                 }
             }
             .padding(16)
-            .padding(.bottom, 124)
         }
         .background(Color(uiColor: .systemGroupedBackground))
+        .sensoryFeedback(.success, trigger: saveCount)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
@@ -40,13 +41,15 @@ struct DeutschlandTicketView: View {
             }
         }
         .sheet(isPresented: $isScannerPresented) {
-            KufBarcodeScannerView(
-                onScan: saveScan,
-                onError: showScannerError,
-                preferredMetadataTypes: [.aztec, .pdf417, .qr],
-                cameraDeniedMessage: "Camera access is needed to scan your Deutschlandticket barcode."
+            StudentBarcodeScannerSheet(
+                title: "Scan Deutschlandticket",
+                scanner: KufBarcodeScannerView(
+                    onScan: saveScan,
+                    onError: showScannerError,
+                    preferredMetadataTypes: [.aztec, .pdf417, .qr],
+                    cameraDeniedMessage: "Camera access is needed to scan your Deutschlandticket barcode."
+                )
             )
-            .ignoresSafeArea()
         }
         .alert("Deutschlandticket", isPresented: errorBinding) {
             Button("OK", role: .cancel) {}
@@ -56,13 +59,7 @@ struct DeutschlandTicketView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Deutschlandticket")
-                .font(.system(.largeTitle, design: .rounded, weight: .bold))
-            Text("StudyOS stores and displays this barcode locally on this device. It does not validate official ticket status.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
+        StudentScreenHeading(title: "Deutschlandticket", detail: "Show a saved barcode. Check ticket validity with your transport provider.")
     }
 
     private var emptyTicketState: some View {
@@ -81,7 +78,7 @@ struct DeutschlandTicketView: View {
                 Label("Scan ticket", systemImage: "camera.viewfinder")
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
+            .studentProminentButton()
             .controlSize(.large)
         }
     }
@@ -97,7 +94,7 @@ struct DeutschlandTicketView: View {
                 Label("Replace", systemImage: "arrow.triangle.2.circlepath")
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.borderedProminent)
+            .studentProminentButton()
 
             Button(role: .destructive) {
                 deleteTicket()
@@ -114,7 +111,7 @@ struct DeutschlandTicketView: View {
         AppSurfaceCard {
             LabeledContent("Scanner format", value: ticket.symbology)
             LabeledContent("Saved locally", value: ticket.scannedAt.formatted(date: .abbreviated, time: .shortened))
-            LabeledContent("Validation", value: "Not checked by StudyOS")
+            LabeledContent("Validation", value: "Check with your provider")
         }
     }
 
@@ -142,6 +139,7 @@ struct DeutschlandTicketView: View {
             try store.save(nextTicket)
             ticket = store.loadTicket()
             isScannerPresented = false
+            saveCount += 1
         } catch {
             showScannerError(error.localizedDescription)
         }

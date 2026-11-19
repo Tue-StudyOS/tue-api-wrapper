@@ -9,17 +9,15 @@ struct OnboardingView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Text("Your university in one place")
-                    .font(.largeTitle.bold())
-                    .accessibilityAddTraits(.isHeader)
-
-                Text("See your lectures, deadlines and official documents.")
-                    .foregroundStyle(.secondary)
+                StudentScreenHeading(
+                    title: "Your university in one place",
+                    detail: "See your lectures, deadlines and official documents."
+                )
 
                 Button("Connect university account") {
                     showsSignIn = true
                 }
-                .buttonStyle(.borderedProminent)
+                .studentProminentButton()
                 .controlSize(.large)
 
                 Button("Explore Campus without signing in") {
@@ -32,6 +30,7 @@ struct OnboardingView: View {
             .frame(maxWidth: .infinity)
         }
         .toolbar(.hidden, for: .navigationBar)
+        .background(Color(uiColor: .systemGroupedBackground))
         .navigationDestination(isPresented: $showsSignIn) {
             UniversityConnectionView(model: model, finishingSetup: $finishingSetup)
         }
@@ -49,6 +48,7 @@ struct UniversityConnectionView: View {
 
     var body: some View {
         Form {
+            StudentListHeading(title: "Connect your account", detail: "Use your University of Tübingen login.")
             if !isChecking && checks.isEmpty {
                 Section {
                     UniversityCredentialsFields(username: $username, password: $password)

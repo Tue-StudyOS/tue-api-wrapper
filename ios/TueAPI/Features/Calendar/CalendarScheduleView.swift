@@ -105,10 +105,10 @@ struct CalendarScheduleView: View {
                 }
             }
             .padding(16)
-            .padding(.bottom, 124)
         }
         .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("")
+        .sensoryFeedback(.selection, trigger: selectedDay)
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(for: LectureEvent.self) { event in
             CourseDetailView(event: event, model: model)

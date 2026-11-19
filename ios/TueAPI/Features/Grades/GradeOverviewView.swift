@@ -9,6 +9,7 @@ struct GradeOverviewView: View {
 
     var body: some View {
         List {
+            StudentListHeading(title: "Academic records", detail: "Exams, grades and enrollment.")
             Section {
                 statusContent
             }
@@ -29,6 +30,7 @@ struct GradeOverviewView: View {
             }
         }
         .navigationTitle("Grades")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {

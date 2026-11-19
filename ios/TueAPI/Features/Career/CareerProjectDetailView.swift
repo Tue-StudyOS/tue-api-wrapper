@@ -10,9 +10,10 @@ struct CareerProjectDetailView: View {
 
     var body: some View {
         List {
+            StudentListHeading(title: selection.title)
             content
         }
-        .navigationTitle(selection.title)
+        .navigationTitle("Listing")
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await load()

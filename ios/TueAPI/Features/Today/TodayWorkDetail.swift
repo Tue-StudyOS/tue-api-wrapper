@@ -5,6 +5,7 @@ struct TodayWorkDetail: View {
 
     var body: some View {
         List {
+            StudentListHeading(title: item.title)
             Section(item.source) {
                 LabeledContent("Course", value: item.subtitle)
                 LabeledContent("Deadline", value: item.detail)
@@ -27,7 +28,7 @@ struct TodayWorkDetail: View {
                 }
             }
         }
-        .navigationTitle(item.title)
+        .navigationTitle("Work item")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

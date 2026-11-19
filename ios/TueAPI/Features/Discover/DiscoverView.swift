@@ -29,14 +29,17 @@ struct DiscoverView: View {
             if searchText.isEmpty {
                 Section {
                     destinationLink(.kuf)
+                    destinationLink(.seats)
                 }
                 Section("Explore") {
                     ForEach(CampusArea.allCases) { area in
                         NavigationLink {
                             List {
+                                StudentListHeading(title: area.title, detail: area.detail)
                                 ForEach(area.destinations) { destinationLink($0) }
                             }
                             .navigationTitle(area.title)
+                            .navigationBarTitleDisplayMode(.inline)
                         } label: {
                             CampusServiceRow(title: area.title, detail: area.detail, symbol: area.symbol)
                         }

@@ -98,7 +98,7 @@ struct StudyIliasAssignmentRow: View {
                         .font(.subheadline.weight(.semibold))
                         .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.borderedProminent)
+                .studentProminentButton()
                 .controlSize(.regular)
             }
         }

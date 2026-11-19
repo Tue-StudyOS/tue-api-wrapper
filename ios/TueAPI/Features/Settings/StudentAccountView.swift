@@ -7,6 +7,16 @@ struct StudentAccountView: View {
 
     var body: some View {
         List {
+            StudentListHeading(title: "Account")
+            if !model.hasCredentials {
+                Section {
+                    NavigationLink {
+                        SettingsView(model: model)
+                    } label: {
+                        Label("Connect university account", systemImage: "person.badge.key")
+                    }
+                }
+            }
             Section("University") {
                 NavigationLink {
                     StudentDocumentsView(model: model)
@@ -33,6 +43,7 @@ struct StudentAccountView: View {
                     TodayPortalMessagesCard(model: model)
                         .padding()
                         .navigationTitle("Alma notices")
+        .navigationBarTitleDisplayMode(.inline)
                 } label: {
                     Label("Alma notices", systemImage: "bell")
                 }
@@ -59,18 +70,25 @@ private struct StudentWidgetGuide: View {
     private var showsLectureDetails = false
     var body: some View {
         List {
+            StudentListHeading(title: "Widgets", detail: "Open the schedule, see KuF counts, or get to your saved pass.")
             Section("Lectures") {
                 Text("Add Upcoming Lectures to the Home Screen or Lock Screen to see your next class.")
-                Toggle("Show course and room on Lock Screen", isOn: $showsLectureDetails)
+                Toggle("Show lecture details on Lock Screen", isOn: $showsLectureDetails)
                     .onChange(of: showsLectureDetails) {
                         WidgetCenter.shared.reloadTimelines(ofKind: "UpcomingLecturesWidget")
+                        if !showsLectureDetails {
+                            Task { await LiveActivityController.endAll() }
+                        }
                     }
+                Text("This also controls course titles and rooms in Live Activities.")
                 Text("To start a Live Activity, open a lecture in Schedule.")
             }
             Section("KuF") {
                 Text("Add KuF Pass to the Home Screen or Lock Screen. Tap it to open your saved barcode in the app.")
+                Text("Add KuF Count to the Home Screen. Tap it to open training trends.")
             }
         }
         .navigationTitle("Widgets")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

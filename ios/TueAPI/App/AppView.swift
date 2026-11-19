@@ -4,12 +4,7 @@ struct AppView: View {
     var model: AppModel
     @Environment(\.scenePhase) private var scenePhase
     @State private var mailBadgeStore = MailBadgeStore()
-    @State private var selectedTab: StudentTab
-
-    init(model: AppModel) {
-        self.model = model
-        _selectedTab = State(initialValue: model.hasCredentials ? .today : .campus)
-    }
+    @Binding var selectedTab: StudentTab
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -82,6 +77,6 @@ struct AppView: View {
     }
 }
 
-private enum StudentTab: Hashable {
+enum StudentTab: Hashable {
     case today, schedule, courses, campus
 }

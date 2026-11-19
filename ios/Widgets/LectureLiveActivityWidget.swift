@@ -6,6 +6,7 @@ struct LectureLiveActivityWidget: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: LectureActivityAttributes.self) { context in
             LectureLiveActivityView(state: context.state)
+                .widgetURL(AppLink.schedule.url)
                 .activitySystemActionForegroundColor(.primary)
         } dynamicIsland: { context in
             DynamicIsland {
@@ -56,6 +57,7 @@ struct LectureLiveActivityWidget: Widget {
             } minimal: {
                 Image(systemName: "calendar")
             }
+            .widgetURL(AppLink.schedule.url)
         }
     }
 }

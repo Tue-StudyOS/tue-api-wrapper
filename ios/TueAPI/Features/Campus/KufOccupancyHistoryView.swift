@@ -13,6 +13,7 @@ struct KufOccupancyHistoryView: View {
 
     var body: some View {
         List {
+            StudentListHeading(title: "KuF trends", detail: "Compare recorded training counts by time of day.")
             Section {
                 Picker("Trend grouping", selection: $selectedScope) {
                     ForEach(KufOccupancyHistoryScope.allCases) { scope in
@@ -67,6 +68,7 @@ struct KufOccupancyHistoryView: View {
             }
         }
         .navigationTitle("KuF trends")
+        .navigationBarTitleDisplayMode(.inline)
         .onAppear(perform: loadHistory)
         .refreshable {
             loadHistory()

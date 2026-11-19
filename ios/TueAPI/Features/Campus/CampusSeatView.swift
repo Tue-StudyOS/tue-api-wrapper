@@ -3,6 +3,7 @@ import SwiftUI
 struct CampusSeatView: View {
     @State private var phase: CampusSeatLoadPhase = .idle
     @State private var availability: CampusSeatAvailability?
+    @State private var display: CampusSeatDisplay = .list
 
     private var locations: [CampusSeatLocation] {
         (availability?.locations ?? []).sorted {
@@ -33,7 +34,7 @@ struct CampusSeatView: View {
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
-                CampusSeatHeader(subtitle: subtitle)
+                StudentScreenHeading(title: "Study spaces", detail: subtitle)
 
                 if let statusLine {
                     AppInlineStatusLine(
@@ -44,7 +45,19 @@ struct CampusSeatView: View {
                     )
                 }
 
-                content
+                if !locations.isEmpty {
+                    Picker("Study spaces view", selection: $display) {
+                        Label("List", systemImage: "list.bullet").tag(CampusSeatDisplay.list)
+                        Label("3D map", systemImage: "map").tag(CampusSeatDisplay.map)
+                    }
+                    .pickerStyle(.segmented)
+                }
+
+                if display == .map && !locations.isEmpty {
+                    CampusSeatMap(locations: locations)
+                } else {
+                    content
+                }
 
                 if let availability {
                     Text("Last updated \(formatTimestamp(availability.retrievedAt))")
@@ -54,9 +67,11 @@ struct CampusSeatView: View {
                 }
             }
             .padding(16)
-            .padding(.bottom, 124)
         }
         .background(Color(uiColor: .systemGroupedBackground))
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+        .sensoryFeedback(.selection, trigger: display)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button {
@@ -157,21 +172,7 @@ private struct CampusSeatStatusLine {
     var isLoading = false
 }
 
-private struct CampusSeatHeader: View {
-    let subtitle: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Library seats")
-                .font(.system(.largeTitle, design: .rounded, weight: .bold))
-            Text(subtitle)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-    }
-}
-
-private struct CampusSeatLocationCard: View {
+struct CampusSeatLocationCard: View {
     let location: CampusSeatLocation
 
     var body: some View {
@@ -194,28 +195,34 @@ private struct CampusSeatLocationCard: View {
                     }
                 }
 
-                ProgressView(value: occupancyValue)
-                    .tint(occupancyTint)
+                if let occupancy = location.occupancyPercent {
+                    ProgressView(value: min(max(occupancy / 100, 0), 1))
+                        .tint(occupancyTint)
+                        .accessibilityLabel("Seat occupancy")
+                }
 
-                HStack(spacing: 8) {
-                    CampusSeatMetricPill(label: "Free", value: metricText(location.freeSeats), tint: .green.opacity(0.16))
-                    CampusSeatMetricPill(label: "Occupied", value: metricText(location.occupiedSeats), tint: .orange.opacity(0.16))
-                    CampusSeatMetricPill(label: "Capacity", value: metricText(location.totalSeats), tint: .secondary.opacity(0.14))
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 8) { metrics }
+                    VStack(alignment: .leading, spacing: 8) { metrics }
                 }
             }
         }
     }
 
+    @ViewBuilder private var metrics: some View {
+        CampusSeatMetricPill(label: "Free", value: metricText(location.freeSeats), tint: .green.opacity(0.16))
+        CampusSeatMetricPill(label: "Occupied", value: metricText(location.occupiedSeats), tint: .orange.opacity(0.16))
+        CampusSeatMetricPill(label: "Capacity", value: metricText(location.totalSeats), tint: .secondary.opacity(0.14))
+    }
+
     private var detailLine: String {
+        guard location.freeSeats != nil || location.occupiedSeats != nil else {
+            return "Seat count unavailable"
+        }
         if let updatedAt = location.updatedAt {
             return "Updated \(formatTimestamp(updatedAt))"
         }
         return "University Library seatfinder"
-    }
-
-    private var occupancyValue: Double {
-        guard let percent = location.occupancyPercent else { return 0 }
-        return min(max(percent / 100, 0), 1)
     }
 
     private var occupancyTint: Color {
@@ -224,6 +231,10 @@ private struct CampusSeatLocationCard: View {
         if percent >= 60 { return .orange }
         return .green
     }
+}
+
+private enum CampusSeatDisplay: Hashable {
+    case list, map
 }
 
 private struct CampusSeatMetricPill: View {
@@ -235,7 +246,6 @@ private struct CampusSeatMetricPill: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(label)
                 .font(.caption)
-                .foregroundStyle(.secondary)
             Text(value)
                 .font(.footnote.weight(.semibold))
         }

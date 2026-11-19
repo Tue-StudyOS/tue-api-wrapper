@@ -6,11 +6,10 @@ struct TodayIdentityHeader: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Today")
-                .font(.largeTitle.weight(.bold))
-            Text(Date.now.formatted(.dateTime.weekday(.wide).day().month(.wide)))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            StudentScreenHeading(
+                title: "Today",
+                detail: Date.now.formatted(.dateTime.weekday(.wide).day().month(.wide))
+            )
             if let termLabel, !termLabel.isEmpty {
                 Text(termLabel)
                     .font(.subheadline)
@@ -58,7 +57,7 @@ struct TodayNextLectureCard: View {
         .multilineTextAlignment(.leading)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
-        .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 18))
+        .background(Color.studentActionFill, in: RoundedRectangle(cornerRadius: 18))
     }
 
     private var emptyCard: some View {

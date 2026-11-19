@@ -2,6 +2,7 @@ import Foundation
 
 enum UniversityDirectoryHTMLParser {
     static func searchForm(in html: String, pageURL: URL) throws -> UniversityDirectorySearchForm {
+        try checkAvailability(at: pageURL)
         let formTag = try firstFormTag(in: html)
         let actionURL = try resolve(HTMLRegex.attribute("action", in: formTag) ?? "", pageURL: pageURL)
         let queryFieldName = try inputName(matching: "NameTextBox", type: "text", in: html)
@@ -17,6 +18,7 @@ enum UniversityDirectoryHTMLParser {
     }
 
     static func searchResponse(from html: String, query: String, pageURL: URL) throws -> UniversityDirectorySearchResponse {
+        try checkAvailability(at: pageURL)
         let title = firstHeading(in: primaryContent(in: html)) ?? "People"
         let pageName = pageURL.lastPathComponent.lowercased()
         return switch pageName {
@@ -54,6 +56,12 @@ enum UniversityDirectoryHTMLParser {
             )
         default:
             throw UniversityPortalError.parsing("The public university directory returned an unsupported result page.")
+        }
+    }
+
+    private static func checkAvailability(at pageURL: URL) throws {
+        if pageURL.lastPathComponent.caseInsensitiveCompare("Maintenance.aspx") == .orderedSame {
+            throw UniversityPortalError.portal("The university directory is temporarily unavailable for maintenance. Try again later.")
         }
     }
 

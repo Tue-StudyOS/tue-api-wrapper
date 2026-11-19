@@ -2,6 +2,19 @@ import XCTest
 @testable import TueAPI
 
 final class UniversityDirectoryHTMLParserTests: XCTestCase {
+    func testMaintenanceRedirectReportsServiceOutage() throws {
+        let pageURL = try XCTUnwrap(URL(string: "https://epv-welt.uni-tuebingen.de/Maintenance.aspx"))
+        let html = "<form><h1>Wartungsarbeiten</h1><input type='hidden' name='__VIEWSTATE'></form>"
+        let expected = UniversityPortalError.portal("The university directory is temporarily unavailable for maintenance. Try again later.")
+
+        XCTAssertThrowsError(try UniversityDirectoryHTMLParser.searchForm(in: html, pageURL: pageURL)) {
+            XCTAssertEqual($0 as? UniversityPortalError, expected)
+        }
+        XCTAssertThrowsError(try UniversityDirectoryHTMLParser.searchResponse(from: html, query: "Informatik", pageURL: pageURL)) {
+            XCTAssertEqual($0 as? UniversityPortalError, expected)
+        }
+    }
+
     func testSearchFormExtractsQueryableFields() throws {
         let pageURL = URL(string: "https://epv-welt.uni-tuebingen.de/RestrictedPages/StartSearch.aspx")!
         let html = """
